@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Panel admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" data-sidebar>
+      <a class="brand" href="index.html">
+        <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+      </a>
+
+      <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+
+      <div class="side-section-title">Admin</div>
+      <a class="side-link active" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+
+      <div class="side-section-title">Gestión</div>
+      <a class="side-link" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Registros</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+      <a class="side-link" href="#"><span>Equipos</span><span>›</span></a>
+      <a class="side-link" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+      <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+
+      <div class="side-section-title">Sistema</div>
+      <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+      <a class="side-link" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+
+      <div class="side-section-title">Otros roles</div>
+      <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+      <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+    </aside>
+
+    <!-- Main -->
+    <main class="app-main">
+      <div class="topbar">
+        <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+          <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+          <span style="font-weight:700">Panel general</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="muted" style="font-size:.88rem">Admin Principal</span>
+          <div
+            style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">
+            A</div>
+        </div>
+      </div>
+
+      <section class="page">
+        <section class="page-header">
+          <div class="page-title">
+            <div class="eyebrow">Administración</div>
+            <h1>Panel general</h1>
+            <p>Resumen operativo del sistema FlexArena.</p>
+          </div>
+        </section>
+
+        <div class="kpi-row">
+          <div class="stat-card"><strong data-count="38">0</strong><span>Torneos</span></div>
+          <div class="stat-card"><strong data-count="412">0</strong><span>Participantes</span></div>
+          <div class="stat-card"><strong data-count="67">0</strong><span>Equipos</span></div>
+          <div class="stat-card"><strong data-count="18">0</strong><span>Acciones recientes</span></div>
+        </div>
+
+        <div class="grid cols-2">
+          <article class="card">
+            <h3>Actividad reciente</h3>
+            <div class="timeline">
+              <div class="timeline-item">
+                <strong>LOGIN</strong>
+                <div class="muted">Usuario admin ingresó al sistema</div>
+                <div class="muted" style="font-size:.8rem">2025-06-13 09:14:02</div>
+              </div>
+              <div class="timeline-item">
+                <strong>CREAR_TORNEO</strong>
+                <div class="muted">Torneo "Copa Ajedrez Primavera 2025" creado</div>
+                <div class="muted" style="font-size:.8rem">2025-06-12 18:32:44</div>
+              </div>
+              <div class="timeline-item">
+                <strong>RESULTADO_CARGADO</strong>
+                <div class="muted">Ronda 5 · García vs Martínez — 1:0</div>
+                <div class="muted" style="font-size:.8rem">2025-06-12 17:55:11</div>
+              </div>
+              <div class="timeline-item">
+                <strong>APROBAR_REGISTRO</strong>
+                <div class="muted">Participante "Carlos Rodríguez" habilitado</div>
+                <div class="muted" style="font-size:.8rem">2025-06-12 16:40:28</div>
+              </div>
+              <div class="timeline-item">
+                <strong>INSCRIPCION</strong>
+                <div class="muted">Equipo "Los Pumas" inscripto en Fútbol 5</div>
+                <div class="muted" style="font-size:.8rem">2025-06-12 15:22:09</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Accesos rápidos</h3>
+            <div class="actions" style="flex-direction:column;align-items:stretch;gap:.6rem">
+              <a class="btn" href="08-admin-participantes.html">Registros de participantes <span class="chip warning"
+                  style="margin-left:auto;padding:.15rem .55rem;font-size:.76rem">3 pendientes</span></a>
+              <a class="btn" href="#">+ Nuevo equipo</a>
+              <a class="btn primary" href="06-admin-torneos.html">+ Nuevo torneo</a>
+              <a class="btn" href="09-admin-usuarios.html">+ Nuevo organizador</a>
+            </div>
+
+            <h3 style="margin-top:1.2rem">Torneos en curso</h3>
+            <div style="display:grid;gap:.5rem">
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04)">
+                <div>
+                  <div style="font-weight:600;font-size:.92rem">Copa Ajedrez Primavera</div>
+                  <div class="muted" style="font-size:.8rem">Sistema Suizo · 24 participantes</div>
+                </div>
+                <a class="btn small primary" href="07-admin-gestion-torneo.html">Gestionar</a>
+              </div>
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04)">
+                <div>
+                  <div style="font-weight:600;font-size:.92rem">Liga Ping Pong Mensual</div>
+                  <div class="muted" style="font-size:.8rem">Liga · 16 participantes</div>
+                </div>
+                <a class="btn small" href="#">Gestionar</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mockup-nav">
+    <a href="index.html">← Índice</a>
+    <a href="05-admin-dashboard.html" class="current">Dashboard</a>
+    <a href="06-admin-torneos.html">Torneos</a>
+    <a href="07-admin-gestion-torneo.html">Gestión</a>
+    <a href="08-admin-participantes.html">Participantes</a>
+    <a href="09-admin-usuarios.html">Usuarios</a>
+    <a href="10-admin-auditoria.html">Auditoría</a>
+  </nav>
+
+  <!-- Capa JavaScript modular -->
+  <script src="js/app.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/confirm.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+
+</html>

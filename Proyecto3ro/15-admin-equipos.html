@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Equipos · Admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" data-sidebar>
+      <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+      </a>
+      <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+      <div class="side-section-title">Admin</div>
+      <a class="side-link" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+      <div class="side-section-title">Gestión</div>
+      <a class="side-link" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Registros</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+      <a class="side-link active" href="15-admin-equipos.html"><span>Equipos</span><span>›</span></a>
+      <a class="side-link" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+      <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+      <div class="side-section-title">Sistema</div>
+      <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+      <a class="side-link" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+      <div class="side-section-title">Otros roles</div>
+      <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+      <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+    </aside>
+
+    <main class="app-main">
+      <div class="topbar">
+        <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+          <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+          <span style="font-weight:700">Equipos</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="muted" style="font-size:.88rem">Admin Principal</span>
+          <div
+            style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">
+            A</div>
+        </div>
+      </div>
+
+      <section class="page">
+        <section class="page-header">
+          <div class="page-title">
+            <div class="eyebrow">Gestión</div>
+            <h1>Equipos</h1>
+            <p class="muted">Agrupaciones de participantes que compiten en torneos por equipos.</p>
+          </div>
+          <button class="btn primary" data-modal-open="modalEquipo">+ Nuevo equipo</button>
+        </section>
+
+        <!-- Búsqueda en vivo gestionada por tables.js -->
+        <div class="field" style="max-width:320px;margin-bottom:1rem">
+          <input type="search" data-table-search="#tablaEquipos" placeholder="Buscar equipo…">
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tablaEquipos">
+              <thead>
+                <tr>
+                  <th data-sort>Equipo</th>
+                  <th data-sort>Capitán</th>
+                  <th data-sort="number">Integrantes</th>
+                  <th data-sort="number">Torneos</th>
+                  <th data-sort>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Los Pumas</strong></td>
+                  <td>Rodríguez, Carlos</td>
+                  <td>7</td>
+                  <td>3</td>
+                  <td><span class="chip success" data-state-badge>Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem" data-state-action="desactivar"
+                      data-flash="Equipo desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Eagles FC</strong></td>
+                  <td>López, María</td>
+                  <td>9</td>
+                  <td>2</td>
+                  <td><span class="chip success" data-state-badge>Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem" data-state-action="desactivar"
+                      data-flash="Equipo desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Tiburones Azules</strong></td>
+                  <td>Soto, Miguel</td>
+                  <td>6</td>
+                  <td>1</td>
+                  <td><span class="chip success" data-state-badge>Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem" data-state-action="desactivar"
+                      data-flash="Equipo desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Dragones Rojos</strong></td>
+                  <td>Vega, Marcos</td>
+                  <td>8</td>
+                  <td>0</td>
+                  <td><span class="chip danger" data-state-badge>Inactivo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small primary" style="margin-left:.35rem" data-state-action="activar"
+                      data-flash="Equipo reactivado.">Activar</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal nuevo equipo -->
+  <div class="modal-overlay" id="modalEquipo" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" style="width:min(100%,520px)">
+      <h3>Nuevo equipo</h3>
+      <form data-validate data-mock data-flash="Equipo creado correctamente.">
+        <div class="form-grid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Nombre del equipo *</label>
+            <input type="text" placeholder="Los Pumas" required>
+          </div>
+          <div class="field">
+            <label>Capitán *</label>
+            <select required>
+              <option value="">Seleccionar participante…</option>
+              <option>Rodríguez, Carlos</option>
+              <option>López, María</option>
+              <option>Soto, Miguel</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <select>
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn" data-modal-close>Cancelar</button>
+          <button type="submit" class="btn primary">Crear equipo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <nav class="mockup-nav">
+    <a href="index.html">← Índice</a>
+    <a href="05-admin-dashboard.html">Dashboard</a>
+    <a href="08-admin-participantes.html">Participantes</a>
+    <a href="15-admin-equipos.html" class="current">Equipos</a>
+    <a href="16-admin-torneo-form.html">Nuevo torneo →</a>
+  </nav>
+
+  <!-- Capa JavaScript modular -->
+  <script src="js/app.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/confirm.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/tables.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockups — FlexArena SGDM</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .hub {
+      max-width: 820px;
+      width: 100%;
+    }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .hub-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255, 255, 255, .085), rgba(255, 255, 255, .035));
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      transition: border-color .18s, transform .18s;
+    }
+
+    .hub-card:hover {
+      border-color: rgba(107, 197, 255, .4);
+      transform: translateY(-2px);
+    }
+
+    .hub-card .role {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-weight: 800;
+      color: var(--primary-strong);
+    }
+
+    .hub-card h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .hub-card p {
+      margin: 0;
+      font-size: .85rem;
+    }
+
+    .hub-card a.btn {
+      margin-top: auto;
+    }
+
+    .section-label {
+      margin: 2rem 0 .5rem;
+      color: #7790aa;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hub">
+    <div class="eyebrow">FlexArena · SGDM</div>
+    <h1 style="font-size:clamp(2rem,5vw,3.5rem)">Mockups de presentación</h1>
+    <p>Vistas estáticas del sistema. Hacé clic en cualquier pantalla para verla.</p>
+
+    <div class="section-label">Vistas públicas</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Público</span>
+        <h3>Home / Landing</h3>
+        <p class="muted">Página de inicio con hero y tipos de torneo</p>
+        <a class="btn primary small" href="01-home.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Público</span>
+        <h3>Torneos</h3>
+        <p class="muted">Listado público de torneos con filtros dinámicos</p>
+        <a class="btn primary small" href="02-torneos-publico.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Público</span>
+        <h3>Detalle de torneo</h3>
+        <p class="muted">Bracket de eliminación con scroll inteligente</p>
+        <a class="btn primary small" href="17-torneo-detalle.html">Ver →</a>
+      </div>
+    </div>
+
+    <div class="section-label">Autenticación</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Auth</span>
+        <h3>Iniciar sesión</h3>
+        <p class="muted">Formulario de login para todos los roles</p>
+        <a class="btn primary small" href="03-login.html">Ver →</a>
+      </div>
+
+    </div>
+
+    <div class="section-label">Panel Administrador</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Dashboard admin</h3>
+        <p class="muted">KPIs, actividad reciente y accesos rápidos</p>
+        <a class="btn primary small" href="05-admin-dashboard.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Torneos</h3>
+        <p class="muted">Lista de todos los torneos del sistema</p>
+        <a class="btn primary small" href="06-admin-torneos.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Gestión de torneo</h3>
+        <p class="muted">Vista de bracket, inscriptos y resultados</p>
+        <a class="btn primary small" href="07-admin-gestion-torneo.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Participantes</h3>
+        <p class="muted">Listado y administración de participantes</p>
+        <a class="btn primary small" href="08-admin-participantes.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Equipos</h3>
+        <p class="muted">Gestión de equipos y capitanes</p>
+        <a class="btn primary small" href="15-admin-equipos.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Nuevo torneo</h3>
+        <p class="muted">Formulario con campos condicionales por formato</p>
+        <a class="btn primary small" href="16-admin-torneo-form.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Organizadores</h3>
+        <p class="muted">Gestión de usuarios organizadores</p>
+        <a class="btn primary small" href="09-admin-usuarios.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Admin</span>
+        <h3>Auditoría</h3>
+        <p class="muted">Historial de acciones del sistema</p>
+        <a class="btn primary small" href="10-admin-auditoria.html">Ver →</a>
+      </div>
+    </div>
+
+    <div class="section-label">Panel Organizador</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Organizador</span>
+        <h3>Panel organizador</h3>
+        <p class="muted">Torneos asignados al organizador</p>
+        <a class="btn primary small" href="11-organizador-dashboard.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Organizador</span>
+        <h3>Gestión de torneo</h3>
+        <p class="muted">Vista de torneo Liga con tabla de posiciones</p>
+        <a class="btn primary small" href="12-organizador-gestion.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Auth</span>
+        <h3>Inscripcion de participantes</h3>
+        <p class="muted">Formulario de Inscripción para participantes</p>
+        <a class="btn primary small" href="04-registro.html">Ver →</a>
+      </div>
+    </div>
+
+    <div class="section-label">Panel Participante</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Participante</span>
+        <h3>Mi panel</h3>
+        <p class="muted">Estadísticas personales y torneos activos</p>
+        <a class="btn primary small" href="13-participante-dashboard.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Participante</span>
+        <h3>Mi perfil</h3>
+        <p class="muted">Perfil completo con historial y equipos</p>
+        <a class="btn primary small" href="14-participante-perfil.html">Ver →</a>
+      </div>
+    </div>
+
+    <div class="section-label">Errores y documentación</div>
+    <div class="hub-grid">
+      <div class="hub-card">
+        <span class="role">Error</span>
+        <h3>Acceso denegado (403)</h3>
+        <p class="muted">Pantalla de permiso insuficiente</p>
+        <a class="btn primary small" href="18-error-403.html">Ver →</a>
+      </div>
+      <div class="hub-card">
+        <span class="role">Docs</span>
+        <h3>Documentación</h3>
+        <p class="muted">Maquetación, CSS, JavaScript y diagramas</p>
+        <a class="btn small" href="docs/mockups_documentacion.md">Abrir →</a>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

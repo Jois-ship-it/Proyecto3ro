@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Crear cuenta · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+
+
+<body>
+  <div class="auth-layout">
+    <div class="auth-card" style="width:min(100%,520px)">
+      <a class="brand" href="index.html" style="margin-bottom:1.2rem;display:inline-flex">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+      </a>
+
+      <h2 style="margin-bottom:.25rem">Crear cuenta de participante</h2>
+      <p class="muted" style="margin-bottom:1.2rem">Tu cuenta quedará <strong style="color:var(--text)">pendiente de
+          aprobación</strong> hasta que un administrador la habilite.</p>
+
+      <form data-validate data-mock data-flash="Cuenta creada. Quedó pendiente de aprobación.">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" placeholder="Juan Pérez" required>
+          </div>
+          <div class="field">
+            <label>Nick / Alias</label>
+            <input type="text" placeholder="CaRo92">
+          </div>
+          <div class="field">
+            <label>Email *</label>
+            <input type="email" placeholder="tu@email.com" required>
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="text" placeholder="+54 9 11 1234-5678">
+          </div>
+          <div class="field">
+            <label>Contraseña *</label>
+            <input type="password" data-password required>
+          </div>
+          <div class="field">
+            <label>Confirmar contraseña *</label>
+            <input type="password" data-password-confirm required>
+          </div>
+        </div>
+
+        <!-- Reglas evaluadas en vivo por forms.js (rule-ok / rule-pending) -->
+        <ul data-password-hints
+          style="list-style:none;padding:0;margin:.6rem 0 0;font-size:.82rem;display:grid;gap:.2rem">
+          <li data-rule="len" class="rule-pending">• Al menos 8 caracteres</li>
+          <li data-rule="upper" class="rule-pending">• Una letra mayúscula</li>
+          <li data-rule="lower" class="rule-pending">• Una letra minúscula</li>
+          <li data-rule="num" class="rule-pending">• Un número</li>
+          <li data-rule="sym" class="rule-pending">• Un símbolo (!@#$%&*…)</li>
+          <li data-rule="match" class="rule-pending">• Las contraseñas coinciden</li>
+        </ul>
+
+        <div class="form-actions" style="margin-top:1.2rem">
+        
+          <button type="submit" class="btn primary" data-password-submit>Crear cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <nav class="mockup-nav">
+    <a href="index.html">← Índice</a>
+    <a href="03-login.html">Login</a>
+    <a href="04-registro.html" class="current">Registro</a>
+    <a href="05-admin-dashboard.html">Admin</a>
+  </nav>
+
+  <!-- Capa JavaScript modular -->
+  <script src="js/app.js"></script>
+  <script src="js/forms.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Torneo de Tenis Otoño · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    /* Bracket flexible (rondas como columnas) para eliminacion.js */
+    .bracket-flex { display: flex; gap: 3rem; padding: .5rem 3rem; min-width: max-content; }
+    .round-col {
+      display: flex; flex-direction: column; justify-content: space-around;
+      gap: 1rem; min-width: 220px;
+    }
+    .round-col h4 {
+      margin: 0 0 .25rem; text-align: center;
+      color: #bed5ee; font-size: .72rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .1em;
+    }
+    .match-card {
+      border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(255,255,255,.05); overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    }
+    .match-card.champion { border-color: rgba(37,194,129,.45); background: rgba(37,194,129,.1); }
+    .match-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: .5rem; padding: .55rem .7rem; font-size: .88rem;
+    }
+    .match-row + .match-row { border-top: 1px solid var(--line); }
+    .match-row.win { background: rgba(37,194,129,.16); color: #dfffea; font-weight: 700; }
+    .match-row .sc { font-weight: 800; min-width: 1.3rem; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="public-shell">
+  <nav class="public-nav">
+    <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="01-home.html">Inicio</a>
+      <a class="nav-link active" href="02-torneos-publico.html">Torneos</a>
+      <a class="nav-link" href="03-login.html">Ingresar</a>
+    </div>
+  </nav>
+
+  <section class="section">
+    <a class="btn small" href="02-torneos-publico.html" style="margin-bottom:1rem">← Volver a torneos</a>
+
+    <!-- Cabecera del torneo -->
+    <div style="display:flex;align-items:start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem">
+      <div>
+        <div class="eyebrow">Detalle del torneo</div>
+        <h1 style="margin:.2rem 0;font-size:clamp(1.8rem,4vw,3rem)">Torneo de Tenis Otoño</h1>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <span class="chip warning">Eliminación Directa</span>
+          <span class="chip">Individual</span>
+          <span class="chip success">Finalizado</span>
+        </div>
+      </div>
+      <div class="card" style="text-align:center;padding:1rem 1.4rem">
+        <div class="eyebrow" style="color:var(--success)">Campeón</div>
+        <div style="font-size:1.4rem;font-weight:800;margin-top:.2rem">🏆 García, Luis</div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><strong>8</strong><span>Participantes</span></div>
+      <div class="stat-card"><strong>3</strong><span>Rondas</span></div>
+      <div class="stat-card"><strong>7</strong><span>Partidos</span></div>
+    </div>
+
+    <!-- Bracket con scroll horizontal inteligente (eliminacion.js) -->
+    <div class="panel" style="margin-top:1rem;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+        <h3 style="margin:0">Llave de eliminación</h3>
+        <span class="chip success">Campeón definido</span>
+      </div>
+      <p class="muted" style="font-size:.85rem;margin:0 0 .6rem">Arrastrá con el mouse, usá la rueda o las flechas ‹ › para desplazarte.</p>
+
+      <div class="bk-scroll" data-bracket>
+        <div class="bracket-flex">
+
+          <!-- Cuartos de Final -->
+          <div class="round-col">
+            <h4>Cuartos de Final</h4>
+            <div class="match-card">
+              <div class="match-row win"><span>García, Luis</span><span class="sc">6</span></div>
+              <div class="match-row"><span>Núñez, Pablo</span><span class="sc">3</span></div>
+            </div>
+            <div class="match-card">
+              <div class="match-row win"><span>Martínez, Ana</span><span class="sc">6</span></div>
+              <div class="match-row"><span>Ríos, Sol</span><span class="sc">2</span></div>
+            </div>
+            <div class="match-card">
+              <div class="match-row win"><span>Rodríguez, Carlos</span><span class="sc">7</span></div>
+              <div class="match-row"><span>Gómez, Iván</span><span class="sc">5</span></div>
+            </div>
+            <div class="match-card">
+              <div class="match-row"><span>López, María</span><span class="sc">4</span></div>
+              <div class="match-row win"><span>Fernández, Diego</span><span class="sc">6</span></div>
+            </div>
+          </div>
+
+          <!-- Semifinales -->
+          <div class="round-col">
+            <h4>Semifinales</h4>
+            <div class="match-card">
+              <div class="match-row win"><span>García, Luis</span><span class="sc">6</span></div>
+              <div class="match-row"><span>Martínez, Ana</span><span class="sc">4</span></div>
+            </div>
+            <div class="match-card">
+              <div class="match-row win"><span>Rodríguez, Carlos</span><span class="sc">6</span></div>
+              <div class="match-row"><span>Fernández, Diego</span><span class="sc">1</span></div>
+            </div>
+          </div>
+
+          <!-- Final -->
+          <div class="round-col">
+            <h4>Final</h4>
+            <div class="match-card">
+              <div class="match-row win"><span>García, Luis</span><span class="sc">6</span></div>
+              <div class="match-row"><span>Rodríguez, Carlos</span><span class="sc">3</span></div>
+            </div>
+          </div>
+
+          <!-- Campeón -->
+          <div class="round-col">
+            <h4>Campeón</h4>
+            <div class="match-card champion">
+              <div class="match-row win"><span>García, Luis</span><span class="sc">🏆</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
+    <span>© 2025 <strong style="color:var(--text)">Guemanelli Tech</strong> · FlexArena SGDM</span>
+    <a href="02-torneos-publico.html" style="color:var(--muted)">Ver más torneos</a>
+  </footer>
+</div>
+
+<nav class="mockup-nav">
+  <a href="index.html">← Índice</a>
+  <a href="02-torneos-publico.html">Torneos</a>
+  <a href="17-torneo-detalle.html" class="current">Detalle / Bracket</a>
+  <a href="07-admin-gestion-torneo.html">Gestión</a>
+  <a href="18-error-403.html">Error 403</a>
+</nav>
+
+<!-- Capa JavaScript modular -->
+<script src="js/app.js"></script>
+<script src="js/eliminacion.js"></script>
+</body>
+</html>

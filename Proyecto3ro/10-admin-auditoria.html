@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Auditoría · Admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" data-sidebar>
+    <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+    </a>
+    <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+    <div class="side-section-title">Admin</div>
+    <a class="side-link" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+    <div class="side-section-title">Gestión</div>
+    <a class="side-link" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Registros</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+    <a class="side-link" href="#"><span>Equipos</span><span>›</span></a>
+    <a class="side-link" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+    <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+    <div class="side-section-title">Sistema</div>
+    <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+    <a class="side-link active" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+    <div class="side-section-title">Otros roles</div>
+    <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+    <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+        <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <span style="font-weight:700">Auditoría</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="muted" style="font-size:.88rem">Admin Principal</span>
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">A</div>
+      </div>
+    </div>
+
+    <section class="page">
+      <section class="page-header">
+        <div class="page-title">
+          <div class="eyebrow">Sistema</div>
+          <h1>Auditoría</h1>
+          <p class="muted">Historial de acciones administrativas — 284 registros.</p>
+        </div>
+      </section>
+
+      <!-- Búsqueda en vivo gestionada por tables.js -->
+      <div class="field" style="max-width:340px;margin-bottom:1rem">
+        <input type="search" data-table-search="#tablaAuditoria" placeholder="Buscar por usuario, acción, IP…">
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="tablaAuditoria">
+            <thead>
+              <tr><th data-sort>Fecha</th><th data-sort>Usuario</th><th data-sort>Acción</th><th data-sort>Tabla</th><th>Descripción</th><th data-sort>IP</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="white-space:nowrap">2025-06-13 09:14:02</td>
+                <td>Admin Principal</td>
+                <td><span class="chip">LOGIN</span></td>
+                <td class="muted">usuarios</td>
+                <td>Inicio de sesión exitoso</td>
+                <td class="muted">192.168.1.10</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 18:32:44</td>
+                <td>Admin Principal</td>
+                <td><span class="chip success">CREAR_TORNEO</span></td>
+                <td class="muted">torneos</td>
+                <td>Torneo "Copa Ajedrez Primavera 2025" creado</td>
+                <td class="muted">192.168.1.10</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 17:55:11</td>
+                <td>Ramirez, Sofía</td>
+                <td><span class="chip">RESULTADO_CARGADO</span></td>
+                <td class="muted">enfrentamientos</td>
+                <td>Ronda 5 · García vs Martínez — 1:0</td>
+                <td class="muted">10.0.0.42</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 16:40:28</td>
+                <td>Admin Principal</td>
+                <td><span class="chip success">APROBAR_REGISTRO</span></td>
+                <td class="muted">participantes</td>
+                <td>Participante "Carlos Rodríguez" habilitado</td>
+                <td class="muted">192.168.1.10</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 15:22:09</td>
+                <td>Sistema</td>
+                <td><span class="chip warning">INSCRIPCION</span></td>
+                <td class="muted">inscripciones</td>
+                <td>Equipo "Los Pumas" inscripto en Fútbol 5</td>
+                <td class="muted">—</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 14:10:05</td>
+                <td>Vega, Marcos</td>
+                <td><span class="chip">GENERAR_BRACKET</span></td>
+                <td class="muted">enfrentamientos</td>
+                <td>Bracket generado para "Torneo Fútbol 5 Verano"</td>
+                <td class="muted">10.0.0.55</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-12 13:08:47</td>
+                <td>Admin Principal</td>
+                <td><span class="chip danger">CORRECCION</span></td>
+                <td class="muted">resultados</td>
+                <td>Resultado corregido por error de carga — Ronda 4</td>
+                <td class="muted">192.168.1.10</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-11 20:44:33</td>
+                <td>Admin Principal</td>
+                <td><span class="chip success">CREAR_USUARIO</span></td>
+                <td class="muted">usuarios</td>
+                <td>Organizador "Cabrera, Laura" creado</td>
+                <td class="muted">192.168.1.10</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-11 18:30:12</td>
+                <td>Ramirez, Sofía</td>
+                <td><span class="chip">RESULTADO_CARGADO</span></td>
+                <td class="muted">enfrentamientos</td>
+                <td>Ronda 4 · Rodríguez vs Fernández — 0:1</td>
+                <td class="muted">10.0.0.42</td>
+              </tr>
+              <tr>
+                <td style="white-space:nowrap">2025-06-11 11:15:00</td>
+                <td>Sistema</td>
+                <td><span class="chip">GENERAR_RONDA</span></td>
+                <td class="muted">rondas</td>
+                <td>Ronda 5 generada automáticamente para "Copa Ajedrez"</td>
+                <td class="muted">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div class="actions" style="margin-top:1rem;justify-content:center">
+        <a class="btn small" href="#">1</a>
+        <a class="btn primary" href="#">2</a>
+        <a class="btn small" href="#">3</a>
+        <a class="btn small" href="#">4</a>
+        <a class="btn small" href="#">5</a>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="mockup-nav">
+  <a href="index.html">← Índice</a>
+  <a href="05-admin-dashboard.html">Dashboard</a>
+  <a href="09-admin-usuarios.html">Organizadores</a>
+  <a href="10-admin-auditoria.html" class="current">Auditoría</a>
+  <a href="11-organizador-dashboard.html">Organizador →</a>
+</nav>
+
+<!-- Capa JavaScript modular -->
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/tables.js"></script>
+</body>
+</html>

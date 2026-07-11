@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Participantes · Admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" data-sidebar>
+      <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+      </a>
+      <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+      <div class="side-section-title">Admin</div>
+      <a class="side-link" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+      <div class="side-section-title">Gestión</div>
+      <a class="side-link active" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Registros</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+      <a class="side-link" href="#"><span>Equipos</span><span>›</span></a>
+      <a class="side-link" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+      <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+      <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning"
+          style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+      <div class="side-section-title">Sistema</div>
+      <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+      <a class="side-link" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+      <div class="side-section-title">Otros roles</div>
+      <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+      <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+    </aside>
+
+    <main class="app-main">
+      <div class="topbar">
+        <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+          <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+          <span style="font-weight:700">Participantes</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="muted" style="font-size:.88rem">Admin Principal</span>
+          <div
+            style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">
+            A</div>
+        </div>
+      </div>
+
+      <section class="page">
+        <!-- Registros pendientes -->
+        <div class="panel"
+          style="margin-bottom:1rem;border-color:rgba(255,204,102,.3);background:rgba(255,204,102,.05)">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
+            <div>
+              <h3 style="margin:0;color:var(--warning)">⚠ Registros pendientes de aprobación</h3>
+              <p class="muted" style="margin:.3rem 0 0;font-size:.88rem">3 participantes esperan habilitación.</p>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <div data-state-item
+                style="padding:.6rem .9rem;border:1px solid rgba(255,204,102,.3);border-radius:12px;background:rgba(0,0,0,.15)">
+                <strong>Sánchez, Pedro</strong> <span class="muted" style="font-size:.82rem">pedro@mail.com</span>
+                <div style="margin-top:.4rem;display:flex;gap:.4rem">
+                  <button class="btn small success" data-state-action="aprobar"
+                    data-flash="Registro de Sánchez, Pedro aprobado.">Aprobar</button>
+                  <button class="btn small danger" data-state-action="rechazar"
+                    data-flash="Registro de Sánchez, Pedro rechazado.">Rechazar</button>
+                </div>
+              </div>
+              <div data-state-item
+                style="padding:.6rem .9rem;border:1px solid rgba(255,204,102,.3);border-radius:12px;background:rgba(0,0,0,.15)">
+                <strong>Torres, Ana</strong> <span class="muted" style="font-size:.82rem">ana@mail.com</span>
+                <div style="margin-top:.4rem;display:flex;gap:.4rem">
+                  <button class="btn small success" data-state-action="aprobar"
+                    data-flash="Registro de Torres, Ana aprobado.">Aprobar</button>
+                  <button class="btn small danger" data-state-action="rechazar"
+                    data-flash="Registro de Torres, Ana rechazado.">Rechazar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="page-header">
+          <div class="page-title">
+            <div class="eyebrow">Gestión</div>
+            <h1>Participantes</h1>
+            <p class="muted">Personas individuales que compiten en torneos. Se registran por cuenta propia.</p>
+          </div>
+          <a class="btn" href="#">Registros pendientes →</a>
+        </section>
+
+        <!-- Búsqueda en vivo gestionada por tables.js -->
+        <div class="field" style="max-width:320px;margin-bottom:1rem">
+          <input type="search" data-table-search="#tablaParticipantes" placeholder="Buscar participante…">
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tablaParticipantes">
+              <thead>
+                <tr>
+                  <th data-sort>Nombre</th>
+                  <th data-sort>Nick / Doc</th>
+                  <th data-sort>Contacto</th>
+                  <th data-sort>Equipos</th>
+                  <th data-sort>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>García, Luis</strong></td>
+                  <td>LuisG_Chess</td>
+                  <td>luis@mail.com</td>
+                  <td><span class="muted">—</span></td>
+                  <td><span class="chip success">Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem"
+                      data-confirm="¿Desactivar este participante? No podrá inscribirse a nuevos torneos."
+                      data-confirm-type="danger" data-confirm-ok="Desactivar"
+                      data-flash="Participante desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Martínez, Ana</strong></td>
+                  <td>AnaM92</td>
+                  <td>ana.m@mail.com</td>
+                  <td><span class="muted">—</span></td>
+                  <td><span class="chip success">Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem"
+                      data-confirm="¿Desactivar este participante? No podrá inscribirse a nuevos torneos."
+                      data-confirm-type="danger" data-confirm-ok="Desactivar"
+                      data-flash="Participante desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Rodríguez, Carlos</strong></td>
+                  <td>CaRo92</td>
+                  <td>carlos@mail.com</td>
+                  <td>Los Pumas</td>
+                  <td><span class="chip success">Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem"
+                      data-confirm="¿Desactivar este participante? No podrá inscribirse a nuevos torneos."
+                      data-confirm-type="danger" data-confirm-ok="Desactivar"
+                      data-flash="Participante desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>López, María</strong></td>
+                  <td>MaLo_pro</td>
+                  <td>+54 9 11 9876-5432</td>
+                  <td>Los Pumas, Eagles FC</td>
+                  <td><span class="chip success">Activo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small danger" style="margin-left:.35rem"
+                      data-confirm="¿Desactivar este participante? No podrá inscribirse a nuevos torneos."
+                      data-confirm-type="danger" data-confirm-ok="Desactivar"
+                      data-flash="Participante desactivado.">Desactivar</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Herrera, José</strong></td>
+                  <td>JoseH_old</td>
+                  <td>jose@mail.com</td>
+                  <td><span class="muted">—</span></td>
+                  <td><span class="chip danger">Inactivo</span></td>
+                  <td>
+                    <a class="btn small" href="#">Editar</a>
+                    <button class="btn small primary" style="margin-left:.35rem"
+                      data-confirm="¿Reactivar este participante?" data-confirm-ok="Activar"
+                      data-flash="Participante reactivado.">Activar</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mockup-nav">
+    <a href="index.html">← Índice</a>
+    <a href="05-admin-dashboard.html">Dashboard</a>
+    <a href="06-admin-torneos.html">Torneos</a>
+    <a href="08-admin-participantes.html" class="current">Participantes</a>
+    <a href="09-admin-usuarios.html">Usuarios</a>
+  </nav>
+
+  <!-- Capa JavaScript modular -->
+  <script src="js/app.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/confirm.js"></script>
+  <script src="js/tables.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+
+</html>

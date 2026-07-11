@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Nuevo torneo · Admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" data-sidebar>
+    <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+    </a>
+    <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+    <div class="side-section-title">Admin</div>
+    <a class="side-link" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+    <div class="side-section-title">Gestión</div>
+    <a class="side-link" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Registros</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+    <a class="side-link" href="15-admin-equipos.html"><span>Equipos</span><span>›</span></a>
+    <a class="side-link active" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+    <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+    <div class="side-section-title">Sistema</div>
+    <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+    <a class="side-link" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+    <div class="side-section-title">Otros roles</div>
+    <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+    <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+        <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <span style="font-weight:700">Nuevo torneo</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="muted" style="font-size:.88rem">Admin Principal</span>
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">A</div>
+      </div>
+    </div>
+
+    <section class="page">
+      <section class="page-header">
+        <div class="page-title">
+          <div class="eyebrow">Gestión</div>
+          <h1>Nuevo torneo</h1>
+          <p class="muted">Los campos cambian según el formato elegido.</p>
+        </div>
+        <a class="btn" href="06-admin-torneos.html">← Torneos</a>
+      </section>
+
+      <div class="form-card" style="max-width:760px">
+        <!-- forms.js: validación + campos condicionales por formato -->
+        <form data-validate data-mock data-flash="Torneo creado. Ya podés inscribir participantes.">
+          <div class="form-grid">
+            <div class="field" style="grid-column:1/-1">
+              <label>Nombre del torneo *</label>
+              <input type="text" placeholder="Copa Ajedrez Primavera 2025" required>
+            </div>
+
+            <div class="field">
+              <label>Formato *</label>
+              <!-- data-format-select controla la visibilidad de los campos condicionales -->
+              <select data-format-select required>
+                <option value="liga">Liga (todos contra todos)</option>
+                <option value="eliminacion">Eliminación Directa</option>
+                <option value="suizo">Sistema Suizo</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Modalidad *</label>
+              <select required>
+                <option value="individual">Individual</option>
+                <option value="equipos">Equipos</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Fecha de inicio</label>
+              <input type="date">
+            </div>
+            <div class="field">
+              <label>Cupo máximo</label>
+              <input type="number" min="2" placeholder="32">
+            </div>
+          </div>
+
+          <!-- ─── Campos condicionales según formato (forms.js) ─── -->
+
+          <!-- LIGA: sistema de puntos -->
+          <div class="panel" data-format-field data-format-show="liga" style="margin-top:1rem;background:rgba(52,152,219,.06)">
+            <h3 style="font-size:1rem">Sistema de puntos (Liga)</h3>
+            <div class="form-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="field"><label>Puntos por victoria</label><input type="number" value="3" min="0"></div>
+              <div class="field"><label>Puntos por empate</label><input type="number" value="1" min="0"></div>
+              <div class="field"><label>Puntos por derrota</label><input type="number" value="0" min="0"></div>
+            </div>
+          </div>
+
+          <!-- SUIZO: cantidad de rondas -->
+          <div class="panel" data-format-field data-format-show="suizo" style="margin-top:1rem;background:rgba(37,194,129,.06)" hidden>
+            <h3 style="font-size:1rem">Configuración Suizo</h3>
+            <div class="form-grid">
+              <div class="field"><label>Cantidad de rondas</label><input type="number" value="7" min="1"></div>
+              <div class="field">
+                <label>Criterio de desempate</label>
+                <select><option>Buchholz</option><option>Sonneborn-Berger</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ELIMINACIÓN: nota informativa -->
+          <div class="panel" data-format-field data-format-show="eliminacion" style="margin-top:1rem;background:rgba(255,204,102,.06)" hidden>
+            <h3 style="font-size:1rem">Eliminación Directa</h3>
+            <p class="muted" style="margin:0">El bracket se genera automáticamente. Si la cantidad de inscriptos no es potencia de 2, el sistema asigna <strong>byes</strong> a los mejores sembrados.</p>
+          </div>
+
+          <div class="form-actions">
+            <a class="btn" href="06-admin-torneos.html">Cancelar</a>
+            <button type="submit" class="btn primary">Crear torneo</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="mockup-nav">
+  <a href="index.html">← Índice</a>
+  <a href="06-admin-torneos.html">Torneos</a>
+  <a href="15-admin-equipos.html">Equipos</a>
+  <a href="16-admin-torneo-form.html" class="current">Nuevo torneo</a>
+  <a href="17-torneo-detalle.html">Detalle público →</a>
+</nav>
+
+<!-- Capa JavaScript modular -->
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/forms.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Torneos · Admin · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" data-sidebar>
+    <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+    </a>
+    <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+    <div class="side-section-title">Admin</div>
+    <a class="side-link" href="05-admin-dashboard.html"><span>Panel admin</span><span>›</span></a>
+    <div class="side-section-title">Gestión</div>
+    <a class="side-link" href="08-admin-participantes.html"><span>Participantes</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Registros</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">3</span></a>
+    <a class="side-link" href="#"><span>Equipos</span><span>›</span></a>
+    <a class="side-link active" href="06-admin-torneos.html"><span>Torneos</span><span>›</span></a>
+    <a class="side-link" href="09-admin-usuarios.html"><span>Organizadores</span><span>›</span></a>
+    <a class="side-link" href="#"><span>Correcciones</span><span class="chip warning" style="padding:.15rem .5rem;font-size:.72rem">1</span></a>
+    <div class="side-section-title">Sistema</div>
+    <a class="side-link" href="#"><span>Módulos</span><span>›</span></a>
+    <a class="side-link" href="10-admin-auditoria.html"><span>Auditoría</span><span>›</span></a>
+    <div class="side-section-title">Otros roles</div>
+    <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+    <a class="side-link" href="13-participante-dashboard.html"><span>Panel participante</span><span>›</span></a>
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+        <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <span style="font-weight:700">Torneos</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="muted" style="font-size:.88rem">Admin Principal</span>
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:grid;place-items:center;font-weight:800;font-size:.85rem">A</div>
+      </div>
+    </div>
+
+    <section class="page">
+      <section class="page-header">
+        <div class="page-title">
+          <div class="eyebrow">Gestión</div>
+          <h1>Torneos</h1>
+        </div>
+        <a class="btn primary" href="16-admin-torneo-form.html">+ Nuevo torneo</a>
+      </section>
+
+      <!-- Búsqueda en vivo gestionada por tables.js -->
+      <div class="field" style="max-width:320px;margin-bottom:1rem">
+        <input type="search" data-table-search="#tablaTorneos" placeholder="Buscar torneo…">
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="tablaTorneos">
+            <thead>
+              <tr><th data-sort>Nombre</th><th data-sort>Formato</th><th data-sort>Modalidad</th><th data-sort="number">Inscritos</th><th data-sort>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Copa Ajedrez Primavera 2025</strong></td>
+                <td><span class="chip">Sistema Suizo</span></td>
+                <td>Individual</td>
+                <td>24</td>
+                <td><span class="chip success">En curso</span></td>
+                <td>
+                  <a class="btn small" href="07-admin-gestion-torneo.html">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Torneo Fútbol 5 Verano</strong></td>
+                <td><span class="chip warning">Eliminación Directa</span></td>
+                <td>Equipos</td>
+                <td>12</td>
+                <td><span class="chip warning">Inscripción</span></td>
+                <td>
+                  <a class="btn small" href="#">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Liga Ping Pong Mensual</strong></td>
+                <td><span class="chip">Liga</span></td>
+                <td>Individual</td>
+                <td>16</td>
+                <td><span class="chip success">En curso</span></td>
+                <td>
+                  <a class="btn small" href="12-organizador-gestion.html">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Torneo de Tenis Otoño</strong></td>
+                <td><span class="chip warning">Eliminación Directa</span></td>
+                <td>Individual</td>
+                <td>8</td>
+                <td><span class="chip" style="background:rgba(168,184,204,.1);border-color:rgba(168,184,204,.3);color:var(--muted)">Finalizado</span></td>
+                <td>
+                  <a class="btn small" href="#">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Campeonato de Básquet</strong></td>
+                <td><span class="chip">Liga</span></td>
+                <td>Equipos</td>
+                <td>6</td>
+                <td><span class="chip warning">Inscripción</span></td>
+                <td>
+                  <a class="btn small" href="#">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Suizo Rápido de Damas</strong></td>
+                <td><span class="chip">Sistema Suizo</span></td>
+                <td>Individual</td>
+                <td>32</td>
+                <td><span class="chip" style="background:rgba(168,184,204,.1);border-color:rgba(168,184,204,.3);color:var(--muted)">Finalizado</span></td>
+                <td>
+                  <a class="btn small" href="#">Gestionar</a>
+                  <a class="btn small" href="#" style="margin-left:.35rem">Editar</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="mockup-nav">
+  <a href="index.html">← Índice</a>
+  <a href="05-admin-dashboard.html">Dashboard</a>
+  <a href="06-admin-torneos.html" class="current">Torneos</a>
+  <a href="07-admin-gestion-torneo.html">Gestión torneo</a>
+  <a href="08-admin-participantes.html">Participantes</a>
+</nav>
+
+<!-- Capa JavaScript modular -->
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/confirm.js"></script>
+<script src="js/tables.js"></script>
+</body>
+</html>

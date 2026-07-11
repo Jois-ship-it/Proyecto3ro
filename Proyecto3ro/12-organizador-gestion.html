@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+
+  <title>Liga Ping Pong · Organizador · FlexArena</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .fixture-match {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.65rem .9rem; border:1px solid var(--line);
+      border-radius:12px; background:rgba(255,255,255,.04); margin-bottom:.4rem;
+    }
+    .fixture-match .team { flex:1; font-size:.9rem; }
+    .fixture-match .score { font-weight:800; font-size:1rem; min-width:2.4rem; text-align:center; color:var(--primary-strong); }
+    .fixture-match .team.right { text-align:right; }
+    .pos-badge { width:26px; height:26px; border-radius:50%; background:rgba(52,152,219,.15); border:1px solid rgba(52,152,219,.25); display:inline-grid; place-items:center; font-size:.78rem; font-weight:800; }
+    .pos-badge.gold { background:rgba(255,204,102,.15); border-color:rgba(255,204,102,.35); color:var(--warning); }
+    .pos-badge.silver { background:rgba(168,184,204,.12); border-color:rgba(168,184,204,.3); color:#c8d8e8; }
+    .pos-badge.bronze { background:rgba(200,150,100,.12); border-color:rgba(200,150,100,.3); color:#e0b890; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" data-sidebar>
+    <a class="brand" href="index.html">
+      <img src="img/flexarena.webp" alt="FlexArena" style="height:38px;width:auto">
+    </a>
+    <a class="side-link" href="01-home.html">Vista pública <span>↗</span></a>
+    <div class="side-section-title">Organizador</div>
+    <a class="side-link" href="11-organizador-dashboard.html"><span>Panel organizador</span><span>›</span></a>
+    <a class="side-link active" href="12-organizador-gestion.html"><span>Mis torneos</span><span>›</span></a>
+          <a class="side-link" href="04-registro.html"><span>Inscripcion Partipantes</span><span>›</span></a>
+
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:.7rem">
+        <button class="menu-toggle" data-sidebar-toggle aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <span style="font-weight:700">Liga Ping Pong Mensual</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="muted" style="font-size:.88rem">Ramirez, Sofía</span>
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#25c281,#1a8f5e);display:grid;place-items:center;font-weight:800;font-size:.85rem">S</div>
+      </div>
+    </div>
+
+    <section class="page">
+      <!-- Header -->
+      <section class="page-header">
+        <div class="page-title">
+          <div class="eyebrow">Gestión de torneo</div>
+          <h1>Liga Ping Pong Mensual</h1>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem">
+            <span class="chip success">En curso</span>
+            <span class="chip">Liga</span>
+            <span class="chip">Individual</span>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="11-organizador-dashboard.html">← Mis torneos</a>
+        </div>
+      </section>
+
+      <!-- Dos columnas -->
+      <div class="grid cols-2" style="margin-bottom:1rem">
+
+        <!-- Tabla de posiciones -->
+        <div class="panel">
+          <h3 style="margin-bottom:.75rem">Tabla de posiciones</h3>
+          <div class="table-wrap" style="box-shadow:none;border:none">
+            <div class="table-scroll">
+              <table data-liga-tabla>
+                <thead>
+                  <tr><th>#</th><th>Participante</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-pts="16">
+                    <td><span class="pos-badge gold" data-pos>1</span></td>
+                    <td><strong>Soto, Miguel</strong></td>
+                    <td>6</td><td>5</td><td>1</td><td>0</td><td>28</td><td>14</td>
+                    <td><strong style="color:var(--success)">16</strong></td>
+                  </tr>
+                  <tr data-pts="13">
+                    <td><span class="pos-badge silver" data-pos>2</span></td>
+                    <td><strong>Romero, Clara</strong></td>
+                    <td>6</td><td>4</td><td>1</td><td>1</td><td>25</td><td>18</td>
+                    <td><strong>13</strong></td>
+                  </tr>
+                  <tr data-pts="11">
+                    <td><span class="pos-badge bronze" data-pos>3</span></td>
+                    <td>Pérez, Juan</td>
+                    <td>6</td><td>3</td><td>2</td><td>1</td><td>22</td><td>19</td>
+                    <td>11</td>
+                  </tr>
+                  <tr data-pts="9">
+                    <td><span class="pos-badge" data-pos>4</span></td>
+                    <td>Acosta, Valeria</td>
+                    <td>6</td><td>3</td><td>0</td><td>3</td><td>20</td><td>22</td>
+                    <td>9</td>
+                  </tr>
+                  <tr data-pts="4">
+                    <td><span class="pos-badge" data-pos>5</span></td>
+                    <td>Nieto, Ernesto</td>
+                    <td>6</td><td>1</td><td>1</td><td>4</td><td>15</td><td>25</td>
+                    <td>4</td>
+                  </tr>
+                  <tr data-pts="1">
+                    <td><span class="pos-badge" data-pos>6</span></td>
+                    <td>Vargas, Camila</td>
+                    <td>6</td><td>0</td><td>1</td><td>5</td><td>11</td><td>30</td>
+                    <td>1</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inscriptos -->
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+            <h3 style="margin:0">Inscriptos (16)</h3>
+            <a class="btn small primary" href="#">+ Inscribir</a>
+          </div>
+          <div style="display:grid;gap:.35rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Soto, Miguel</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Romero, Clara</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Pérez, Juan</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Acosta, Valeria</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Nieto, Ernesto</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04)"><span style="font-size:.9rem">Vargas, Camila</span><span class="chip success" style="font-size:.72rem">Activo</span></div>
+            <p class="muted" style="font-size:.82rem;margin:.3rem 0 0;text-align:center">+ 10 más</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixture Fecha 3 -->
+      <div class="panel">
+        <h3 style="margin-bottom:.75rem">Fixture — Fecha 3</h3>
+        <div class="fixture-match">
+          <span class="team"><strong>Soto, Miguel</strong></span>
+          <span class="score" style="color:var(--success)">3 — 1</span>
+          <span class="team right">Romero, Clara</span>
+          <span class="chip success" style="font-size:.75rem">Finalizado</span>
+          <button class="btn small danger" data-result-fix data-jugador-a="Soto, Miguel" data-jugador-b="Romero, Clara" data-puntos-a="3" data-puntos-b="1">Corregir</button>
+        </div>
+        <div class="fixture-match">
+          <span class="team"><strong>Pérez, Juan</strong></span>
+          <span class="score" style="color:var(--success)">2 — 2</span>
+          <span class="team right">Acosta, Valeria</span>
+          <span class="chip success" style="font-size:.75rem">Finalizado</span>
+          <button class="btn small danger" data-result-fix data-jugador-a="Pérez, Juan" data-jugador-b="Acosta, Valeria" data-puntos-a="2" data-puntos-b="2">Corregir</button>
+        </div>
+        <div class="fixture-match">
+          <span class="team">Nieto, Ernesto</span>
+          <span class="score" style="color:var(--muted)">· — ·</span>
+          <span class="team right">Vargas, Camila</span>
+          <span class="chip warning" style="font-size:.75rem">Pendiente</span>
+          <button class="btn small primary" data-result-load data-jugador-a="Nieto, Ernesto" data-jugador-b="Vargas, Camila">Cargar</button>
+        </div>
+        <div class="fixture-match">
+          <span class="team">García, Luis</span>
+          <span class="score" style="color:var(--muted)">· — ·</span>
+          <span class="team right">Martínez, Ana</span>
+          <span class="chip warning" style="font-size:.75rem">Pendiente</span>
+          <button class="btn small primary" data-result-load data-jugador-a="García, Luis" data-jugador-b="Martínez, Ana">Cargar</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal cargar (poblado por resultados.js) -->
+<div class="modal-overlay" id="modalCargar" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card">
+    <h3 data-titulo>Cargar resultado</h3>
+    <div class="form-grid">
+      <div class="field"><label data-label-a>Local</label><input type="number" min="0" placeholder="0" data-input-a></div>
+      <div class="field"><label data-label-b>Visitante</label><input type="number" min="0" placeholder="0" data-input-b></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" data-modal-close>Cancelar</button>
+      <button class="btn primary" data-confirm-cargar>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal corregir (poblado por resultados.js) -->
+<div class="modal-overlay" id="modalCorregir" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card">
+    <h3>Corregir resultado</h3>
+    <div class="chip warning" style="margin-bottom:.75rem;display:block">⚠️ Esta acción recalcula la tabla. Ingresá un motivo.</div>
+    <div class="form-grid">
+      <div class="field"><label data-label-a>Local</label><input type="number" min="0" data-input-a></div>
+      <div class="field"><label data-label-b>Visitante</label><input type="number" min="0" data-input-b></div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Motivo *</label>
+        <textarea placeholder="Describí el motivo…" data-input-motivo></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" data-modal-close>Cancelar</button>
+      <button class="btn danger" data-confirm-corregir>Corregir</button>
+    </div>
+  </div>
+</div>
+
+<nav class="mockup-nav">
+  <a href="index.html">← Índice</a>
+  <a href="11-organizador-dashboard.html">Org. Dashboard</a>
+  <a href="12-organizador-gestion.html" class="current">Liga</a>
+  <a href="07-admin-gestion-torneo.html">Suizo</a>
+  <a href="13-participante-dashboard.html">Participante →</a>
+</nav>
+
+<!-- Capa JavaScript modular -->
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/confirm.js"></script>
+<script src="js/forms.js"></script>
+<script src="js/resultados.js"></script>
+<script src="js/liga.js"></script>
+</body>
+</html>
