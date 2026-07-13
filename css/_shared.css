@@ -255,7 +255,10 @@ p {
   gap: .4rem;
   flex-wrap: wrap;
 }
+.options {
+    background:  #050910 70%;
 
+}
 .nav-link {
   padding: .65rem .85rem;
   border-radius: 999px;
