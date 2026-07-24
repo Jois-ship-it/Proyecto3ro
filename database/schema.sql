@@ -1,0 +1,357 @@
+-- ============================================================
+-- FlexArena — schema.sql
+-- MySQL 8.0 · utf8mb4_unicode_ci
+-- ============================================================
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+SET sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
+
+-- ------------------------------------------------------------
+-- roles
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS roles (
+    id          TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(50)  NOT NULL UNIQUE,
+    descripcion VARCHAR(255) DEFAULT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- usuarios
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    rol_id        TINYINT UNSIGNED NOT NULL,
+    nombre        VARCHAR(100) NOT NULL,
+    email         VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    estado        ENUM('pendiente','activo','inactivo','suspendido','rechazado') NOT NULL DEFAULT 'activo',
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (rol_id) REFERENCES roles(id) ON UPDATE CASCADE,
+    INDEX idx_email (email),
+    INDEX idx_rol   (rol_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- participantes
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS participantes (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id  INT UNSIGNED DEFAULT NULL,
+    nombre      VARCHAR(100) NOT NULL,
+    documento   VARCHAR(50)  DEFAULT NULL,
+    nick        VARCHAR(80)  DEFAULT NULL,
+    foto        VARCHAR(160) DEFAULT NULL,
+    email       VARCHAR(150) DEFAULT NULL,
+    telefono    VARCHAR(30)  DEFAULT NULL,
+    estado      ENUM('pendiente','activo','inactivo','suspendido','rechazado') NOT NULL DEFAULT 'activo',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_nombre (nombre),
+    INDEX idx_usuario (usuario_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- equipos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS equipos (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(100) NOT NULL,
+    logo        VARCHAR(160) DEFAULT NULL,
+    descripcion TEXT         DEFAULT NULL,
+    categoria   VARCHAR(80)  DEFAULT NULL,
+    disciplina  VARCHAR(80)  DEFAULT NULL,
+    estado      ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- equipo_participantes
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS equipo_participantes (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    equipo_id       INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED NOT NULL,
+    rol_en_equipo   VARCHAR(60) NOT NULL DEFAULT 'jugador',
+    fecha_ingreso   DATE DEFAULT NULL,
+    UNIQUE KEY uq_ep (equipo_id, participante_id),
+    FOREIGN KEY (equipo_id)       REFERENCES equipos(id)       ON DELETE CASCADE,
+    FOREIGN KEY (participante_id) REFERENCES participantes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- tipos_torneo
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tipos_torneo (
+    id          TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(60) NOT NULL,
+    slug        VARCHAR(40) NOT NULL UNIQUE,
+    descripcion TEXT DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- modulos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS modulos (
+    id          TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(80) NOT NULL,
+    slug        VARCHAR(40) NOT NULL UNIQUE,
+    estado      ENUM('activo','inactivo','revision') NOT NULL DEFAULT 'activo',
+    descripcion VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- torneos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS torneos (
+    id                       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre                   VARCHAR(150) NOT NULL,
+    descripcion              TEXT DEFAULT NULL,
+    tipo_torneo_id           TINYINT UNSIGNED NOT NULL,
+    modalidad                ENUM('individual','equipos') NOT NULL DEFAULT 'individual',
+    min_integrantes_equipo   INT UNSIGNED DEFAULT NULL,
+    estado                   ENUM('borrador','inscripcion','en_curso','finalizado','cancelado') NOT NULL DEFAULT 'borrador',
+    fecha_inicio             DATE DEFAULT NULL,
+    fecha_fin                DATE DEFAULT NULL,
+    publico                  TINYINT(1) NOT NULL DEFAULT 1,
+    permite_empates          TINYINT(1) NOT NULL DEFAULT 0,
+    puntos_victoria          TINYINT NOT NULL DEFAULT 3,
+    puntos_empate            TINYINT NOT NULL DEFAULT 1,
+    puntos_derrota           TINYINT NOT NULL DEFAULT 0,
+    usa_puntos_favor         TINYINT(1) NOT NULL DEFAULT 1,
+    requiere_desempate_final TINYINT(1) NOT NULL DEFAULT 0,
+    rondas_suizo             TINYINT DEFAULT NULL,
+    bye_suizo                ENUM('sin_puntos','victoria','personalizado') DEFAULT 'sin_puntos',
+    puntos_bye_suizo         DECIMAL(5,2) NOT NULL DEFAULT 0,
+    nombre_puntos            VARCHAR(30) NOT NULL DEFAULT 'puntos',
+    campeon_participante_id  INT UNSIGNED DEFAULT NULL,
+    campeon_equipo_id        INT UNSIGNED DEFAULT NULL,
+    creado_por               INT UNSIGNED NOT NULL,
+    created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tipo_torneo_id)          REFERENCES tipos_torneo(id) ON UPDATE CASCADE,
+    FOREIGN KEY (campeon_participante_id) REFERENCES participantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (campeon_equipo_id)       REFERENCES equipos(id)       ON DELETE SET NULL,
+    FOREIGN KEY (creado_por)              REFERENCES usuarios(id)       ON UPDATE CASCADE,
+    INDEX idx_estado (estado),
+    INDEX idx_publico (publico)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- torneo_organizadores
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS torneo_organizadores (
+    torneo_id  INT UNSIGNED NOT NULL,
+    usuario_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (torneo_id, usuario_id),
+    FOREIGN KEY (torneo_id)  REFERENCES torneos(id)  ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- inscripciones
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS inscripciones (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    torneo_id       INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED DEFAULT NULL,
+    equipo_id       INT UNSIGNED DEFAULT NULL,
+    estado          ENUM('activa','retirada','descalificada') NOT NULL DEFAULT 'activa',
+    orden_seed      INT UNSIGNED DEFAULT NULL,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_inscripcion_part  (torneo_id, participante_id),
+    UNIQUE KEY uq_inscripcion_equipo (torneo_id, equipo_id),
+    CONSTRAINT chk_inscripcion CHECK (participante_id IS NOT NULL OR equipo_id IS NOT NULL),
+    FOREIGN KEY (torneo_id)       REFERENCES torneos(id)       ON DELETE CASCADE,
+    FOREIGN KEY (participante_id) REFERENCES participantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id)       REFERENCES equipos(id)       ON DELETE CASCADE,
+    INDEX idx_torneo (torneo_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- rondas
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS rondas (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    torneo_id   INT UNSIGNED NOT NULL,
+    numero      TINYINT NOT NULL,
+    nombre      VARCHAR(80) NOT NULL,
+    estado      ENUM('pendiente','en_curso','cerrada','bloqueada') NOT NULL DEFAULT 'pendiente',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_ronda (torneo_id, numero),
+    FOREIGN KEY (torneo_id) REFERENCES torneos(id) ON DELETE CASCADE,
+    INDEX idx_torneo (torneo_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- enfrentamientos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS enfrentamientos (
+    id                       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    torneo_id                INT UNSIGNED NOT NULL,
+    ronda_id                 INT UNSIGNED NOT NULL,
+    participante_a_id        INT UNSIGNED DEFAULT NULL,
+    participante_b_id        INT UNSIGNED DEFAULT NULL,
+    equipo_a_id              INT UNSIGNED DEFAULT NULL,
+    equipo_b_id              INT UNSIGNED DEFAULT NULL,
+    ganador_participante_id  INT UNSIGNED DEFAULT NULL,
+    ganador_equipo_id        INT UNSIGNED DEFAULT NULL,
+    perdedor_participante_id INT UNSIGNED DEFAULT NULL,
+    perdedor_equipo_id       INT UNSIGNED DEFAULT NULL,
+    estado                   ENUM('pendiente','en_curso','finalizado','bye','pospuesto','cancelado','bloqueado') NOT NULL DEFAULT 'pendiente',
+    es_bye                   TINYINT(1) NOT NULL DEFAULT 0,
+    orden                    SMALLINT   NOT NULL DEFAULT 1,
+    fecha_programada         DATETIME   DEFAULT NULL,
+    fecha_inicio_real        DATETIME   DEFAULT NULL,
+    fecha_fin_real           DATETIME   DEFAULT NULL,
+    created_at               TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (torneo_id)                REFERENCES torneos(id)       ON DELETE CASCADE,
+    FOREIGN KEY (ronda_id)                 REFERENCES rondas(id)        ON DELETE CASCADE,
+    FOREIGN KEY (participante_a_id)        REFERENCES participantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (participante_b_id)        REFERENCES participantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (equipo_a_id)              REFERENCES equipos(id)       ON DELETE SET NULL,
+    FOREIGN KEY (equipo_b_id)              REFERENCES equipos(id)       ON DELETE SET NULL,
+    FOREIGN KEY (ganador_participante_id)  REFERENCES participantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (ganador_equipo_id)        REFERENCES equipos(id)       ON DELETE SET NULL,
+    FOREIGN KEY (perdedor_participante_id) REFERENCES participantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (perdedor_equipo_id)       REFERENCES equipos(id)       ON DELETE SET NULL,
+    INDEX idx_torneo (torneo_id),
+    INDEX idx_ronda  (ronda_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- resultados
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS resultados (
+    id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enfrentamiento_id       INT UNSIGNED NOT NULL UNIQUE,
+    puntos_a                DECIMAL(7,2) NOT NULL DEFAULT 0,
+    puntos_b                DECIMAL(7,2) NOT NULL DEFAULT 0,
+    ganador_participante_id INT UNSIGNED DEFAULT NULL,
+    ganador_equipo_id       INT UNSIGNED DEFAULT NULL,
+    estado                  ENUM('cargado','corregido','bloqueado','anulado') NOT NULL DEFAULT 'cargado',
+    cargado_por             INT UNSIGNED DEFAULT NULL,
+    corregido               TINYINT(1) NOT NULL DEFAULT 0,
+    motivo_correccion       TEXT DEFAULT NULL,
+    resultado_anterior_a    DECIMAL(7,2) DEFAULT NULL,
+    resultado_anterior_b    DECIMAL(7,2) DEFAULT NULL,
+    fecha_carga             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_correccion        DATETIME DEFAULT NULL,
+    usuario_correccion_id   INT UNSIGNED DEFAULT NULL,
+    FOREIGN KEY (enfrentamiento_id)       REFERENCES enfrentamientos(id) ON DELETE CASCADE,
+    FOREIGN KEY (ganador_participante_id) REFERENCES participantes(id)   ON DELETE SET NULL,
+    FOREIGN KEY (ganador_equipo_id)       REFERENCES equipos(id)         ON DELETE SET NULL,
+    FOREIGN KEY (cargado_por)             REFERENCES usuarios(id)        ON DELETE SET NULL,
+    FOREIGN KEY (usuario_correccion_id)   REFERENCES usuarios(id)        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- tabla_posiciones
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tabla_posiciones (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    torneo_id       INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED DEFAULT NULL,
+    equipo_id       INT UNSIGNED DEFAULT NULL,
+    pj              SMALLINT NOT NULL DEFAULT 0,
+    pg              SMALLINT NOT NULL DEFAULT 0,
+    pe              SMALLINT NOT NULL DEFAULT 0,
+    pp              SMALLINT NOT NULL DEFAULT 0,
+    pf              INT      NOT NULL DEFAULT 0,
+    pc              INT      NOT NULL DEFAULT 0,
+    diferencia      INT      NOT NULL DEFAULT 0,
+    puntos          INT      NOT NULL DEFAULT 0,
+    byes_recibidos  TINYINT  NOT NULL DEFAULT 0,
+    buchholz        DECIMAL(7,2) NOT NULL DEFAULT 0,
+    posicion        SMALLINT NOT NULL DEFAULT 0,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_tabla_part  (torneo_id, participante_id),
+    UNIQUE KEY uq_tabla_equipo (torneo_id, equipo_id),
+    CONSTRAINT chk_tabla CHECK (participante_id IS NOT NULL OR equipo_id IS NOT NULL),
+    FOREIGN KEY (torneo_id)       REFERENCES torneos(id)       ON DELETE CASCADE,
+    FOREIGN KEY (participante_id) REFERENCES participantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id)       REFERENCES equipos(id)       ON DELETE CASCADE,
+    INDEX idx_torneo_pos (torneo_id, posicion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- auditoria
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS auditoria (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id     INT UNSIGNED DEFAULT NULL,
+    accion         VARCHAR(80)  NOT NULL,
+    tabla_afectada VARCHAR(60)  DEFAULT NULL,
+    registro_id    INT UNSIGNED DEFAULT NULL,
+    descripcion    TEXT         DEFAULT NULL,
+    valor_anterior JSON         DEFAULT NULL,
+    valor_nuevo    JSON         DEFAULT NULL,
+    ip             VARCHAR(45)  DEFAULT NULL,
+    user_agent     VARCHAR(255) DEFAULT NULL,
+    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario  (usuario_id),
+    INDEX idx_accion   (accion),
+    INDEX idx_created  (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- permisos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS permisos (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    rol_id         TINYINT UNSIGNED NOT NULL,
+    modulo_slug    VARCHAR(40) NOT NULL,
+    puede_ver      TINYINT(1) NOT NULL DEFAULT 1,
+    puede_crear    TINYINT(1) NOT NULL DEFAULT 0,
+    puede_editar   TINYINT(1) NOT NULL DEFAULT 0,
+    puede_eliminar TINYINT(1) NOT NULL DEFAULT 0,
+    UNIQUE KEY uq_permiso (rol_id, modulo_slug),
+    FOREIGN KEY (rol_id)      REFERENCES roles(id)     ON DELETE CASCADE,
+    FOREIGN KEY (modulo_slug) REFERENCES modulos(slug) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- configuraciones_torneo
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS configuraciones_torneo (
+    id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    torneo_id INT UNSIGNED NOT NULL,
+    clave     VARCHAR(60)  NOT NULL,
+    valor     TEXT         DEFAULT NULL,
+    UNIQUE KEY uq_config (torneo_id, clave),
+    FOREIGN KEY (torneo_id) REFERENCES torneos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- solicitudes_correccion (flujo de revisión/aprobación de correcciones)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS solicitudes_correccion (
+    id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enfrentamiento_id INT UNSIGNED NOT NULL,
+    torneo_id         INT UNSIGNED NOT NULL,
+    puntos_a          DECIMAL(7,2) NOT NULL,
+    puntos_b          DECIMAL(7,2) NOT NULL,
+    motivo            TEXT NOT NULL,
+    estado            ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+    solicitado_por    INT UNSIGNED NOT NULL,
+    revisado_por      INT UNSIGNED DEFAULT NULL,
+    motivo_rechazo    TEXT DEFAULT NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resuelto_at       DATETIME DEFAULT NULL,
+    FOREIGN KEY (enfrentamiento_id) REFERENCES enfrentamientos(id) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id)         REFERENCES torneos(id)         ON DELETE CASCADE,
+    FOREIGN KEY (solicitado_por)    REFERENCES usuarios(id)        ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por)      REFERENCES usuarios(id)        ON DELETE SET NULL,
+    INDEX idx_estado (estado),
+    INDEX idx_torneo (torneo_id),
+    INDEX idx_enf (enfrentamiento_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
