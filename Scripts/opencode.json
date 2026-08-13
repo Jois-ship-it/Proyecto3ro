@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "devflow": {
+      "type": "local",
+      "command": [
+        "node",
+        "C:\\Users\\57055626/.devflow/mcp-bridge.js",
+        "C:/Users/57055626/Desktop/Proyecto3ro/Scripts"
+      ],
+      "enabled": true
+    }
+  }
+}
