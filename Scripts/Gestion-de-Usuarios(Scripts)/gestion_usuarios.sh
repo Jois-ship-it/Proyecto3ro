@@ -34,28 +34,20 @@ case $Menu1 in
 echo "Ingrese Nombre de Usuario"
 read NombreUsuario
 
-echo "Ingrese Contraseña"
-read ContrasenaUsuario
-
 if [ -z "$NombreUsuario" ]; then 
     echo "El nombre no puede quedar vacio"
     else
-        
-        if [ -z "$ContrasenaUsuario" ]; then
-            echo "La contraseña no puede quedar vacia"
-            else
-        
+    
                 if id "$NombreUsuario" &>/dev/null; then
                     echo "El Usuario ya existe"
                     else
 
                         sudo useradd -m "$NombreUsuario"
-                        echo "$NombreUsuario:ContrasenaUsuario" | sudo chpasswd
-                        echo "Usuario $NombreUsuario creado correctamente con contraseña $ContrasenaUsuario"
+                        sudo passwd "$NombreUsuario"
+                        echo "Usuario $NombreUsuario creado correctamente"
                 
                 fi
         fi
-fi
 ;;
 #=========================
 #=====Elimine Usuario=====
@@ -283,7 +275,7 @@ esac
 3)
 echo "##########################################"
 echo "1- Listar todos los usuarios del sistema"
-echo "2- Listar todos los grupos"
+echo "2- Listar todos los grupos del sistema"
 echo "##########################################"
 read Menu3
 case $Menu3 in
