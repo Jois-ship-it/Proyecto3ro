@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 120" role="img" aria-label="FlexArena">
+  <title>FlexArena</title>
+
+  <!-- Líneas de velocidad (motion) -->
+  <g stroke="#eaf4ff" stroke-width="7" stroke-linecap="round" fill="none">
+    <line x1="6"  y1="34" x2="40" y2="34"/>
+    <line x1="2"  y1="52" x2="46" y2="52"/>
+    <line x1="8"  y1="70" x2="44" y2="70"/>
+    <line x1="14" y1="88" x2="40" y2="88"/>
+  </g>
+
+  <!-- Letra F (italic, blanca) -->
+  <g transform="skewX(-10)">
+    <path fill="#eaf4ff"
+      d="M70 20
+         L122 20
+         L122 36
+         L90 36
+         L90 52
+         L116 52
+         L116 68
+         L90 68
+         L90 100
+         L70 100
+         Z"/>
+  </g>
+
+  <!-- Letra A (italic, azul delta) -->
+  <g transform="skewX(-10)">
+    <path fill="#2f90ee" fill-rule="evenodd"
+      d="M168 20
+         L214 108
+         L190 108
+         L181 88
+         L159 88
+         L150 108
+         L126 108
+         Z
+         M168 54
+         L175 72
+         L161 72
+         Z"/>
+  </g>
+</svg>

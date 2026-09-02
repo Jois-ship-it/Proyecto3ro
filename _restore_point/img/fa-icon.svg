@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="FlexArena">
+  <title>FlexArena</title>
+  <!-- "A" delta italic — azul de la paleta -->
+  <g transform="skewX(-9)">
+    <path fill="#2f90ee" fill-rule="evenodd"
+      d="M58 16
+         L96 104
+         L74 104
+         L66 84
+         L48 84
+         L40 104
+         L18 104
+         Z
+         M58 50
+         L64 66
+         L52 66
+         Z"/>
+  </g>
+</svg>
