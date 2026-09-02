@@ -28,6 +28,7 @@ class StatsService
     /**
      * @param string $tipo 'participante' | 'equipo'
      */
+<<<<<<< HEAD
     private const TIPO_MAP = [
         'participante' => [
             'colA'       => 'participante_a_id',
@@ -70,6 +71,15 @@ class StatsService
         $tabla      = self::assertIdentifier($map['tabla']);
         $campeonCol = self::assertIdentifier($map['campeonCol']);
         $nombreJoin = self::assertIdentifier($map['nombreJoin']);
+=======
+    private function stats(string $tipo, int $id): array
+    {
+        $colA  = $tipo === 'equipo' ? 'equipo_a_id'  : 'participante_a_id';
+        $colB  = $tipo === 'equipo' ? 'equipo_b_id'  : 'participante_b_id';
+        $tabla = $tipo === 'equipo' ? 'equipo_id'    : 'participante_id';
+        $campeonCol = $tipo === 'equipo' ? 'campeon_equipo_id' : 'campeon_participante_id';
+        $nombreJoin = $tipo === 'equipo' ? 'equipos' : 'participantes';
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
 
         // ── Historial de enfrentamientos finalizados ──
         $rows = $this->all(

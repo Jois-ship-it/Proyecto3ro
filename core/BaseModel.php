@@ -26,15 +26,21 @@ abstract class BaseModel
     public function findAll(string $orderBy = 'id', string $dir = 'ASC'): array
     {
         $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+<<<<<<< HEAD
         self::assertValidIdentifier($orderBy);
+=======
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
         return $this->fetchAll("SELECT * FROM {$this->table} ORDER BY {$orderBy} {$dir}");
     }
 
     public function insert(array $data): int
     {
+<<<<<<< HEAD
         foreach (array_keys($data) as $col) {
             self::assertValidIdentifier($col);
         }
+=======
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
         $cols  = implode(', ', array_keys($data));
         $binds = implode(', ', array_map(fn($c) => ":{$c}", array_keys($data)));
         $this->query("INSERT INTO {$this->table} ({$cols}) VALUES ({$binds})", $data);
@@ -44,9 +50,12 @@ abstract class BaseModel
     public function update(int $id, array $data): bool
     {
         if (empty($data)) return false;
+<<<<<<< HEAD
         foreach (array_keys($data) as $col) {
             self::assertValidIdentifier($col);
         }
+=======
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
         $sets = implode(', ', array_map(fn($c) => "{$c} = :{$c}", array_keys($data)));
         $data[$this->pk] = $id;
         $stmt = $this->query(
@@ -77,6 +86,7 @@ abstract class BaseModel
 
     // ─── Helpers internos ─────────────────────────────────────
 
+<<<<<<< HEAD
     private static function assertValidIdentifier(string $name): string
     {
         if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $name)) {
@@ -85,6 +95,8 @@ abstract class BaseModel
         return $name;
     }
 
+=======
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
     protected function query(string $sql, array $params = []): PDOStatement
     {
         $stmt = $this->db->prepare($sql);

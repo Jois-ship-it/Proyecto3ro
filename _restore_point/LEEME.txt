@@ -1,3 +1,7 @@
 ﻿Punto de restauracion creado antes de: bracket Challonge + logo flexarena-logo.svg.
 Contiene el estado de los archivos con los logos FA y el bracket flex anterior.
+<<<<<<< HEAD
 Para revertir: copiar estos archivos de vuelta a sus rutas originales.
+=======
+Para revertir: copiar estos archivos de vuelta a sus rutas originales.
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77

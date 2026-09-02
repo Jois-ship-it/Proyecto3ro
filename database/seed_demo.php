@@ -114,6 +114,7 @@ $randScore = function (bool $noDraw): array {
 /** Carga resultados de todos los partidos con ambos lados definidos (liga + eliminación). */
 $cargarPendientes = function (int $torneoId, bool $noDraw) use ($db, $resService, $randScore): void {
     do {
+<<<<<<< HEAD
         $stmt = $db->prepare(
             "SELECT id, participante_a_id, participante_b_id, equipo_a_id, equipo_b_id
              FROM enfrentamientos
@@ -121,6 +122,13 @@ $cargarPendientes = function (int $torneoId, bool $noDraw) use ($db, $resService
         );
         $stmt->execute([':torneo_id' => $torneoId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+=======
+        $rows = $db->query(
+            "SELECT id, participante_a_id, participante_b_id, equipo_a_id, equipo_b_id
+             FROM enfrentamientos
+             WHERE torneo_id = $torneoId AND estado IN ('pendiente','en_curso') AND es_bye = 0"
+        )->fetchAll(PDO::FETCH_ASSOC);
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
         $cargados = 0;
         foreach ($rows as $r) {
             $aSet = $r['participante_a_id'] || $r['equipo_a_id'];
@@ -136,12 +144,19 @@ $cargarPendientes = function (int $torneoId, bool $noDraw) use ($db, $resService
 /** Juega un suizo: carga la ronda actual y genera la siguiente, hasta completar. */
 $jugarSuizo = function (int $torneoId, int $rondas, int $hasta, bool $noDraw) use ($db, $resService, $suizoService, $randScore): void {
     for ($round = 1; $round <= $hasta; $round++) {
+<<<<<<< HEAD
         $stmt = $db->prepare(
             "SELECT e.id FROM enfrentamientos e JOIN rondas r ON r.id = e.ronda_id
              WHERE e.torneo_id = :torneo_id AND e.estado IN ('pendiente','en_curso') AND e.es_bye = 0 AND r.numero = :numero"
         );
         $stmt->execute([':torneo_id' => $torneoId, ':numero' => $round]);
         $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+=======
+        $ids = $db->query(
+            "SELECT e.id FROM enfrentamientos e JOIN rondas r ON r.id = e.ronda_id
+             WHERE e.torneo_id = $torneoId AND e.estado IN ('pendiente','en_curso') AND e.es_bye = 0 AND r.numero = $round"
+        )->fetchAll(PDO::FETCH_COLUMN);
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
         foreach ($ids as $eid) { [$pa, $pb] = $randScore($noDraw); $resService->cargar((int)$eid, $pa, $pb, 1); }
         if ($round < $rondas) { $suizoService->generarSiguienteRonda($torneoId); }
     }
@@ -229,9 +244,13 @@ $t = $crearTorneo(['nombre'=>'Liga Verano (en juego)','tipo'=>'liga','modalidad'
 $inscribir($t,'individual', $sub($pids,1,8));   $ligaService->generarFixture($t);
 // cargar solo las rondas 1 a 3
 foreach ([1,2,3] as $rn) {
+<<<<<<< HEAD
     $stmt = $db->prepare("SELECT e.id FROM enfrentamientos e JOIN rondas r ON r.id=e.ronda_id WHERE e.torneo_id=:torneo_id AND r.numero=:numero AND e.estado IN ('pendiente','en_curso') AND e.es_bye=0");
     $stmt->execute([':torneo_id' => $t, ':numero' => $rn]);
     $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+=======
+    $ids = $db->query("SELECT e.id FROM enfrentamientos e JOIN rondas r ON r.id=e.ronda_id WHERE e.torneo_id=$t AND r.numero=$rn AND e.estado IN ('pendiente','en_curso') AND e.es_bye=0")->fetchAll(PDO::FETCH_COLUMN);
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
     foreach ($ids as $eid) { [$pa,$pb]=$randScore(false); $resService->cargar((int)$eid,$pa,$pb,1); }
 }
 line("  ◔ Liga Verano (8 jug.) EN CURSO (3 fechas jugadas)");
@@ -252,6 +271,7 @@ line("  ○ Torneo de Equipos 2027 EN INSCRIPCIÓN (4 equipos)");
 
 // ── Resumen ──
 line('');
+<<<<<<< HEAD
 $allowedTables = ['participantes','equipos','torneos','inscripciones','enfrentamientos','resultados','rondas','tabla_posiciones'];
 $c = function (string $t) use ($db, $allowedTables): int {
     if (!in_array($t, $allowedTables, true)) {
@@ -261,6 +281,9 @@ $c = function (string $t) use ($db, $allowedTables): int {
     $stmt->execute();
     return (int)$stmt->fetchColumn();
 };
+=======
+$c = fn(string $t) => (int)$db->query("SELECT COUNT(*) FROM $t")->fetchColumn();
+>>>>>>> 4ef20e9daebe2b5733c8675afc915fe244e92e77
 line('=== RESUMEN ===');
 line("Participantes: {$c('participantes')} | Equipos: {$c('equipos')} | Torneos: {$c('torneos')}");
 line("Inscripciones: {$c('inscripciones')} | Enfrentamientos: {$c('enfrentamientos')} | Resultados: {$c('resultados')}");
