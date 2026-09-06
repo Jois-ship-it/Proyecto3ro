@@ -135,7 +135,10 @@ done < "$ENV_FILE"
 # no bloquea la instalación (puede ser un ambiente de prueba a propósito),
 # pero es fácil olvidarse de esto antes de ir a producción de verdad.
 PLACEHOLDER_FOUND=0
-case "$DB_PASS$DB_ROOT_PASS" in *"-2026_Db"*|*"-Root-2026"*) PLACEHOLDER_FOUND=1 ;; esac
+case "$DB_PASS$DB_ROOT_PASS" in
+  *"-2026_Db"*|*"-Root-2026"*|*change_this_db_password*|*change_this_root_password*)
+    PLACEHOLDER_FOUND=1 ;;
+esac
 case "$APP_SECRET" in change_this_secret_key*) PLACEHOLDER_FOUND=1 ;; esac
 if [ "$PLACEHOLDER_FOUND" -eq 1 ]; then
   echo "ADVERTENCIA: .env todavía tiene valores de ejemplo (DB_PASS/DB_ROOT_PASS/APP_SECRET)." >&2
