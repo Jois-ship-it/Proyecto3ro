@@ -1,0 +1,39 @@
+Options -Indexes
+Options +FollowSymLinks
+
+RewriteEngine On
+
+# No reescribir archivos o directorios reales (assets, imágenes, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirigir todo a index.php con el path como query string
+RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Header unset X-Powered-By
+    # El puerto 80 solo redirige a HTTPS (nunca sirve contenido), así que
+    # este header nunca sale por una respuesta HTTP real.
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+</IfModule>
+
+# Bloquear archivos sensibles y endpoints de debug
+<FilesMatch "(^\.|\.(env|sql|md|log|sh|ps1|ini)$|^_hdr\.php$)">
+    Require all denied
+</FilesMatch>
+
+# Caché de assets estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css             "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/svg+xml        "access plus 30 days"
+    ExpiresByType image/png            "access plus 30 days"
+</IfModule>

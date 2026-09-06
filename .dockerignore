@@ -1,0 +1,25 @@
+# Nada de esto lo necesita el contenedor 'app' en tiempo de ejecución:
+# el bind mount de docker-compose.yml (.:/var/www/flexarena) igual lo
+# reemplaza todo al arrancar, así que copiarlo a la imagen solo suma
+# tiempo de build y peso, sin ningún beneficio funcional.
+
+# Secretos: nunca deben quedar horneados en una capa de la imagen.
+.env
+ssl/*.crt
+ssl/*.key
+
+# Solo lo usa el contenedor 'db' (bind mount aparte, no el de 'app').
+database/
+
+# Documentación, tests y herramientas de host — no se ejecutan dentro del contenedor.
+docs/
+tests/
+scripts/
+_restore_point/
+backups/
+README.md
+
+# Control de versiones / editor, por si aparecen más adelante.
+.git/
+.gitignore
+.vscode/

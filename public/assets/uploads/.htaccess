@@ -1,0 +1,17 @@
+# Seguridad de la carpeta de subidas:
+# - Impedir ejecución de cualquier script subido (PHP, etc.)
+# - Servir solo como archivos estáticos.
+
+php_flag engine off
+
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|phar|pl|py|cgi|asp|aspx|sh|exe)$">
+    Require all denied
+</FilesMatch>
+
+# Permitir solo imágenes
+<FilesMatch "\.(jpe?g|png|webp|gif)$">
+    Require all granted
+</FilesMatch>
+
+Options -Indexes -ExecCGI
+AddType text/plain .php .phtml .phar

@@ -1,0 +1,87 @@
+name: flexarena
+
+services:
+  app:
+    build: .
+    container_name: flexarena_app
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - .:/var/www/flexarena:z
+      - flexarena_apache_logs:/var/log/apache2
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-flexarena}
+      - DB_USER=${DB_USER:-flexarena_user}
+      - DB_PASS=${DB_PASS:-FlexArena-2026_Db}
+      - APP_SECRET=${APP_SECRET:-change_me}
+      - APP_URL=${APP_URL:-http://localhost:8080}
+      - HTTPS_PORT=${HTTPS_PORT:-443}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - flexarena_net
+
+  db:
+    image: mysql:8.0
+    container_name: flexarena_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-FlexArena-Root-2026}
+      MYSQL_DATABASE:      ${DB_NAME:-flexarena}
+      MYSQL_USER:          ${DB_USER:-flexarena_user}
+      MYSQL_PASSWORD:      ${DB_PASS:-FlexArena-2026_Db}
+      TZ:                  America/Argentina/Buenos_Aires
+    # Sin "ports": no se publica al host, solo accesible dentro de flexarena_net (por app y pma).
+    volumes:
+      - flexarena_mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro,z
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro,z
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=America/Argentina/Buenos_Aires
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-flexarena_user}", "-p${DB_PASS:-FlexArena-2026_Db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+    networks:
+      - flexarena_net
+
+  pma:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: flexarena_pma
+    restart: unless-stopped
+    ports:
+      - "${PMA_HTTP_PORT:-8081}:80"
+    environment:
+      # Sin PMA_USER/PMA_PASSWORD a propósito: con esas variables, phpMyAdmin
+      # usa auth_type "config" y AUTO-loguea a cualquiera que llegue al puerto,
+      # sin pedir usuario/contraseña — quien acceda a este puerto tendría
+      # control total de la base sin ningún desafío. Sin ellas, usa el modo
+      # por defecto ("cookie"): pide login real en cada acceso.
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - flexarena_net
+
+volumes:
+  flexarena_mysql_data:
+    name: flexarena_mysql_data
+  flexarena_apache_logs:
+    name: flexarena_apache_logs
+
+networks:
+  flexarena_net:
+    name: flexarena_net
+    driver: bridge
