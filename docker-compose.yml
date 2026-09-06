@@ -17,7 +17,7 @@ services:
       - DB_PORT=${DB_PORT:-3306}
       - DB_NAME=${DB_NAME:-flexarena}
       - DB_USER=${DB_USER:-flexarena_user}
-      - DB_PASS=${DB_PASS:-FlexArena-2026_Db}
+      - DB_PASS=${DB_PASS:-change_this_db_password}
       - APP_SECRET=${APP_SECRET:-change_me}
       - APP_URL=${APP_URL:-http://localhost:8080}
       - HTTPS_PORT=${HTTPS_PORT:-443}
@@ -32,10 +32,10 @@ services:
     container_name: flexarena_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-FlexArena-Root-2026}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-change_this_root_password}
       MYSQL_DATABASE:      ${DB_NAME:-flexarena}
       MYSQL_USER:          ${DB_USER:-flexarena_user}
-      MYSQL_PASSWORD:      ${DB_PASS:-FlexArena-2026_Db}
+      MYSQL_PASSWORD:      ${DB_PASS:-change_this_db_password}
       TZ:                  America/Argentina/Buenos_Aires
     # Sin "ports": no se publica al host, solo accesible dentro de flexarena_net (por app y pma).
     volumes:
@@ -47,7 +47,7 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --default-time-zone=America/Argentina/Buenos_Aires
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-flexarena_user}", "-p${DB_PASS:-FlexArena-2026_Db}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-flexarena_user}", "-p${DB_PASS:-change_this_db_password}"]
       interval: 10s
       timeout: 5s
       retries: 8

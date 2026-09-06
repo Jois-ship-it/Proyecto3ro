@@ -17,6 +17,10 @@ Plataforma web para organizar, administrar y consultar torneos deportivos, menta
 ```bash
 # 1. Copiar variables de entorno
 cp .env.example .env
+# Editá .env y poné tu propio DB_PASS y DB_ROOT_PASS. Vienen como placeholder
+# ("change_this_db_password" / "change_this_root_password") a propósito: es el
+# mismo valor genérico que docker-compose.yml usa de default si te olvidás de
+# definirlos, así que conviene no dejarlo así ni en desarrollo local.
 
 # 2. Construir las imágenes y levantar los contenedores
 docker compose build
@@ -126,10 +130,14 @@ sudo bash scripts/install_almalinux.sh
 Opciones: `--no-deps` (Docker ya instalado), `--no-firewall`, `--no-selinux`, `--no-up`
 (preparar todo sin levantar los contenedores todavía).
 
-Después de correrlo, revisá `.env` a mano: cambiá `APP_SECRET`, `DB_PASS` y `DB_ROOT_PASS`
-por valores propios, y ajustá `APP_URL` al dominio o IP real del servidor. Podés levantar
-primero con el certificado autofirmado y reemplazarlo en `ssl/` cuando llegue el de la
-institución.
+El script valida `.env` al final: si `APP_SECRET`, `DB_PASS` o `DB_ROOT_PASS` quedaron con
+el valor de ejemplo — **o directamente faltan** (sin esas líneas, MySQL y la app caen en
+silencio en el default genérico de `docker-compose.yml`: `change_this_db_password` /
+`change_this_root_password`) — imprime una `ADVERTENCIA` explícita. No bloquea la
+instalación (puede ser un ambiente de prueba a propósito), pero avisa antes de dejar esto
+expuesto en producción. Revisá `.env` a mano: cambiá esos tres valores por propios, y
+ajustá `APP_URL` al dominio o IP real del servidor. Podés levantar primero con el
+certificado autofirmado y reemplazarlo en `ssl/` cuando llegue el de la institución.
 
 ---
 

@@ -140,8 +140,16 @@ case "$DB_PASS$DB_ROOT_PASS" in
     PLACEHOLDER_FOUND=1 ;;
 esac
 case "$APP_SECRET" in change_this_secret_key*) PLACEHOLDER_FOUND=1 ;; esac
+# DB_PASS/DB_ROOT_PASS ausentes en .env (variable vacía, ni siquiera la línea)
+# caen en silencio en el default de docker-compose.yml (change_this_db_password /
+# change_this_root_password) — mismo riesgo que dejar el placeholder puesto a mano.
+if [ -z "$DB_PASS" ] || [ -z "$DB_ROOT_PASS" ]; then
+  PLACEHOLDER_FOUND=1
+fi
 if [ "$PLACEHOLDER_FOUND" -eq 1 ]; then
-  echo "ADVERTENCIA: .env todavía tiene valores de ejemplo (DB_PASS/DB_ROOT_PASS/APP_SECRET)." >&2
+  echo "ADVERTENCIA: .env todavía tiene valores de ejemplo, o directamente le faltan" >&2
+  echo "             DB_PASS/DB_ROOT_PASS/APP_SECRET (sin definirlos, MySQL/la app" >&2
+  echo "             usan el default público de docker-compose.yml)." >&2
   echo "             Cambialos antes de dejar esto expuesto en producción." >&2
 fi
 
