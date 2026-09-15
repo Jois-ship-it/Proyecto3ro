@@ -31,7 +31,7 @@
           <option value="<?= (int)$tipo['id'] ?>"
                   data-slug="<?= View::e($tipo['slug']) ?>"
                   <?= ($torneo['tipo_torneo_id'] ?? '') == $tipo['id'] ? 'selected' : '' ?>>
-            <?= View::e($tipo['nombre']) ?>
+            <?= View::e($tipo['nombre']) ?><?= empty($tipo['modulo_activo']) ? ' — módulo deshabilitado' : '' ?>
           </option>
         <?php endforeach; ?>
       </select>

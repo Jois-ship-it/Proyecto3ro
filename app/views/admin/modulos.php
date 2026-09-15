@@ -5,6 +5,13 @@
   </div>
 </section>
 
+<p class="muted">
+  Desactivar un módulo de formato (Liga, Eliminación Directa, Sistema Suizo) impide
+  <strong>crear torneos nuevos</strong> de ese formato y <strong>generar su estructura</strong>
+  (fixture, bracket o primera ronda). Los torneos que ya están en curso no se interrumpen:
+  siguen aceptando resultados y pueden terminarse normalmente.
+</p>
+
 <div class="grid cols-3">
   <?php foreach ($modulos as $m): ?>
   <article class="card" style="display:flex;flex-direction:column;gap:.75rem">

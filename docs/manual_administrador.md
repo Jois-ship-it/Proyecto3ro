@@ -28,8 +28,36 @@ Panel Admin → Sistema → Auditoría:
 ## Gestionar módulos
 
 Panel Admin → Sistema → Módulos:
-- Activar/desactivar módulos del sistema
-- Los módulos desactivados no permiten acciones relacionadas
+- Activar/desactivar módulos del sistema.
+- Cada cambio de estado queda registrado en Auditoría (acción `toggle_modulo`,
+  con el estado anterior y el nuevo).
+
+### Qué pasa al deshabilitar un módulo de formato
+
+Los módulos `liga`, `eliminacion_directa` y `suizo` controlan los tres formatos de
+competencia. La regla es **no se empiezan cosas nuevas, pero lo empezado se termina**:
+
+| Acción | Módulo activo | Módulo deshabilitado |
+|--------|---------------|----------------------|
+| Crear un torneo de ese formato | Sí | **No** — el formato ni siquiera se ofrece en el formulario |
+| Generar fixture / bracket / ronda 1 | Sí | **No** — el servicio rechaza la operación con un mensaje explicativo |
+| Generar la siguiente ronda de un suizo ya arrancado | Sí | Sí |
+| Cargar y corregir resultados de un torneo en curso | Sí | Sí |
+| Avanzar ganadores del bracket y coronar campeón | Sí | Sí |
+| Consultar públicamente torneos de ese formato | Sí | Sí |
+
+El motivo de dejar terminar los torneos en curso es que ya tienen partidos jugados y
+una tabla de posiciones: cortarlos por un cambio de configuración dejaría competencias
+reales a mitad de camino, sin forma de cerrarlas salvo reactivando el módulo.
+
+Al editar un torneo cuyo módulo fue deshabilitado después de crearlo, el formulario
+sigue mostrando su formato actual (marcado como *módulo deshabilitado*) para no
+cambiarlo en silencio al guardar. Lo que no se puede es **pasar** un torneo a un
+formato deshabilitado.
+
+Los demás módulos del panel (`participantes`, `equipos`, `auditoria`,
+`consulta_publica`, `resultados`, `torneos`) todavía no tienen efecto funcional:
+su estado se guarda pero ningún flujo lo consulta.
 
 ## Respaldo de la base de datos
 

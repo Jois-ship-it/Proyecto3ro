@@ -145,7 +145,24 @@ Reglas de negocio que **no** son garantizadas por el esquema de la base de datos
 | 70 | Toda acción sensible se registra asociada al usuario que la ejecuta (`Auth::id()`). | `AdminController:122,135`; `CorreccionController:25,49,62`; `ResultadoController:38,59,82` |
 | 71 | El creador del torneo queda registrado en `creado_por` al crearlo. | `TorneoController:74` |
 
+## 14. Módulos habilitados
+
+Reglas que dan efecto funcional al toggle de `modulos`. Se citan por método porque
+son puntos de entrada estables, no por número de línea.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 72 | Generar el fixture de una Liga exige el módulo `liga` activo. | `LigaService::generarFixture()` |
+| 73 | Generar el bracket exige el módulo `eliminacion_directa` activo. | `EliminacionDirectaService::generarBracket()` |
+| 74 | Generar la primera ronda suiza exige el módulo `suizo` activo. | `SistemaSuizoService::generarPrimeraRonda()` |
+| 75 | Crear un torneo —o cambiarle el formato— exige que el módulo de ese formato esté activo. | `TorneoService::crear()`, `TorneoService::editar()` |
+| 76 | El formulario de torneo solo ofrece formatos con módulo activo; al editar conserva el formato actual del torneo. | `TipoTorneoModel::findDisponibles()` |
+| 77 | Un torneo ya en curso NO se interrumpe al deshabilitar su módulo: rondas siguientes, carga de resultados y definición de campeón siguen funcionando. | `SistemaSuizoService::generarSiguienteRonda()` (sin guarda, deliberado) |
+| 78 | Un slug de módulo inexistente se trata como deshabilitado (deniega por defecto). | `ModuloActivoTrait::assertModuloActivo()` |
+| 79 | Todo cambio de estado de un módulo queda auditado con estado anterior y nuevo. | `ModuloService::toggle()` |
+
 ---
 
-**Total: 71 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
-Las referencias de línea corresponden al estado del código al 2026-06-17.
+**Total: 79 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+Las referencias de línea corresponden al estado del código al 2026-06-17;
+las de la sección 14 se citan por método.

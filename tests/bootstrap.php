@@ -101,3 +101,29 @@ try {
 }
 
 Database::getInstance();
+
+// ── 5) Utilidades compartidas por los tests ─────────────────────────────────
+
+/**
+ * Vacía los datos dinámicos dejando intactos los catálogos que vienen de
+ * seed.sql (roles, usuarios, tipos_torneo, modulos, permisos). Mismo criterio
+ * que database/seed_demo.php, para que los tests arranquen de un estado conocido.
+ */
+function testResetDatosDinamicos(PDO $db): void
+{
+    $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+    foreach ([
+        'solicitudes_correccion', 'tabla_posiciones', 'resultados', 'enfrentamientos', 'rondas',
+        'inscripciones', 'torneo_organizadores', 'configuraciones_torneo', 'torneos',
+        'equipo_participantes', 'equipos', 'participantes', 'auditoria',
+    ] as $tabla) {
+        $db->exec("TRUNCATE TABLE $tabla");
+    }
+    $db->exec('SET FOREIGN_KEY_CHECKS = 1');
+}
+
+/** Deja todos los módulos en 'activo' (estado de partida de seed.sql). */
+function testActivarTodosLosModulos(PDO $db): void
+{
+    $db->exec("UPDATE modulos SET estado = 'activo'");
+}

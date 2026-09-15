@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 class EliminacionDirectaService
 {
+    use ModuloActivoTrait;
+
     private TorneoModel         $torneoModel;
     private InscripcionModel    $insModel;
     private RondaModel          $rondaModel;
@@ -26,6 +28,10 @@ class EliminacionDirectaService
      */
     public function generarBracket(int $torneoId): void
     {
+        // Generar el bracket es EMPEZAR el torneo: si el módulo está deshabilitado
+        // no se arranca nada nuevo (los brackets ya generados siguen avanzando).
+        $this->assertModuloActivo('eliminacion_directa');
+
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
         if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
 

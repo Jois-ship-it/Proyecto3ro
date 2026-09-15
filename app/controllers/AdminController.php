@@ -7,7 +7,7 @@ class AdminController extends BaseController
     private ParticipanteService $participanteService;
     private EquipoService      $equipoService;
     private AuditoriaService   $auditoriaService;
-    private ModuloModel        $moduloModel;
+    private ModuloService      $moduloService;
 
     public function __construct()
     {
@@ -15,7 +15,7 @@ class AdminController extends BaseController
         $this->participanteService = new ParticipanteService();
         $this->equipoService       = new EquipoService();
         $this->auditoriaService    = new AuditoriaService();
-        $this->moduloModel         = new ModuloModel();
+        $this->moduloService       = new ModuloService();
     }
 
     // ─── Dashboard ───────────────────────────────────────────
@@ -360,7 +360,7 @@ class AdminController extends BaseController
         $this->requireAdmin();
         $this->render('admin/modulos', [
             'pageTitle' => 'Módulos',
-            'modulos'   => $this->moduloModel->findAll(),
+            'modulos'   => $this->moduloService->getTodos(),
         ], 'admin');
     }
 
@@ -368,8 +368,13 @@ class AdminController extends BaseController
     {
         $this->requireAdmin();
         $this->checkCsrf();
-        $nuevoEstado = $this->moduloModel->toggleEstado((int)$id);
-        $this->flash('success', "Módulo " . ($nuevoEstado === 'activo' ? 'activado' : 'desactivado') . '.');
+        try {
+            $r = $this->moduloService->toggle((int)$id);
+            $accion = $r['nuevo'] === 'activo' ? 'activado' : 'desactivado';
+            $this->flash('success', "Módulo «{$r['modulo']['nombre']}» {$accion}.");
+        } catch (RuntimeException $e) {
+            $this->flash('error', $e->getMessage());
+        }
         $this->redirect('/admin/modulos');
     }
 }

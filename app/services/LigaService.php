@@ -4,6 +4,7 @@ declare(strict_types=1);
 class LigaService
 {
     use DesempateTrait;
+    use ModuloActivoTrait;
 
     private TorneoModel          $torneoModel;
     private InscripcionModel     $insModel;
@@ -28,6 +29,10 @@ class LigaService
      */
     public function generarFixture(int $torneoId): void
     {
+        // Generar el fixture es EMPEZAR el torneo: si el módulo está deshabilitado
+        // no se arranca nada nuevo (los torneos ya en curso sí pueden terminarse).
+        $this->assertModuloActivo('liga');
+
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
         if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
         if ($torneo['estado'] !== 'inscripcion' && $torneo['estado'] !== 'borrador') {

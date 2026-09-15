@@ -52,7 +52,11 @@ class TorneoController extends BaseController
         $this->render('admin/torneo_form', [
             'pageTitle'        => $torneo ? 'Editar torneo' : 'Nuevo torneo',
             'torneo'           => $torneo,
-            'tipos'            => $this->tipoModel->findAll(),
+            // Solo formatos con módulo habilitado; si se está editando, se conserva
+            // el formato actual del torneo aunque su módulo esté apagado.
+            'tipos'            => $this->tipoModel->findDisponibles(
+                                      $torneo ? (int)$torneo['tipo_torneo_id'] : null
+                                  ),
             'organizadores'    => $organizadores,
             'organizadorActual'=> $torneo ? ($torneo['organizador_id'] ?? null) : null,
             'csrf'             => Csrf::generate(),

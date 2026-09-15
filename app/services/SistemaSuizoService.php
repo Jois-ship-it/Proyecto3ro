@@ -4,6 +4,7 @@ declare(strict_types=1);
 class SistemaSuizoService
 {
     use DesempateTrait;
+    use ModuloActivoTrait;
 
     /** Tope de nodos explorados por intento de emparejamiento (salvaguarda de tiempo). */
     private const MAX_NODOS_EMPAREJAMIENTO = 50000;
@@ -35,6 +36,11 @@ class SistemaSuizoService
      */
     public function generarPrimeraRonda(int $torneoId): void
     {
+        // La ronda 1 es el arranque del torneo: si el módulo está deshabilitado no
+        // se empieza. generarSiguienteRonda() a propósito NO tiene esta guarda: un
+        // suizo ya arrancado tiene que poder completar sus rondas y coronar campeón.
+        $this->assertModuloActivo('suizo');
+
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
         if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
         if ($this->rondaModel->countByTorneo($torneoId) > 0) {
