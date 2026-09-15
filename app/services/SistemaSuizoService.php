@@ -5,6 +5,9 @@ class SistemaSuizoService
 {
     use DesempateTrait;
 
+    /** Tope de nodos explorados por intento de emparejamiento (salvaguarda de tiempo). */
+    private const MAX_NODOS_EMPAREJAMIENTO = 50000;
+
     private TorneoModel          $torneoModel;
     private InscripcionModel     $insModel;
     private RondaModel           $rondaModel;
@@ -202,40 +205,99 @@ class SistemaSuizoService
 
     // ─── Helpers privados ─────────────────────────────────────
 
+    /**
+     * Empareja la ronda minimizando revanchas.
+     *
+     * $ids llega ordenado por ranking (1.º primero). El barrido codicioso anterior
+     * emparejaba de a uno sin poder deshacer decisiones: cuando los dos últimos
+     * que quedaban libres ya se habían enfrentado, el "float" forzaba la revancha
+     * aunque bastara reacomodar un par anterior para evitarla.
+     *
+     * Ahora se busca con backtracking y límite creciente de revanchas: primero se
+     * intenta un emparejamiento perfecto con CERO revanchas y solo si se demuestra
+     * que no existe se admite una, después dos, etc. Así la revancha queda como
+     * último recurso demostrado, no como efecto colateral del orden de barrido.
+     *
+     * Dentro de cada intento el recorrido respeta el ranking (el jugador libre mejor
+     * ubicado se prueba primero contra el rival disponible más cercano), de modo que
+     * cuando no hace falta deshacer nada el resultado es el mismo emparejamiento
+     * estilo suizo de antes.
+     */
     private function emparejar(array $ids, array $yaEnfrentados): array
     {
         $n = count($ids);
-        $usados = array_fill(0, $n, false);
-        $pares  = [];
+        if ($n < 2) return [];
 
-        for ($i = 0; $i < $n; $i++) {
-            if ($usados[$i]) continue;
+        $maxRevanchas = intdiv($n, 2);
+        for ($limite = 0; $limite <= $maxRevanchas; $limite++) {
+            $usados = array_fill(0, $n, false);
+            $pares  = [];
+            $nodos  = 0;
 
-            $emparejado = false;
-
-            // Intentar emparejar con el siguiente disponible que no haya enfrentado
-            for ($j = $i + 1; $j < $n; $j++) {
-                if ($usados[$j]) continue;
-                if (isset($yaEnfrentados[$ids[$i]][$ids[$j]])) continue; // ya jugaron
-
-                $pares[]    = [$ids[$i], $ids[$j]];
-                $usados[$i] = $usados[$j] = true;
-                $emparejado = true;
-                break;
-            }
-
-            // Float: si no se encontró rival ideal, forzar con el siguiente disponible
-            if (!$emparejado) {
-                for ($j = $i + 1; $j < $n; $j++) {
-                    if ($usados[$j]) continue;
-                    $pares[]    = [$ids[$i], $ids[$j]];
-                    $usados[$i] = $usados[$j] = true;
-                    break;
-                }
+            if ($this->buscarEmparejamiento($ids, $yaEnfrentados, $usados, $pares, 0, $limite, $nodos)) {
+                return $pares;
             }
         }
 
-        return $pares;
+        // Con $limite == n/2 cualquier combinación es válida y la primera rama de la
+        // búsqueda ya la encuentra, así que llegar acá significa un error de lógica.
+        throw new RuntimeException('No se pudo emparejar la ronda: ningún emparejamiento completo encontrado.');
+    }
+
+    /**
+     * Backtracking sobre el emparejamiento.
+     *
+     * Toma el primer id libre a partir de $desde (el mejor ubicado sin rival) y lo
+     * prueba contra cada id libre posterior en orden de ranking. Las revanchas solo
+     * se usan mientras queden disponibles en $revanchasDisponibles.
+     *
+     * @param array $usados Marca por índice, se modifica y restaura en cada rama.
+     * @param array $pares  Acumulador del emparejamiento en construcción.
+     * @param int   $nodos  Contador de nodos explorados (salvaguarda de tiempo).
+     */
+    private function buscarEmparejamiento(
+        array $ids,
+        array $yaEnfrentados,
+        array &$usados,
+        array &$pares,
+        int $desde,
+        int $revanchasDisponibles,
+        int &$nodos
+    ): bool {
+        $n = count($ids);
+
+        while ($desde < $n && $usados[$desde]) $desde++;
+        if ($desde >= $n) return true; // todos emparejados
+
+        // Tope defensivo: si un caso patológico agota la búsqueda, se abandona este
+        // límite de revanchas y se reintenta con uno mayor (peor pero siempre resuelve).
+        if (++$nodos > self::MAX_NODOS_EMPAREJAMIENTO) return false;
+
+        $usados[$desde] = true;
+
+        for ($j = $desde + 1; $j < $n; $j++) {
+            if ($usados[$j]) continue;
+
+            $esRevancha = isset($yaEnfrentados[$ids[$desde]][$ids[$j]]);
+            if ($esRevancha && $revanchasDisponibles === 0) continue;
+
+            $usados[$j] = true;
+            $pares[]    = [$ids[$desde], $ids[$j]];
+
+            $ok = $this->buscarEmparejamiento(
+                $ids, $yaEnfrentados, $usados, $pares,
+                $desde + 1,
+                $revanchasDisponibles - ($esRevancha ? 1 : 0),
+                $nodos
+            );
+            if ($ok) return true;
+
+            array_pop($pares);
+            $usados[$j] = false;
+        }
+
+        $usados[$desde] = false;
+        return false;
     }
 
     private function crearEnfrentamiento(int $torneoId, int $rondaId, int $a, int $b, bool $esEquipos, int $orden): void
