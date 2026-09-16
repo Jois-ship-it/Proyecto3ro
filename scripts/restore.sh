@@ -8,8 +8,16 @@
 # Usa el usuario root: restaurar un dump completo implica CREATE/DROP
 # TABLE, y el usuario de la app (DB_USER) solo tiene permisos de
 # SELECT/INSERT/UPDATE/DELETE — no alcanza para esto.
+#
+# El archivo se verifica ANTES de pedir confirmación y antes de tocar la base:
+# restaurar desde un respaldo vacío o truncado deja la base peor que como
+# estaba. Mismo criterio que usa backup.sh (ver lib_dump.sh).
 # ============================================================
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib_dump.sh"
 
 if [ -z "${1:-}" ]; then
     echo "Uso: $0 <archivo_respaldo.sql.gz>"
@@ -19,13 +27,20 @@ fi
 BACKUP_FILE="$1"
 
 if [ ! -f "$BACKUP_FILE" ]; then
-    echo "Error: El archivo '$BACKUP_FILE' no existe."
+    echo "Error: El archivo '$BACKUP_FILE' no existe." >&2
     exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# ── Verificación del respaldo ───────────────────────────────────────────────
+# Va primero: es la comprobación más barata y la que más seguido falla.
+echo "[$(date)] Verificando $BACKUP_FILE..."
+if ! validar_dump "$BACKUP_FILE"; then
+    echo "[$(date)] RESTAURACIÓN CANCELADA: el archivo no parece un respaldo completo de FlexArena." >&2
+    echo "       No se tocó la base de datos." >&2
+    exit 1
+fi
 
+# ── Configuración ───────────────────────────────────────────────────────────
 if [ -f "$PROJECT_ROOT/.env" ]; then
     set -a
     source "$PROJECT_ROOT/.env"

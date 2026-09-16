@@ -207,9 +207,16 @@ sufijo `_test`.
 | `lockout_estado_test.php` | `AuthService` / `UsuarioService` / `ParticipanteService`: bloqueo a los 5 intentos y desbloqueo. |
 | `torneo_ownership_test.php` | `TorneoController`: quién puede crear, editar y reasignar torneos. |
 | `modulos_toggle_test.php` | `ModuloService` + guardas de módulo en los tres formatos. |
+| `rondas_estado_test.php` | `RondaService`: estado de las rondas, cierre automático y cerrar/reabrir manual. |
+| `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
 
 Archivos de apoyo: `tests/bootstrap.php` (conexión y autoload), `tests/lib/TestCase.php`
-(clase base con las aserciones) y `tests/lib/Fixtures.php` (datos de prueba).
+(clase base con las aserciones), `tests/lib/Fixtures.php` (datos de prueba) y
+`scripts/lib_dump.sh` (criterio de verificación de respaldos, compartido por
+`backup.sh` y `restore.sh`).
+
+Los tests de shell (`*_test.sh`) necesitan `bash`; en Windows viene con Git Bash.
+Si no está instalado, `tests/run.php` los marca como omitidos en lugar de fallar.
 
 ### Sobre PHPUnit
 

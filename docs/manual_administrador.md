@@ -95,7 +95,24 @@ Cosas a tener en cuenta:
 # Genera: backups/flexarena_YYYYMMDD_HHMMSS.sql.gz
 ```
 
+El script **verifica el volcado antes de darlo por bueno**: tamaño mínimo,
+integridad del gzip, presencia de sentencias `CREATE TABLE`, de las tablas
+propias de FlexArena y de la línea final de `mysqldump` (`-- Dump completed`).
+Si algo de eso falla, borra el archivo parcial y termina con código distinto de
+cero, en vez de dejar en `backups/` un `.gz` vacío con nombre de respaldo bueno
+(que es lo que pasaba antes cuando el `mysqldump` no llegaba a correr).
+
+Conviene revisar el código de salida en cualquier tarea programada:
+
+```bash
+./scripts/backup.sh || echo "EL RESPALDO FALLÓ" | mail -s "FlexArena" admin@...
+```
+
 ## Restaurar respaldo
+
+`restore.sh` aplica exactamente la misma verificación **antes** de pedir
+confirmación y antes de tocar la base: restaurar desde un respaldo vacío o
+truncado deja la base peor que como estaba.
 
 ```bash
 ./scripts/restore.sh backups/flexarena_20260601_120000.sql.gz
