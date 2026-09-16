@@ -33,8 +33,18 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
 fi
 
 DB_NAME="${DB_NAME:-flexarena}"
+# Se usa root porque restaurar un dump implica CREATE/DROP TABLE (ver encabezado).
 DB_USER="root"
-DB_PASS="${DB_ROOT_PASS:-FlexArena-Root-2026}"
+
+# Sin valor por defecto, a propósito: un default con pinta de contraseña real
+# termina commiteado en el repositorio y, encima, hace que el script "ande" con
+# la credencial equivocada en vez de avisar.
+if [ -z "${DB_ROOT_PASS:-}" ]; then
+    echo "ERROR: DB_ROOT_PASS no está definida." >&2
+    echo "       Definila en $PROJECT_ROOT/.env (DB_ROOT_PASS=...) o exportala antes de correr este script." >&2
+    exit 1
+fi
+DB_PASS="$DB_ROOT_PASS"
 
 echo "[$(date)] ADVERTENCIA: Se restaurará $DB_NAME desde $BACKUP_FILE (contenedor db)"
 read -rp "¿Confirmar? (s/N): " confirm

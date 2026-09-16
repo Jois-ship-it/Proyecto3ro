@@ -18,7 +18,15 @@ fi
 
 DB_NAME="${DB_NAME:-flexarena}"
 DB_USER="${DB_USER:-flexarena_user}"
-DB_PASS="${DB_PASS:-FlexArena-2026_Db}"
+
+# Sin valor por defecto, a propósito: un default con pinta de contraseña real
+# termina commiteado en el repositorio y, encima, hace que el script "ande" con
+# la credencial equivocada en vez de avisar.
+if [ -z "${DB_PASS:-}" ]; then
+    echo "ERROR: DB_PASS no está definida." >&2
+    echo "       Definila en $PROJECT_ROOT/.env (DB_PASS=...) o exportala antes de correr este script." >&2
+    exit 1
+fi
 
 cd "$PROJECT_ROOT"
 mysql_cmd() {
