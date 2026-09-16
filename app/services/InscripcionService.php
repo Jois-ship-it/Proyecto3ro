@@ -7,6 +7,7 @@ class InscripcionService
     private TorneoModel      $torneoModel;
     private EquipoModel      $equipoModel;
     private AuditoriaService $auditoria;
+    private ConfiguracionTorneoService $config;
 
     public function __construct()
     {
@@ -14,6 +15,29 @@ class InscripcionService
         $this->torneoModel = new TorneoModel();
         $this->equipoModel = new EquipoModel();
         $this->auditoria   = new AuditoriaService();
+        $this->config      = new ConfiguracionTorneoService();
+    }
+
+    /**
+     * Corta si ya pasó el cierre de inscripción del torneo.
+     *
+     * El plazo vive en `configuraciones_torneo` (clave `cierre_inscripcion`) y es
+     * opcional: sin fecha no hay plazo. Solo se aplica en estado «inscripcion»;
+     * en «borrador» el torneo todavía se está armando y no es público, así que
+     * una fecha de cierre ahí no significa nada.
+     */
+    private function assertPlazoAbierto(array $torneo): void
+    {
+        if ($torneo['estado'] !== 'inscripcion') return;
+
+        $torneoId = (int) $torneo['id'];
+        if (!$this->config->inscripcionVencida($torneoId)) return;
+
+        $cierre = $this->config->cierreInscripcion($torneoId);
+        throw new RuntimeException(
+            "El plazo de inscripción de este torneo cerró el {$cierre}. "
+            . 'Un administrador puede correr la fecha desde los datos del evento.'
+        );
     }
 
     public function inscribirParticipante(int $torneoId, int $participanteId): void
@@ -23,6 +47,7 @@ class InscripcionService
         if (!in_array($torneo['estado'], ['borrador', 'inscripcion'])) {
             throw new RuntimeException('El torneo no está abierto para inscripciones.');
         }
+        $this->assertPlazoAbierto($torneo);
         if ($torneo['modalidad'] !== 'individual') {
             throw new RuntimeException('Este torneo es por equipos. Inscribí un equipo.');
         }
@@ -56,6 +81,7 @@ class InscripcionService
         if (!in_array($torneo['estado'], ['borrador', 'inscripcion'])) {
             throw new RuntimeException('El torneo no está abierto para inscripciones.');
         }
+        $this->assertPlazoAbierto($torneo);
         if ($torneo['modalidad'] !== 'equipos') {
             throw new RuntimeException('Este torneo es individual. Inscribí un participante.');
         }

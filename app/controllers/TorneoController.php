@@ -6,12 +6,14 @@ class TorneoController extends BaseController
     private TorneoService      $torneoService;
     private InscripcionService $inscripcionService;
     private TipoTorneoModel    $tipoModel;
+    private ConfiguracionTorneoService $configService;
 
     public function __construct()
     {
         $this->torneoService      = new TorneoService();
         $this->inscripcionService = new InscripcionService();
         $this->tipoModel          = new TipoTorneoModel();
+        $this->configService      = new ConfiguracionTorneoService();
     }
 
     public function listadoAdmin(): void
@@ -61,6 +63,12 @@ class TorneoController extends BaseController
                                   ),
             'organizadores'    => $organizadores,
             'organizadorActual'=> $torneo ? ($torneo['organizador_id'] ?? null) : null,
+            // Datos del evento (tabla configuraciones_torneo). En un torneo nuevo
+            // vienen las claves vacias, para que la vista no tenga que preguntar.
+            'configuracion'    => $torneo
+                                    ? $this->configService->getPorTorneo((int)$torneo['id'])
+                                    : $this->configService->vacio(),
+            'clavesConfig'     => ConfiguracionTorneoService::CLAVES,
             'csrf'             => Csrf::generate(),
         ], 'admin');
     }
@@ -106,12 +114,21 @@ class TorneoController extends BaseController
                 'creado_por'               => Auth::id(),
             ];
 
+            // Datos del evento: llegan del mismo formulario, en su propio array.
+            // Se validan ANTES de tocar el torneo: el formulario es uno solo, asi
+            // que un contacto mal escrito no puede dejar el torneo guardado y los
+            // datos del evento sin guardar.
+            $configEnviada = is_array($this->post('config')) ? $this->post('config') : [];
+            $this->configService->validar($configEnviada, $datos);
+
             if ($id) {
                 $this->torneoService->editar((int)$id, $datos);
+                $this->configService->guardar((int)$id, $configEnviada, $datos);
                 $this->flash('success', 'Torneo actualizado correctamente.');
             } else {
                 // El organizador se asocia dentro del servicio (clave organizador_id)
-                $this->torneoService->crear($datos);
+                $nuevoId = $this->torneoService->crear($datos);
+                $this->configService->guardar($nuevoId, $configEnviada, $datos);
                 $this->flash('success', 'Torneo creado correctamente.');
             }
             $this->redirect('/admin/torneos');

@@ -38,6 +38,40 @@ $puedeEditar = false; // Vista pública: sin edición
     <?php endif; ?>
   </div>
 
+  <?php
+    /*
+     * Datos del evento (tabla configuraciones_torneo). El bloque entero se
+     * omite si el torneo no tiene ninguno cargado: son todos opcionales.
+     */
+    $datosEvento = array_filter($configuracion, fn(string $v) => $v !== '');
+  ?>
+  <?php if ($datosEvento !== []): ?>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="eyebrow">Datos del evento</div>
+    <div class="grid cols-2" style="margin-top:.75rem">
+      <?php foreach ($datosEvento as $clave => $valor): ?>
+        <?php
+          $def   = $clavesConfig[$clave];
+          $ancho = $def['tipo'] === 'texto_largo' ? ' style="grid-column:1/-1"' : '';
+        ?>
+        <div<?= $ancho ?>>
+          <div class="muted" style="font-size:.8rem"><?= View::e($def['etiqueta']) ?></div>
+          <?php if ($clave === 'contacto'): ?>
+            <a href="mailto:<?= View::e($valor) ?>"><?= View::e($valor) ?></a>
+          <?php elseif ($clave === 'cierre_inscripcion'): ?>
+            <strong><?= View::e(date('d/m/Y', strtotime($valor))) ?></strong>
+            <?php if ($torneo['estado'] === 'inscripcion' && date('Y-m-d') > $valor): ?>
+              <span class="chip warning" style="padding:.1rem .45rem;font-size:.7rem">plazo cerrado</span>
+            <?php endif; ?>
+          <?php else: ?>
+            <strong><?= View::e($valor) ?></strong>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
+
   <!-- Calendario de partidos programados -->
   <?php
     $matchesForCalendar = [];

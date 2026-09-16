@@ -55,6 +55,33 @@ El administrador no aparece en la tabla a propósito: tiene control completo y
 pasa sin consultarla, de modo que no hay forma de dejarlo sin acceso editando la
 matriz. Ver `docs/documentacion_seguridad.md` → «Roles y permisos».
 
+## Datos del evento y cierre de inscripción
+
+Además de su configuración de competencia (formato, puntuación, fechas), cada
+torneo puede llevar cuatro datos opcionales que se cargan en el mismo formulario
+y se muestran en su ficha pública:
+
+| Dato | Para qué |
+|---|---|
+| **Sede** | Dónde se juega. |
+| **Contacto** | Correo de consulta para los participantes. |
+| **Cierre de inscripción** | Último día para anotarse. |
+| **Observaciones** | Reglamento, material a llevar, condiciones especiales. |
+
+**El cierre de inscripción no es solo informativo.** Pasada esa fecha el sistema
+rechaza nuevas inscripciones, tanto de participantes como de equipos, con un
+mensaje que dice cuándo cerró. Cuatro aclaraciones:
+
+- El último día cuenta: un torneo que cierra el 20 acepta inscripciones durante
+  todo el 20.
+- Dejarlo vacío significa «sin límite».
+- En estado *borrador* no se aplica: el torneo todavía se está armando.
+- Cerrar el plazo impide **anotarse**, no **retirarse**: alguien que ya no va a
+  competir puede salir de la lista igual.
+
+Si hace falta correr la fecha, un administrador la edita desde el formulario del
+torneo. No puede quedar después de la fecha de inicio.
+
 ## Datos de prueba
 
 `database/seed_demo.php` genera el juego de datos de demostración **usando los

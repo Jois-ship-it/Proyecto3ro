@@ -27,7 +27,10 @@ Las credenciales de prueba están en el README principal.
 2. Completar nombre, formato y modalidad
 3. Configurar puntuación (liga/suizo) o rondas (suizo)
 4. El formulario muestra/oculta campos según el formato
-5. Guardar → el torneo queda en estado **Borrador**
+5. Al final, en **Datos del evento**, se pueden cargar sede, contacto, cierre de
+   inscripción y observaciones. Son opcionales y aparecen en la ficha pública
+   del torneo
+6. Guardar → el torneo queda en estado **Borrador**
 
 ## Inscribir participantes
 
@@ -35,6 +38,12 @@ Las credenciales de prueba están en el README principal.
 2. En la sección "Inscripciones" seleccionar un participante o equipo
 3. Clic en **Inscribir**
 4. Repetir para todos los participantes/equipos
+
+> **Si el torneo tiene cierre de inscripción**, pasada esa fecha el sistema no
+> deja anotar a nadie más y avisa cuándo cerró. El último día cuenta: un torneo
+> que cierra el 20 acepta inscripciones durante todo el 20. Para reabrirlo, un
+> administrador corre la fecha desde **Datos del evento** en el formulario del
+> torneo. Retirar una inscripción ya cargada sigue siendo posible.
 
 ## Generar competencia
 

@@ -33,8 +33,8 @@ Request → Router → Controller → Service → Model → PDO → MySQL
 ```
 sgdm/
 ├── app/controllers/     — 8 controladores
-├── app/models/          — 15 modelos
-├── app/services/        — 18 servicios + 2 traits
+├── app/models/          — 16 modelos
+├── app/services/        — 19 servicios + 2 traits
 ├── app/views/           — 47 vistas PHP
 ├── config/              — app.php, database.php, routes.php
 ├── core/                — 10 clases base (Router, DB, Auth, CSRF, etc.)
@@ -174,6 +174,54 @@ solo por rol, y cuatro restricciones del documento de RNE citaban un
 `PermisoService` que no existía. Cubierto por `tests/permisos_test.php`, que
 además verifica que las guardas estén puestas en los controladores: que el
 servicio decida bien no sirve de nada si nadie lo llama.
+
+## Dónde va cada dato de un torneo
+
+Un torneo guarda sus datos en dos lugares, y la regla para elegir es simple:
+
+| | `torneos` (columnas) | `configuraciones_torneo` (clave/valor) |
+|---|---|---|
+| Qué guarda | Lo que el sistema **usa para calcular** | Lo que el sistema **muestra o consulta puntualmente** |
+| Ejemplos | `puntos_victoria`, `modalidad`, `rondas_suizo`, `fecha_inicio` | `sede`, `contacto`, `cierre_inscripcion`, `observaciones` |
+| Tipo | Tipado por el motor (`TINYINT`, `ENUM`, `DATE`) | `TEXT`, validado en la capa de servicio |
+| Obligatoriedad | Tienen default y siempre hay valor | Opcionales; ausente y vacío son lo mismo |
+| Agregar uno | Migración + `ALTER TABLE` | Una entrada en `ConfiguracionTorneoService::CLAVES` |
+
+**La puntuación no va en la tabla clave/valor.** `puntos_victoria`, `puntos_empate`
+y `puntos_derrota` ya son columnas de `torneos`, configurables por torneo desde
+el formulario y consumidas por `TablaPosicionesService`. Moverlas a
+`configuraciones_torneo` sería cambiar tres enteros tipados por tres strings sin
+default: peor diseño, no mejor.
+
+### El catálogo de claves
+
+El riesgo de una tabla clave/valor es que se vuelva un cajón de sastre donde cada
+quien escribe la clave que se le ocurre, y después nadie sabe qué hay adentro.
+Por eso las claves válidas se declaran en `ConfiguracionTorneoService::CLAVES`,
+con etiqueta, tipo, máximo y texto de ayuda. Una clave que no esté en el catálogo
+se ignora al guardar.
+
+Ese catálogo es además la única fuente del formulario y de la ficha pública:
+agregar una clave nueva es editar la constante, sin tocar ninguna vista.
+
+### `cierre_inscripcion` no es decorativo
+
+`InscripcionService` lo consulta antes de anotar a alguien y rechaza la
+inscripción si el plazo venció, en las dos modalidades. Tres detalles de la regla:
+
+- **El último día cuenta.** Un torneo que cierra el 20 acepta inscripciones
+  durante todo el 20; recién el 21 está vencido.
+- **Sin fecha no hay plazo.** La clave es opcional y su ausencia no puede cerrar
+  un torneo.
+- **En `borrador` no se aplica.** El torneo todavía se está armando y no es
+  público, así que una fecha de cierre ahí no significa nada.
+- **Cerrar el plazo impide anotarse, no bajarse.** `desinscribir()` sigue
+  funcionando: alguien que ya no va a competir tiene que poder salir de la lista.
+
+Y el cierre no puede ser posterior a `torneos.fecha_inicio`: una fecha así no
+querría decir nada, porque para entonces el torneo ya arrancó.
+
+Cubierto por `tests/configuracion_torneo_test.php`.
 
 ## Estados reversibles
 

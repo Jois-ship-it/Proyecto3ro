@@ -147,6 +147,39 @@
       <textarea name="descripcion"><?= View::e($torneo['descripcion'] ?? '') ?></textarea>
     </div>
 
+    <?php
+      /*
+       * Datos del evento: tabla `configuraciones_torneo` (clave/valor).
+       * Los campos salen del catálogo declarado en ConfiguracionTorneoService,
+       * así que agregar una clave nueva no requiere tocar esta vista.
+       */
+    ?>
+    <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:1rem;margin-top:.5rem">
+      <div class="eyebrow">Datos del evento</div>
+      <p class="muted" style="margin:.25rem 0 0;font-size:.85rem">
+        Opcionales. Se muestran en la ficha pública del torneo.
+      </p>
+    </div>
+
+    <?php foreach ($clavesConfig as $clave => $def): ?>
+      <?php $valor = $configuracion[$clave] ?? ''; ?>
+      <div class="field"<?= $def['tipo'] === 'texto_largo' ? ' style="grid-column:1/-1"' : '' ?>>
+        <label for="config_<?= View::e($clave) ?>"><?= View::e($def['etiqueta']) ?></label>
+        <?php if ($def['tipo'] === 'texto_largo'): ?>
+          <textarea id="config_<?= View::e($clave) ?>"
+                    name="config[<?= View::e($clave) ?>]"
+                    maxlength="<?= (int)$def['max'] ?>"><?= View::e($valor) ?></textarea>
+        <?php else: ?>
+          <input id="config_<?= View::e($clave) ?>"
+                 name="config[<?= View::e($clave) ?>]"
+                 type="<?= $def['tipo'] === 'fecha' ? 'date' : ($def['tipo'] === 'email' ? 'email' : 'text') ?>"
+                 maxlength="<?= (int)$def['max'] ?>"
+                 value="<?= View::e($valor) ?>">
+        <?php endif; ?>
+        <small class="muted"><?= View::e($def['ayuda']) ?></small>
+      </div>
+    <?php endforeach; ?>
+
   </div>
   <div class="form-actions">
     <a class="btn" href="/admin/torneos">Cancelar</a>

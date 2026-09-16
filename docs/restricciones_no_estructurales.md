@@ -186,8 +186,28 @@ son puntos de entrada estables, no por número de línea.
 | 86 | No se reabre una ronda cuyos partidos terminaron todos: no habría nada que cargar. | `RondaService::reabrir()` |
 | 87 | Cerrar o reabrir exige ser dueño del torneo (o admin), token CSRF válido, y queda auditado con estado anterior y nuevo. | `TorneoController::cerrarRonda()/reabrirRonda()`, `RondaService` |
 
+## 16. Datos del evento y cierre de inscripción
+
+`configuraciones_torneo` dejó de ser una tabla sin lector: la maneja
+`ConfiguracionTorneoService` y una de sus claves cambia el comportamiento del
+sistema.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 88 | Solo se guardan las claves declaradas en el catálogo; cualquier otra que llegue del formulario se ignora. | `ConfiguracionTorneoService::CLAVES`, `::guardar()` |
+| 89 | Una clave con valor vacío se borra en vez de guardarse en blanco: ausente y vacía son lo mismo. | `ConfiguracionTorneoService::guardar()` |
+| 90 | `contacto` tiene que ser un correo electrónico válido. | `ConfiguracionTorneoService::validarValor()` |
+| 91 | `cierre_inscripcion` tiene que ser una fecha real en formato AAAA-MM-DD (se descarta, por ejemplo, un 31 de febrero). | `ConfiguracionTorneoService::validarValor()` |
+| 92 | `cierre_inscripcion` no puede ser posterior a `torneos.fecha_inicio`. | `ConfiguracionTorneoService::guardar()` |
+| 93 | Pasado el cierre de inscripción no se admiten nuevas inscripciones, ni de participantes ni de equipos. | `InscripcionService::assertPlazoAbierto()` |
+| 94 | El plazo incluye su propio día: un torneo que cierra el 20 acepta inscripciones durante todo el 20. | `ConfiguracionTorneoService::inscripcionVencida()` |
+| 95 | Sin fecha de cierre no hay plazo: la clave es opcional y su ausencia no cierra un torneo. | `ConfiguracionTorneoService::inscripcionVencida()` |
+| 96 | El plazo solo rige en estado `inscripcion`; en `borrador` el torneo se está armando y no es público. | `InscripcionService::assertPlazoAbierto()` |
+| 97 | Cerrar el plazo impide anotarse, no retirarse: `desinscribir()` sigue funcionando. | `InscripcionService::desinscribir()` |
+| 98 | Cambiar los datos del evento queda auditado con el antes y el después; guardar sin cambios no deja registro. | `ConfiguracionTorneoService::guardar()` |
+
 ---
 
-**Total: 87 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 98 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
 las de las secciones 14 y 15 se citan por método.

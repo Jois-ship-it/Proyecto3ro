@@ -311,6 +311,11 @@ cualquier torneo por URL, y el organizador anterior conservaba acceso tras la tr
   para evitar confusión. (No se tocaron para no alterar datos.)
 - Tabla `configuraciones_torneo`: existe en el esquema pero no se usa. Recomendación (B):
   usarla para settings extensibles o documentarla como reservada.
+  **Resuelto (09/2026):** se implementó la primera opción. `ConfiguracionTorneoService`
+  declara el catálogo de claves (sede, contacto, cierre de inscripción, observaciones),
+  el formulario del torneo las carga y la ficha pública las muestra;
+  `cierre_inscripcion` además bloquea las inscripciones fuera de plazo. Ver
+  `docs/documentacion_tecnica.md` → «Dónde va cada dato de un torneo».
 
 ### Recomendaciones / oportunidades de mejora
 - **Concurrencia (M):** lock (`SELECT ... FOR UPDATE`) al finalizar/avanzar para evitar dobles

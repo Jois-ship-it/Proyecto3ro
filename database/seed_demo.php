@@ -448,13 +448,16 @@ foreach ($porEstado as $estado => $cuantos) {
 }
 
 // ── 8) CONFIGURACIONES POR TORNEO ──
-// configuraciones_torneo es la tabla clave/valor para los datos que no tienen
-// columna propia en `torneos` (sede, contacto, cierre de inscripción). Estaba
-// vacía: ninguna de las 13 entidades que recomienda la letra debería estarlo.
-$stmtConfig = $db->prepare(
-    "INSERT INTO configuraciones_torneo (torneo_id, clave, valor) VALUES (:t, :c, :v)
-     ON DUPLICATE KEY UPDATE valor = VALUES(valor)"
-);
+// configuraciones_torneo es la tabla clave/valor para los datos del evento que
+// no tienen columna propia en `torneos`: sede, contacto, cierre de inscripcion
+// y observaciones.
+//
+// Se escribe por ConfiguracionTorneoService y no con un INSERT suelto, como el
+// resto del seed usa los servicios del dominio: asi los datos de demostracion
+// pasan por las mismas validaciones que los que carga un administrador, y si
+// alguna combinacion no fuera valida el seed lo dice en vez de dejarla entrar
+// por la puerta de atras.
+$configService = new ConfiguracionTorneoService();
 
 $sedes = [
     'Gimnasio Municipal de Montevideo', 'Club Social y Deportivo Progreso',
@@ -464,22 +467,42 @@ $sedes = [
 ];
 $contactos = ['torneos@flexarena.uy', 'organizacion@flexarena.uy', 'info@flexarena.uy'];
 
+// Un torneo ABIERTO a inscripcion no puede arrancar hoy ni tener el plazo
+// vencido: desde que InscripcionService aplica `cierre_inscripcion`, esos datos
+// dejarian la demo con todos los torneos cerrados. Se les corren las fechas
+// hacia adelante antes de calcular el cierre.
+$stmtFechas = $db->prepare(
+    "UPDATE torneos SET fecha_inicio = :ini, fecha_fin = :fin WHERE id = :id"
+);
+foreach ($db->query("SELECT id FROM torneos WHERE estado = 'inscripcion'")->fetchAll(PDO::FETCH_COLUMN) as $i => $tid) {
+    // Escalonadas, para que no arranquen todos el mismo dia.
+    $inicio = date('Y-m-d', strtotime('+' . (21 + ($i % 30)) . ' days'));
+    $stmtFechas->execute([
+        ':ini' => $inicio,
+        ':fin' => date('Y-m-d', strtotime($inicio . ' +30 days')),
+        ':id'  => (int) $tid,
+    ]);
+}
+
 $todosLosTorneos = $db->query("SELECT id, fecha_inicio FROM torneos ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
 $configs = 0;
 foreach ($todosLosTorneos as $n => $t) {
+    $inicio = $t['fecha_inicio'] ?: date('Y-m-d');
+    // El cierre cae tres dias antes del arranque. En los torneos abiertos eso
+    // da una fecha futura (las fechas se corrieron arriba); en los que ya se
+    // jugaron, una pasada, que es lo que corresponde.
+    $cierre = date('Y-m-d', strtotime($inicio . ' -3 days'));
+
     $claves = [
         'sede'               => $sedes[$n % count($sedes)],
         'contacto'           => $contactos[$n % count($contactos)],
-        'cierre_inscripcion' => date('Y-m-d', strtotime(($t['fecha_inicio'] ?: date('Y-m-d')) . ' -3 days')),
+        'cierre_inscripcion' => $cierre,
     ];
     // Una cuarta clave solo en algunos, para que no sean todos idénticos.
     if ($n % 3 === 0) {
         $claves['observaciones'] = 'Se juega con el reglamento de la federación que corresponda al formato.';
     }
-    foreach ($claves as $clave => $valor) {
-        $stmtConfig->execute([':t' => (int)$t['id'], ':c' => $clave, ':v' => (string)$valor]);
-        $configs++;
-    }
+    $configs += $configService->guardar((int)$t['id'], $claves, $t);
 }
 line("Configuraciones de torneo: {$configs}");
 
