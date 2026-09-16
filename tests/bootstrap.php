@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Arranque común de los tests que necesitan base de datos.
+ * Arranque común de los tests de integración.
  *
  * No toca el .env del proyecto: las variables de entorno REALES del proceso
  * tienen prioridad, y el nombre de la base se deriva con sufijo "_test" para
@@ -10,10 +10,10 @@ declare(strict_types=1);
  *
  * Uso típico (Windows/PowerShell):
  *   $env:DB_HOST="127.0.0.1"; $env:DB_USER="root"; $env:DB_PASS=""
- *   php tests/<archivo>_test.php
+ *   php tests/run.php
  *
  * Uso típico (Linux/Docker):
- *   DB_HOST=127.0.0.1 DB_USER=root DB_PASS=secreto php tests/<archivo>_test.php
+ *   DB_HOST=127.0.0.1 DB_USER=root DB_PASS=secreto php tests/run.php
  *
  * Deliberadamente NO define BASE_PATH ni carga config/app.php: algunos tests
  * incluyen database/seed_demo.php, que define esas constantes por su cuenta.
@@ -61,7 +61,12 @@ if (!str_ends_with($_ENV['DB_NAME'], '_test') && getenv('ALLOW_UNSAFE_DB') !== '
 
 // ── 3) Autoload y entorno mínimo ────────────────────────────────────────────
 spl_autoload_register(function (string $clase) use ($raizProyecto) {
-    foreach (["$raizProyecto/core", "$raizProyecto/app/models", "$raizProyecto/app/services"] as $dir) {
+    foreach ([
+        "$raizProyecto/core",
+        "$raizProyecto/app/models",
+        "$raizProyecto/app/services",
+        "$raizProyecto/app/controllers",
+    ] as $dir) {
         $archivo = "$dir/$clase.php";
         if (is_file($archivo)) { require_once $archivo; return; }
     }
@@ -72,8 +77,8 @@ ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
 // ── 4) Fija el singleton de Database contra la base de pruebas ──────────────
-// Debe ocurrir ANTES de incluir seed_demo.php, que recarga el .env real en
-// $_ENV: como la conexión ya quedó abierta y cacheada, sigue apuntando acá.
+// Debe ocurrir ANTES de incluir database/seed_demo.php, que recarga el .env real
+// en $_ENV: como la conexión ya quedó abierta y cacheada, sigue apuntando acá.
 // Se prueba primero con un PDO crudo porque Database::getInstance() atrapa el
 // PDOException y termina con die() y un mensaje pensado para HTTP, no para CLI.
 try {
@@ -84,46 +89,39 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 } catch (PDOException $e) {
-    fwrite(STDERR, "No se pudo conectar a '{$_ENV['DB_NAME']}' en {$_ENV['DB_HOST']}:{$_ENV['DB_PORT']} como '{$_ENV['DB_USER']}'.
-"
-                 . $e->getMessage() . "
-
-"
-                 . "Preparar la base de pruebas:
-"
-                 . "  CREATE DATABASE {$_ENV['DB_NAME']} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-"
-                 . "  mysql {$_ENV['DB_NAME']} < database/schema.sql
-"
-                 . "  mysql {$_ENV['DB_NAME']} < database/seed.sql
-");
+    fwrite(STDERR,
+        "No se pudo conectar a '{$_ENV['DB_NAME']}' en {$_ENV['DB_HOST']}:{$_ENV['DB_PORT']} "
+        . "como '{$_ENV['DB_USER']}'.\n" . $e->getMessage() . "\n\n"
+        . "Preparar la base de pruebas:\n"
+        . "  CREATE DATABASE {$_ENV['DB_NAME']} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n"
+        . "  mysql {$_ENV['DB_NAME']} < database/schema.sql\n"
+        . "  mysql {$_ENV['DB_NAME']} < database/seed.sql\n"
+    );
     exit(2);
 }
 
 Database::getInstance();
 
-// ── 5) Utilidades compartidas por los tests ─────────────────────────────────
+// ── 5) Clases de apoyo de los tests ─────────────────────────────────────────
+require_once __DIR__ . '/lib/TestCase.php';
+require_once __DIR__ . '/lib/Fixtures.php';
 
-/**
- * Vacía los datos dinámicos dejando intactos los catálogos que vienen de
- * seed.sql (roles, usuarios, tipos_torneo, modulos, permisos). Mismo criterio
- * que database/seed_demo.php, para que los tests arranquen de un estado conocido.
- */
-function testResetDatosDinamicos(PDO $db): void
-{
-    $db->exec('SET FOREIGN_KEY_CHECKS = 0');
-    foreach ([
-        'solicitudes_correccion', 'tabla_posiciones', 'resultados', 'enfrentamientos', 'rondas',
-        'inscripciones', 'torneo_organizadores', 'configuraciones_torneo', 'torneos',
-        'equipo_participantes', 'equipos', 'participantes', 'auditoria',
-    ] as $tabla) {
-        $db->exec("TRUNCATE TABLE $tabla");
-    }
-    $db->exec('SET FOREIGN_KEY_CHECKS = 1');
+// Varios servicios leen y escriben la sesión (Auth::id(), Session::flash()) y
+// AuthService::login() llama a session_regenerate_id(). En CLI no hay cookies,
+// pero sí se puede abrir una sesión de archivos, y así no salen warnings.
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.use_cookies', '0'); // en CLI no hay a quién mandarle la cookie
+    @session_start();
 }
 
-/** Deja todos los módulos en 'activo' (estado de partida de seed.sql). */
-function testActivarTodosLosModulos(PDO $db): void
-{
-    $db->exec("UPDATE modulos SET estado = 'activo'");
+// AuthService::login() llama a Session::regenerate() → session_regenerate_id().
+// En CLI, apenas un test imprime su primera línea PHP considera que "los headers
+// ya se enviaron" y el regenerado emite un warning. Es un artefacto del entorno,
+// no del código bajo prueba: se silencia SOLO ese caso y todo lo demás sigue
+// llegando a la salida.
+set_error_handler(static function (int $nivel, string $mensaje): bool {
+    return str_contains($mensaje, 'session_regenerate_id');
+});
+if (!isset($_SESSION)) {
+    $_SESSION = [];
 }

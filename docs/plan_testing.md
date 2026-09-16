@@ -1,4 +1,9 @@
-# Plan de Testing Manual — FlexArena
+# Plan de Testing — FlexArena
+
+Este documento tiene dos partes: el **plan manual** (casos a recorrer a mano en
+el navegador) y, al final, el mapa de qué casos ya cubre la **batería automática**
+de `tests/`. Ver README → Tests para saber cómo correrla.
+
 
 ## Módulo: Autenticación
 
@@ -72,3 +77,46 @@
 | 41 | Resultado duplicado | "Este partido ya tiene resultado" |
 | 42 | Torneo finalizado → generar | Error de estado |
 | 43 | Bye en liga (N impar) | No se crea partido con null, rotación funciona |
+
+---
+
+## Cobertura automática
+
+La batería de `tests/` es de integración: instancia los servicios, modelos y
+controladores reales contra una base descartable. Correrla:
+
+```bash
+DB_HOST=127.0.0.1 DB_USER=root DB_PASS=tu_password php tests/run.php
+```
+
+### Casos del plan que ya están automatizados
+
+| # del plan | Dónde |
+|---|---|
+| 11, 15 | `tabla_posiciones_test.php` — cifras exactas, orden, recálculo |
+| 13, 22, 30, 40 | `correccion_resultados_test.php` — solicitar/aprobar/rechazar y bloqueos por formato |
+| 14 | `tiebreak_test.php` (liga) y `bracket_integridad_test.php` (eliminación) |
+| 16, 17, 18, 19, 20, 21, 23 | `bracket_integridad_test.php` |
+| 24, 25, 26, 28, 29, 31, 37, 38 | `suizo_sin_revanchas_test.php` |
+| 35, 36 (parcial) | `torneo_ownership_test.php` — quién puede crear, editar y reasignar torneos |
+
+### Cobertura automática que el plan manual no listaba
+
+| Tema | Dónde |
+|---|---|
+| Cadena de partidos de desempate hasta que haya campeón | `tiebreak_test.php` |
+| Programación de partidos dentro del rango de fechas del torneo | `match_schedule_test.php` |
+| Bloqueo de cuenta a los 5 intentos fallidos y desbloqueo | `lockout_estado_test.php` |
+| Efecto funcional del toggle de módulos | `modulos_toggle_test.php` |
+| Ausencia de revanchas evitables en Sistema Suizo | `suizo_sin_revanchas_test.php` |
+
+### Casos que siguen siendo manuales
+
+- **1, 2, 3, 6, 7, 8** — login por rol, logout y redirecciones: dependen de sesión
+  HTTP y de la respuesta del navegador.
+- **9, 10, 12, 27, 39, 41, 42, 43** — todavía sin caso automatizado.
+- **32, 33, 34** — inyección SQL, XSS y CSRF: se verifican sobre la aplicación
+  levantada, no desde CLI.
+
+Mantener esta tabla al día cuando se agreguen tests: es la que dice qué hay que
+recorrer a mano antes de una entrega.

@@ -2,162 +2,253 @@
 declare(strict_types=1);
 
 /**
- * Test de las reglas de bloqueo/desbloqueo de cuentas (sin base de datos).
- * Reproduce fielmente las reglas implementadas en:
- *   - AuthService::login() (auto-bloqueo a los 5 intentos fallidos)
- *   - UsuarioService::toggleActivo() / editar() / bloquear() / desbloquear()
- *   - ParticipanteService::toggleActivo() / editar()
- *   - AdminController::usuarioBloquear() / usuarioDesbloquear() (redirect de retorno)
- *   - View::estadoChip() (se usa la clase real, no una reproducción: no depende de DB)
+ * Test de integración del bloqueo/desbloqueo de cuentas.
  *
- * Regla de negocio: una cuenta nunca puede quedar "activa" y "bloqueada"
- * (bloqueada/suspendido) al mismo tiempo, y ninguna acción salvo
- * bloquear()/desbloquear() puede revertir un bloqueo.
+ * Reemplaza a la versión que reproducía las reglas con funciones propias: ahora
+ * se llama a AuthService, UsuarioService y ParticipanteService de verdad contra
+ * una base de prueba, y se comprueba lo que quedó en `usuarios` y `participantes`.
  *
- * Ejecutar:  php sgdm/tests/lockout_estado_test.php
+ * Regla de negocio: una cuenta nunca puede quedar "activa" y "bloqueada" a la
+ * vez, y ninguna acción salvo desbloquear() puede revertir un bloqueo.
+ *
+ * Ejecutar:
+ *   DB_HOST=127.0.0.1 DB_USER=root DB_PASS= php tests/lockout_estado_test.php
  */
 
-require_once __DIR__ . '/../core/View.php';
+require __DIR__ . '/bootstrap.php';
 
-// ── Reproducción de AuthService::login() — solo la parte de conteo/auto-bloqueo ──
-// (MAX_FAILED_ATTEMPTS = 5, idéntico a AuthService::MAX_FAILED_ATTEMPTS)
-function simularIntentosFallidos(int $cantidadIntentos, int $max = 5): array
+final class LockoutEstadoTest extends TestCase
 {
-    $intentos = 0;
-    $estado = 'activo';
-    for ($i = 0; $i < $cantidadIntentos; $i++) {
-        $intentos++;
-        if ($intentos >= $max) {
-            $estado = 'bloqueada'; // UsuarioModel::lockAccount()
+    private const EMAIL    = 'bloqueo' . Fixtures::DOMINIO_TEST;
+    private const PASSWORD = 'Flex-Test2026!';
+
+    private int $usuarioId       = 0;
+    private int $participanteId  = 0;
+
+    protected function setUp(): void
+    {
+        Fixtures::reset($this->db);
+        // El admin es quien ejecuta las acciones de gestión (toggleActivo se niega
+        // a operar sobre la cuenta del propio usuario logueado).
+        Fixtures::loguearComo(Fixtures::ADMIN);
+
+        $this->usuarioId = Fixtures::usuario('Usuario de bloqueo', self::EMAIL, self::PASSWORD, 3);
+        $this->participanteId = (new ParticipanteModel())->insert([
+            'usuario_id' => $this->usuarioId,
+            'nombre'     => 'Usuario de bloqueo',
+            'nick'       => 'bloqueo',
+            'email'      => self::EMAIL,
+            'estado'     => 'activo',
+        ]);
+    }
+
+    private function estadoUsuario(): string
+    {
+        return (string) $this->db->query(
+            "SELECT estado FROM usuarios WHERE id = {$this->usuarioId}"
+        )->fetchColumn();
+    }
+
+    private function intentosFallidos(): int
+    {
+        return (int) $this->db->query(
+            "SELECT failed_attempts FROM usuarios WHERE id = {$this->usuarioId}"
+        )->fetchColumn();
+    }
+
+    private function estadoParticipante(): string
+    {
+        return (string) $this->db->query(
+            "SELECT estado FROM participantes WHERE id = {$this->participanteId}"
+        )->fetchColumn();
+    }
+
+    /** Intenta iniciar sesión con contraseña incorrecta $n veces. */
+    private function fallarLogin(int $n): void
+    {
+        $auth = new AuthService();
+        for ($i = 0; $i < $n; $i++) {
+            try { $auth->login(self::EMAIL, 'ContraseñaIncorrecta1!'); }
+            catch (RuntimeException $e) { /* esperado */ }
         }
     }
-    return [$estado, $intentos];
-}
 
-// ── Reproducción de UsuarioService::toggleActivo() (idéntico a la lógica real) ──
-function usuarioToggleActivo(string $estadoActual): string
-{
-    if ($estadoActual === 'bloqueada') {
-        throw new RuntimeException('Esta cuenta está bloqueada. Desbloqueala primero para poder activarla.');
+    // ─── Auto-bloqueo por intentos fallidos ─────────────────────────────────
+
+    public function test_con_cuatro_intentos_fallidos_la_cuenta_sigue_activa(): void
+    {
+        $this->fallarLogin(4);
+
+        $this->assertSame(4, $this->intentosFallidos(), 'se contaron los 4 intentos');
+        $this->assertSame('activo', $this->estadoUsuario(), 'todavía no se llegó al umbral de 5');
+        $this->assertSame('activo', $this->estadoParticipante());
     }
-    return $estadoActual === 'activo' ? 'inactivo' : 'activo';
-}
 
-// ── Reproducción de ParticipanteService::toggleActivo() ──
-function participanteToggleActivo(string $estadoActual): string
-{
-    if ($estadoActual === 'suspendido') {
-        throw new RuntimeException('Esta cuenta está bloqueada. Desbloqueala primero para poder activarla.');
+    public function test_al_quinto_intento_fallido_la_cuenta_queda_bloqueada(): void
+    {
+        $this->fallarLogin(5);
+
+        $this->assertSame(5, $this->intentosFallidos());
+        $this->assertSame('bloqueada', $this->estadoUsuario(), 'MAX_FAILED_ATTEMPTS = 5');
+        $this->assertSame('suspendido', $this->estadoParticipante(),
+            'el bloqueo cascadea al perfil de participante');
     }
-    return $estadoActual === 'activo' ? 'inactivo' : 'activo';
+
+    public function test_una_cuenta_bloqueada_no_entra_ni_con_la_contrasena_correcta(): void
+    {
+        $this->fallarLogin(5);
+
+        $e = $this->assertThrows(
+            fn() => (new AuthService())->login(self::EMAIL, self::PASSWORD),
+            'bloqueada'
+        );
+        $this->assertStringContainsString('administrador', $e->getMessage(),
+            'el mensaje le dice al usuario a quién recurrir');
+    }
+
+    public function test_el_login_correcto_resetea_el_contador_de_intentos(): void
+    {
+        $this->fallarLogin(3);
+        $this->assertSame(3, $this->intentosFallidos());
+
+        (new AuthService())->login(self::EMAIL, self::PASSWORD);
+
+        $this->assertSame(0, $this->intentosFallidos(), 'un login válido borra los intentos previos');
+        $this->assertSame('activo', $this->estadoUsuario());
+
+        // La sesión quedó con el usuario logueado; se restaura al admin para el resto.
+        Fixtures::loguearComo(Fixtures::ADMIN);
+    }
+
+    // ─── Ninguna otra acción revierte el bloqueo ────────────────────────────
+
+    public function test_toggle_activo_no_puede_reactivar_una_cuenta_bloqueada(): void
+    {
+        $this->fallarLogin(5);
+
+        $this->assertThrows(
+            fn() => (new UsuarioService())->toggleActivo($this->usuarioId),
+            'Desbloqueala primero'
+        );
+        $this->assertSame('bloqueada', $this->estadoUsuario(), 'el estado no cambió');
+    }
+
+    public function test_toggle_activo_tampoco_reactiva_al_participante_suspendido(): void
+    {
+        $this->fallarLogin(5);
+
+        $this->assertThrows(
+            fn() => (new ParticipanteService())->toggleActivo($this->participanteId),
+            'Desbloqueala primero'
+        );
+        $this->assertSame('suspendido', $this->estadoParticipante());
+    }
+
+    public function test_editar_usuario_no_desbloquea_aunque_el_post_traiga_activo(): void
+    {
+        $this->fallarLogin(5);
+
+        (new UsuarioService())->editar($this->usuarioId, [
+            'nombre' => 'Usuario de bloqueo',
+            'email'  => self::EMAIL,
+            'rol_id' => 3,
+            'estado' => 'activo',   // POST manipulado
+        ]);
+
+        $this->assertSame('bloqueada', $this->estadoUsuario(),
+            'editar() ignora el estado posteado si la cuenta está bloqueada');
+    }
+
+    public function test_editar_participante_no_levanta_la_suspension(): void
+    {
+        $this->fallarLogin(5);
+
+        (new ParticipanteService())->editar($this->participanteId, [
+            'nombre' => 'Usuario de bloqueo',
+            'email'  => self::EMAIL,
+            'nick'   => 'bloqueo',
+            'estado' => 'activo',   // POST manipulado
+        ]);
+
+        $this->assertSame('suspendido', $this->estadoParticipante(),
+            'editar() ignora el estado posteado si el participante está suspendido');
+    }
+
+    // ─── Desbloqueo ─────────────────────────────────────────────────────────
+
+    public function test_desbloquear_devuelve_la_cuenta_y_el_perfil_a_activo(): void
+    {
+        $this->fallarLogin(5);
+        (new UsuarioService())->desbloquear($this->usuarioId);
+
+        $this->assertSame('activo', $this->estadoUsuario());
+        $this->assertSame('activo', $this->estadoParticipante(), 'el participante se restaura también');
+        $this->assertSame(0, $this->intentosFallidos(), 'el contador vuelve a cero');
+    }
+
+    public function test_tras_desbloquear_el_toggle_y_el_login_vuelven_a_funcionar(): void
+    {
+        $this->fallarLogin(5);
+        (new UsuarioService())->desbloquear($this->usuarioId);
+
+        $this->assertDoesNotThrow(
+            fn() => (new AuthService())->login(self::EMAIL, self::PASSWORD),
+            'con la cuenta desbloqueada se puede iniciar sesión'
+        );
+        Fixtures::loguearComo(Fixtures::ADMIN);
+
+        $this->assertSame('inactivo', (new UsuarioService())->toggleActivo($this->usuarioId),
+            'toggleActivo vuelve a operar normalmente (activo → inactivo)');
+        $this->assertSame('activo', (new UsuarioService())->toggleActivo($this->usuarioId));
+    }
+
+    public function test_bloquear_manualmente_tiene_el_mismo_efecto_que_el_automatico(): void
+    {
+        (new UsuarioService())->bloquear($this->usuarioId);
+
+        $this->assertSame('bloqueada', $this->estadoUsuario());
+        $this->assertSame('suspendido', $this->estadoParticipante());
+        $this->assertThrows(
+            fn() => (new UsuarioService())->toggleActivo($this->usuarioId),
+            'Desbloqueala primero'
+        );
+    }
+
+    public function test_nadie_puede_cambiar_el_estado_de_su_propia_cuenta(): void
+    {
+        Fixtures::loguearComo($this->usuarioId);
+
+        $this->assertThrows(
+            fn() => (new UsuarioService())->toggleActivo($this->usuarioId),
+            'tu propia cuenta'
+        );
+
+        Fixtures::loguearComo(Fixtures::ADMIN);
+    }
+
+    // ─── Presentación del estado (View::estadoChip, clase real) ─────────────
+
+    public function test_el_chip_de_estado_cubre_todos_los_valores_del_enum(): void
+    {
+        // usuarios:      pendiente, activo, inactivo, suspendido, rechazado, bloqueada
+        // participantes: pendiente, activo, inactivo, suspendido, rechazado
+        $esperado = [
+            'pendiente'  => 'chip warning',
+            'activo'     => 'chip success',
+            'inactivo'   => 'chip danger',
+            'suspendido' => 'chip danger',
+            'rechazado'  => 'chip danger',
+            'bloqueada'  => 'chip danger',
+        ];
+
+        foreach ($esperado as $valor => $clase) {
+            $this->assertSame(
+                '<span class="' . $clase . '">' . ucfirst($valor) . '</span>',
+                View::estadoChip($valor),
+                "estadoChip(\"$valor\")"
+            );
+        }
+    }
 }
 
-// ── Reproducción de UsuarioService::editar() (solo la resolución de 'estado') ──
-function usuarioEditarEstado(string $estadoActual, string $estadoPosteado): string
-{
-    return $estadoActual === 'bloqueada' ? 'bloqueada' : $estadoPosteado;
-}
-
-// ── Reproducción de ParticipanteService::editar() (solo la resolución de 'estado') ──
-function participanteEditarEstado(string $estadoActual, string $estadoPosteado): string
-{
-    return $estadoActual === 'suspendido' ? 'suspendido' : $estadoPosteado;
-}
-
-// ── Reproducción del default de retorno en AdminController::usuarioBloquear/Desbloquear ──
-function redirectDestino(?string $return, string $default): string
-{
-    return $return !== null && $return !== '' ? $return : $default;
-}
-
-$fallos = 0;
-function check(bool $cond, string $desc): void
-{
-    global $fallos;
-    $ok = $cond;
-    printf("[%s] %s\n", $ok ? 'OK' : 'FALLO', $desc);
-    if (!$ok) $fallos++;
-}
-
-// 1) Bloqueo automático a los 5 intentos fallidos de login.
-[$estadoTras4, $c4] = simularIntentosFallidos(4);
-check($estadoTras4 === 'activo', 'con 4 intentos fallidos la cuenta sigue activa (no llegó al umbral)');
-[$estadoTras5, $c5] = simularIntentosFallidos(5);
-check($estadoTras5 === 'bloqueada' && $c5 === 5, 'al 5º intento fallido (MAX_FAILED_ATTEMPTS) la cuenta pasa a bloqueada');
-
-// El chip de estado (View::estadoChip, clase real) debe mostrar "bloqueada" como danger
-// tanto para usuarios como para el 'suspendido' cascada en participantes.
-check(str_contains(View::estadoChip('bloqueada'), 'chip danger'), 'estadoChip("bloqueada") renderiza clase danger');
-check(str_contains(View::estadoChip('suspendido'), 'chip danger'), 'estadoChip("suspendido") renderiza clase danger');
-check(str_contains(View::estadoChip('bloqueada'), 'Bloqueada'), 'estadoChip("bloqueada") muestra la etiqueta "Bloqueada"');
-
-// Bloquear una cuenta activa (simulado: lockAccount fuerza 'bloqueada' directamente,
-// no pasa por toggleActivo — se prueba solo el efecto sobre las reglas siguientes).
-$estadoUsuario = 'bloqueada'; // resultado de UsuarioModel::lockAccount()
-$estadoParticipante = 'suspendido'; // cascada de lockAccount() sobre participantes
-
-// 2) Intentar "activarla" vía toggleActivo → debe fallar
-try {
-    usuarioToggleActivo($estadoUsuario);
-    check(false, 'toggleActivo sobre usuario bloqueado debería lanzar excepción');
-} catch (RuntimeException $e) {
-    check(true, 'toggleActivo sobre usuario bloqueado lanza excepción y no lo activa');
-}
-try {
-    participanteToggleActivo($estadoParticipante);
-    check(false, 'toggleActivo sobre participante suspendido debería lanzar excepción');
-} catch (RuntimeException $e) {
-    check(true, 'toggleActivo sobre participante suspendido lanza excepción y no lo activa');
-}
-
-// 3) Guardar el formulario de edición sin tocar el estado explícitamente
-//    (o con un estado manipulado) no debe desbloquear la cuenta.
-check(
-    usuarioEditarEstado($estadoUsuario, 'activo') === 'bloqueada',
-    'editar() preserva estado bloqueada aunque el POST traiga "activo"'
-);
-check(
-    participanteEditarEstado($estadoParticipante, 'activo') === 'suspendido',
-    'editar() preserva estado suspendido (por bloqueo) aunque el POST traiga "activo"'
-);
-
-// 4) Desbloquear (UsuarioModel::unlockAccount) y confirmar que ahí sí puede volver a activo.
-$estadoUsuario = 'activo';       // resultado de unlockAccount()
-$estadoParticipante = 'activo';  // cascada de unlockAccount() sobre participantes
-check($estadoUsuario === 'activo', 'desbloquear() deja la cuenta en estado activo');
-check(usuarioToggleActivo($estadoUsuario) === 'inactivo', 'tras desbloquear, toggleActivo vuelve a funcionar normalmente (activo → inactivo)');
-check(participanteToggleActivo($estadoParticipante) === 'inactivo', 'tras desbloquear, toggleActivo del participante funciona normalmente');
-check(str_contains(View::estadoChip($estadoUsuario), 'chip success'), 'tras desbloquear, estadoChip(usuario) vuelve a mostrarse como success (activo)');
-check(str_contains(View::estadoChip($estadoParticipante), 'chip success'), 'tras desbloquear, estadoChip(participante) vuelve a mostrarse como success (activo)');
-
-// Cobertura completa de estadoChip() para ambos ENUMs reales (database/schema.sql):
-// usuarios:      pendiente, activo, inactivo, suspendido, rechazado, bloqueada
-// participantes: pendiente, activo, inactivo, suspendido, rechazado
-$claseEsperada = [
-    'pendiente'  => 'chip warning',
-    'activo'     => 'chip success',
-    'inactivo'   => 'chip danger',
-    'suspendido' => 'chip danger',
-    'rechazado'  => 'chip danger',
-    'bloqueada'  => 'chip danger',
-];
-foreach ($claseEsperada as $valor => $claseExact) {
-    check(View::estadoChip($valor) === "<span class=\"{$claseExact}\">" . ucfirst($valor) . '</span>',
-        "estadoChip(\"{$valor}\") = '{$claseExact}' (cobertura completa de los ENUM de usuarios/participantes)");
-}
-
-// 5) editar() ya no debe pisar nada una vez desbloqueada (estado != 'bloqueada'/'suspendido').
-check(usuarioEditarEstado('activo', 'inactivo') === 'inactivo', 'editar() respeta el estado posteado cuando la cuenta no está bloqueada');
-check(participanteEditarEstado('activo', 'inactivo') === 'inactivo', 'editar() respeta el estado posteado cuando el participante no está suspendido por bloqueo');
-
-// 6) Redirect tras bloquear/desbloquear vuelve a la sección de origen.
-check(redirectDestino('/admin/participantes', '/admin/organizadores') === '/admin/participantes', 'return= /admin/participantes se respeta al bloquear/desbloquear desde Participantes');
-check(redirectDestino(null, '/admin/organizadores') === '/admin/organizadores', 'sin return explícito, cae al default de Organizadores (compatibilidad)');
-check(redirectDestino('', '/admin/organizadores') === '/admin/organizadores', 'return vacío cae al default de Organizadores');
-
-echo "\n";
-if ($fallos > 0) {
-    echo "TOTAL: {$fallos} fallo(s)\n";
-    exit(1);
-}
-echo "TOTAL: todos los casos OK\n";
+exit(TestCase::ejecutar(LockoutEstadoTest::class));

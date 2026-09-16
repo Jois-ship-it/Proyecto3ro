@@ -152,6 +152,78 @@ bash scripts/monitor_db.sh                # estado básico de la BD
 
 ---
 
+## Tests
+
+La batería vive en `tests/` y es de **integración**: cada caso instancia los
+servicios, modelos y controladores reales del proyecto y comprueba lo que quedó
+en la base. No hay lógica reimplementada dentro de los tests.
+
+### Preparar la base de pruebas (una sola vez)
+
+Los tests truncan tablas, así que corren contra una base **descartable**, nunca
+contra la de la aplicación. El arranque (`tests/bootstrap.php`) aborta si el
+nombre de la base no termina en `_test`.
+
+```bash
+mysql -u root -p -e "CREATE DATABASE flexarena_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p flexarena_test < database/schema.sql
+mysql -u root -p flexarena_test < database/seed.sql
+```
+
+### Correr los tests
+
+```bash
+# Toda la batería (cada archivo en su propio proceso)
+DB_HOST=127.0.0.1 DB_USER=root DB_PASS=tu_password php tests/run.php
+
+# Solo los que coincidan con un texto
+DB_HOST=127.0.0.1 DB_USER=root DB_PASS=tu_password php tests/run.php suizo
+
+# Un archivo suelto
+DB_HOST=127.0.0.1 DB_USER=root DB_PASS=tu_password php tests/suizo_sin_revanchas_test.php
+```
+
+En Windows/PowerShell:
+
+```powershell
+$env:DB_HOST="127.0.0.1"; $env:DB_USER="root"; $env:DB_PASS=""
+php tests/run.php
+```
+
+Las variables de entorno tienen prioridad sobre el `.env` del proyecto, así que
+no hace falta tocarlo. Si no se define `DB_NAME`, se usa el de `.env` con el
+sufijo `_test`.
+
+### Qué cubre cada archivo
+
+| Archivo | Qué ejercita |
+|---------|--------------|
+| `suizo_sin_revanchas_test.php` | `SistemaSuizoService`: no-revancha, byes, control de rondas. Incluye una corrida completa de `seed_demo.php`. |
+| `bracket_integridad_test.php` | `EliminacionDirectaService`: rondas, avance de ganadores, byes, campeón, bloqueo de corrección. |
+| `tabla_posiciones_test.php` | `TablaPosicionesService`: cifras exactas, orden, desempate por diferencia, puntuación configurable, recálculo. |
+| `tiebreak_test.php` | `DesempateTrait` + `intentarFinalizar`: cadena de partidos de desempate hasta que haya campeón. |
+| `correccion_resultados_test.php` | `CorreccionService`: solicitar / aprobar / rechazar y los bloqueos por formato. |
+| `match_schedule_test.php` | `ResultadoService::programar`: rango de fechas del torneo, byes, partidos finalizados. |
+| `lockout_estado_test.php` | `AuthService` / `UsuarioService` / `ParticipanteService`: bloqueo a los 5 intentos y desbloqueo. |
+| `torneo_ownership_test.php` | `TorneoController`: quién puede crear, editar y reasignar torneos. |
+| `modulos_toggle_test.php` | `ModuloService` + guardas de módulo en los tres formatos. |
+
+Archivos de apoyo: `tests/bootstrap.php` (conexión y autoload), `tests/lib/TestCase.php`
+(clase base con las aserciones) y `tests/lib/Fixtures.php` (datos de prueba).
+
+### Sobre PHPUnit
+
+La batería **no** usa PHPUnit todavía: el proyecto no usa Composer y PHPUnit lo
+requiere, así que agregarlo obliga a instalar Composer en cada máquina donde se
+quiera correr los tests. Mientras tanto, `tests/lib/TestCase.php` provee lo
+mínimo (`assertSame`, `assertTrue`, `assertCount`, `assertThrows`, `setUp`…) con
+**los mismos nombres que PHPUnit**, justamente para que migrar sea mecánico:
+cambiar `extends TestCase` por `extends PHPUnit\Framework\TestCase`, reemplazar
+`assertThrows()` por `expectException()` y borrar el `exit(...)` final de cada
+archivo. Los casos y los fixtures quedan igual.
+
+---
+
 ## Estructura del proyecto
 
 ```
