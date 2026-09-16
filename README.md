@@ -214,6 +214,7 @@ sufijo `_test`.
 | `torneo_ownership_test.php` | `TorneoController`: quién puede crear, editar y reasignar torneos. |
 | `modulos_toggle_test.php` | `ModuloService` + guardas de módulo en los tres formatos. |
 | `rondas_estado_test.php` | `RondaService`: estado de las rondas, cierre automático y cerrar/reabrir manual. |
+| `ruta_parametros_test.php` | `Router`: los `{id}` de las rutas tienen que ser enteros positivos; cualquier otra cosa es 404. Recorre las 40 rutas con parámetros. |
 | `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
 | `datos_minimos_test.php` | El mínimo de 50 registros por componente que pide la letra, y la coherencia de los datos sembrados. |
 

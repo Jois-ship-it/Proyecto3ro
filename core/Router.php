@@ -27,10 +27,53 @@ class Router
         ];
     }
 
+    /**
+     * Qué valores acepta cada parámetro de ruta, según su nombre.
+     *
+     * Antes «{id}» compilaba a ([^/]+) —cualquier cosa que no sea una barra— y
+     * el valor llegaba crudo al controlador, que hace (int)$id. Como (int)'1 OR
+     * 1=1' vale 1, la URL /torneo/1 OR 1=1 devolvía la página del torneo 1 con
+     * código 200. No era inyección (los modelos usan consultas preparadas), pero
+     * una URL inválida no puede devolver una página válida: si el id no es un id,
+     * la ruta no existe y corresponde un 404.
+     *
+     * La lista es restrictiva a propósito. Si alguna vez hace falta un parámetro
+     * que no sea un id —un slug, por ejemplo— hay que agregarlo acá eligiendo qué
+     * acepta; un nombre sin entrada rompe al registrar la ruta, no en silencio.
+     */
+    private const PATRONES = [
+        // Entero positivo, sin signo, sin ceros a la izquierda y de hasta 10
+        // dígitos: las claves primarias son INT UNSIGNED (máximo 4294967295),
+        // así que nada más largo puede ser un id de este sistema.
+        'id' => '([1-9][0-9]{0,9})',
+    ];
+
     private function buildPattern(string $path): string
     {
-        $p = preg_replace('/\{[a-zA-Z_][a-zA-Z0-9_]*\}/', '([^/]+)', $path);
-        return '#^' . $p . '$#';
+        // La ruta se parte en literales y parámetros para poder escapar los
+        // literales: así el texto de la ruta nunca se interpreta como regex.
+        $partes = preg_split('/(\{[a-zA-Z_][a-zA-Z0-9_]*\})/', $path, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+
+        $patron = '';
+        foreach ($partes as $parte) {
+            if (!preg_match('/^\{([a-zA-Z_][a-zA-Z0-9_]*)\}$/', $parte, $m)) {
+                $patron .= preg_quote($parte, '#');
+                continue;
+            }
+
+            $nombre = $m[1];
+            if (!isset(self::PATRONES[$nombre])) {
+                throw new RuntimeException(
+                    "Ruta «{$path}»: el parámetro «{$nombre}» no tiene patrón definido. "
+                    . 'Agregalo a Router::PATRONES decidiendo qué valores acepta.'
+                );
+            }
+            $patron .= self::PATRONES[$nombre];
+        }
+
+        // Modificador D: sin él, «$» también matchea justo antes de un salto de
+        // línea final, y "torneo/1\n" pasaría como si fuera "torneo/1".
+        return '#^' . $patron . '$#D';
     }
 
     private function extractParamNames(string $path): array

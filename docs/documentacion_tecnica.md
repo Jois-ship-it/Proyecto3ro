@@ -55,6 +55,36 @@ GET /admin/torneos/5   →  TorneoController::gestion('5')
 POST /admin/resultados/cargar  →  ResultadoController::cargar()
 ```
 
+### Qué acepta un parámetro de ruta
+
+`Router::PATRONES` define, por nombre de parámetro, qué valores son válidos.
+Hoy el único nombre en uso es `id`, y acepta **enteros positivos sin ceros a la
+izquierda y de hasta 10 dígitos** (las claves primarias son `INT UNSIGNED`).
+Un valor que no encaja no matchea ninguna ruta, así que la petición termina en
+el 404 del router.
+
+Antes el patrón era `([^/]+)` —cualquier cosa menos una barra— y el valor
+llegaba crudo al controlador, que hace `(int)$id`. Como `(int)'5 OR 1=1'` vale
+5, `/torneo/5 OR 1=1` devolvía la página del torneo 5 con código 200. Nunca
+hubo inyección, porque los modelos usan consultas preparadas, pero una URL
+inválida no puede devolver una página válida.
+
+Dos consecuencias a tener presentes:
+
+- `/torneo/007` ya no es un alias de `/torneo/7`: cada recurso tiene una sola
+  URL válida.
+- Agregar una ruta con un parámetro que no se llame `id` lanza una excepción al
+  registrarla, con el nombre del parámetro en el mensaje. Es a propósito: el
+  patrón nuevo se elige explícitamente en `Router::PATRONES`, en vez de heredar
+  por omisión uno que acepte cualquier cosa.
+
+La regex de cada ruta se arma escapando los tramos literales, de modo que el
+texto de la ruta nunca se interprete como expresión regular, y se cierra con el
+modificador `D`: sin él, `$` también matchea justo antes de un salto de línea
+final y `/torneo/5%0A` pasaría como si fuera `/torneo/5`.
+
+Cubierto por `tests/ruta_parametros_test.php`.
+
 ## Base de datos
 
 Ver `database/schema.sql`. Las tablas principales son:
