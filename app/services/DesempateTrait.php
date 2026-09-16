@@ -51,6 +51,9 @@ trait DesempateTrait
         }
         $this->enfModel->insert($enf);
 
+        // La ronda de desempate nace jugable: que su estado lo refleje.
+        (new RondaService())->sincronizarTorneo($torneoId);
+
         $this->auditoria->log('crear_desempate', 'torneos', $torneoId,
             "Desempate {$numDesempate} creado — torneo {$torneoId}");
     }

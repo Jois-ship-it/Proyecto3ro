@@ -101,6 +101,9 @@ class LigaService
 
         $this->torneoModel->updateEstado($torneoId, 'en_curso');
         $this->tablaService->recalcular($torneoId);
+        // Las rondas recién creadas arrancan con el estado que les corresponde
+        // (ver RondaService: 'en_curso' si son jugables, 'pendiente' si les faltan cruces).
+        (new RondaService())->sincronizarTorneo($torneoId);
         $this->auditoria->log('generar_fixture', 'torneos', $torneoId, "Fixture Liga generado para torneo {$torneoId}");
     }
 

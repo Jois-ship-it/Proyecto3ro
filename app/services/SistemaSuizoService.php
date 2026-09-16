@@ -84,6 +84,9 @@ class SistemaSuizoService
 
         $this->torneoModel->updateEstado($torneoId, 'en_curso');
         $this->tablaService->recalcular($torneoId);
+        // Las rondas recién creadas arrancan con el estado que les corresponde
+        // (ver RondaService: 'en_curso' si son jugables, 'pendiente' si les faltan cruces).
+        (new RondaService())->sincronizarTorneo($torneoId);
         $this->auditoria->log('generar_ronda_suiza', 'torneos', $torneoId, "Ronda 1 (Suizo) generada para torneo {$torneoId}");
     }
 
@@ -166,6 +169,10 @@ class SistemaSuizoService
         if ($byeId !== null) {
             $this->asignarBye($torneoId, $rondaId, $byeId, $esEquipos, count($pares) + 1, $torneo);
         }
+
+        // Las rondas recién creadas arrancan con el estado que les corresponde
+        // (ver RondaService: 'en_curso' si son jugables, 'pendiente' si les faltan cruces).
+        (new RondaService())->sincronizarTorneo($torneoId);
 
         $this->auditoria->log('generar_ronda_suiza', 'torneos', $torneoId, "Ronda {$siguienteNum} (Suizo) generada para torneo {$torneoId}");
     }

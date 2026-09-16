@@ -6,7 +6,10 @@
   <div class="panel" style="margin-bottom:1rem">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem;">
       <strong><?= View::e($ronda['nombre']) ?></strong>
-      <?= View::estadoChip($ronda['estado']) ?>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <?= View::estadoChip($ronda['estado']) ?>
+        <?php include __DIR__ . '/ronda_acciones.php'; ?>
+      </div>
     </div>
     <?php if (empty($partidos)): ?>
       <p class="muted">Sin partidos en esta ronda.</p>

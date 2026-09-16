@@ -11,6 +11,7 @@ class ResultadoService
     private LigaService           $ligaService;
     private EliminacionDirectaService $eliminacionService;
     private SistemaSuizoService   $suizoService;
+    private RondaService          $rondaService;
     private AuditoriaService      $auditoria;
 
     public function __construct()
@@ -23,6 +24,7 @@ class ResultadoService
         $this->ligaService        = new LigaService();
         $this->eliminacionService = new EliminacionDirectaService();
         $this->suizoService       = new SistemaSuizoService();
+        $this->rondaService       = new RondaService();
         $this->auditoria          = new AuditoriaService();
     }
 
@@ -41,6 +43,9 @@ class ResultadoService
         if (!in_array($enf['estado'], ['pendiente', 'en_curso'], true)) {
             throw new RuntimeException('No se puede cargar resultado para un partido en estado: ' . $enf['estado']);
         }
+
+        // Una ronda cerrada (a mano por el organizador) no admite carga.
+        $this->rondaService->assertAbiertaParaCarga($enfrentamientoId);
 
         $torneo = $this->torneoModel->findByIdCompleto((int)$enf['torneo_id']);
         $tipo   = $this->tipoModel->findById((int)$torneo['tipo_torneo_id']);
@@ -111,6 +116,10 @@ class ResultadoService
                 $this->tablaService->recalcular((int)$torneo['id']);
                 $this->suizoService->intentarFinalizar((int)$torneo['id']);
             }
+
+            // El estado de las rondas se recalcula al final, cuando ya se sabe si
+            // este resultado completó la ronda o si se generó una nueva.
+            $this->rondaService->sincronizarTorneo((int)$torneo['id']);
 
             $db->commit();
         } catch (Throwable $e) {
@@ -192,6 +201,8 @@ class ResultadoService
             if (in_array($slug, ['liga', 'suizo'], true)) {
                 $this->tablaService->recalcular((int)$torneo['id']);
             }
+
+            $this->rondaService->sincronizarTorneo((int)$torneo['id']);
 
             $db->commit();
         } catch (Throwable $e) {

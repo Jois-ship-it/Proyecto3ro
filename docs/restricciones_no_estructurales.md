@@ -161,8 +161,25 @@ son puntos de entrada estables, no por número de línea.
 | 78 | Un slug de módulo inexistente se trata como deshabilitado (deniega por defecto). | `ModuloActivoTrait::assertModuloActivo()` |
 | 79 | Todo cambio de estado de un módulo queda auditado con estado anterior y nuevo. | `ModuloService::toggle()` |
 
+## 15. Estado de las rondas
+
+`rondas.estado` dejó de ser metadata: lo mantiene `RondaService` y lo consulta
+`ResultadoService`. El ENUM quedó en `pendiente | en_curso | cerrada`
+(`bloqueada` se eliminó: significaba lo mismo que `cerrada`).
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 80 | Una ronda a la que le faltan cruces por definir queda en `pendiente` (caso típico: la ronda siguiente de un bracket mientras avanzan los ganadores). | `RondaService::estadoSegunPartidos()` |
+| 81 | Una ronda con todos sus cruces definidos y partidos por resolver queda en `en_curso`. | `RondaService::estadoSegunPartidos()` |
+| 82 | Una ronda cuyos partidos terminaron todos (finalizado/bye/cancelado) pasa a `cerrada` sola. | `RondaService::sincronizarTorneo()` |
+| 83 | La sincronización automática solo avanza el estado, nunca lo retrocede: un cierre manual no se deshace al cargar otro resultado. | `RondaService::sincronizarTorneo()` |
+| 84 | Una ronda `cerrada` no admite carga de resultados; reabrirla la habilita de nuevo. | `RondaService::assertAbiertaParaCarga()`, `ResultadoService::cargar()` |
+| 85 | La corrección de resultados NO se bloquea por ronda cerrada: si no, un error en una ronda terminada quedaría sin arreglo. | `ResultadoService::corregir()` |
+| 86 | No se reabre una ronda cuyos partidos terminaron todos: no habría nada que cargar. | `RondaService::reabrir()` |
+| 87 | Cerrar o reabrir exige ser dueño del torneo (o admin), token CSRF válido, y queda auditado con estado anterior y nuevo. | `TorneoController::cerrarRonda()/reabrirRonda()`, `RondaService` |
+
 ---
 
-**Total: 79 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 87 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
-las de la sección 14 se citan por método.
+las de las secciones 14 y 15 se citan por método.

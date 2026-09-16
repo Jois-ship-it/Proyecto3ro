@@ -48,6 +48,54 @@ class RondaModel extends BaseModel
         );
     }
 
+    public function updateEstado(int $rondaId, string $estado): void
+    {
+        $this->query(
+            "UPDATE rondas SET estado = :e WHERE id = :id",
+            [':e' => $estado, ':id' => $rondaId]
+        );
+    }
+
+    /**
+     * Situación de los partidos de una ronda, para decidir su estado:
+     *   total        — cuántos enfrentamientos tiene
+     *   terminados   — finalizado / bye / cancelado (ya no admiten carga)
+     *   incompletos  — todavía sin los dos lados definidos (bracket a medio armar)
+     *
+     * @return array{total:int,terminados:int,incompletos:int}
+     */
+    public function contarPartidos(int $rondaId): array
+    {
+        $r = $this->fetchOne(
+            "SELECT COUNT(*) AS total,
+                    SUM(estado IN ('finalizado','bye','cancelado')) AS terminados,
+                    SUM(es_bye = 0
+                        AND ((participante_a_id IS NULL AND equipo_a_id IS NULL)
+                          OR (participante_b_id IS NULL AND equipo_b_id IS NULL))) AS incompletos
+             FROM enfrentamientos
+             WHERE ronda_id = :rid",
+            [':rid' => $rondaId]
+        );
+
+        return [
+            'total'       => (int) ($r['total']       ?? 0),
+            'terminados'  => (int) ($r['terminados']  ?? 0),
+            'incompletos' => (int) ($r['incompletos'] ?? 0),
+        ];
+    }
+
+    /** Ronda a la que pertenece un enfrentamiento (null si no existe). */
+    public function findByEnfrentamiento(int $enfrentamientoId): ?array
+    {
+        $r = $this->fetchOne(
+            "SELECT r.* FROM rondas r
+             JOIN enfrentamientos e ON e.ronda_id = r.id
+             WHERE e.id = :eid LIMIT 1",
+            [':eid' => $enfrentamientoId]
+        );
+        return $r ?: null;
+    }
+
     /** Verifica si la última ronda tiene todos los partidos finalizados */
     public function ultimaRondaCompleta(int $torneoId): bool
     {

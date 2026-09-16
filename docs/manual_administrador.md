@@ -59,6 +59,34 @@ Los demás módulos del panel (`participantes`, `equipos`, `auditoria`,
 `consulta_publica`, `resultados`, `torneos`) todavía no tienen efecto funcional:
 su estado se guarda pero ningún flujo lo consulta.
 
+## Cerrar y reabrir rondas
+
+Panel Admin → Torneos → (un torneo) → en la cabecera de cada ronda hay un botón
+**Cerrar ronda** / **Reabrir ronda**. El organizador dueño del torneo ve lo mismo
+en su propio panel. Es la facultad de "publicar o cerrar rondas" del §5.2 de la
+letra del proyecto.
+
+Estados posibles de una ronda:
+
+| Estado | Qué significa | Cómo se llega |
+|--------|---------------|---------------|
+| `pendiente` | Le faltan cruces por definir. | Automático: ronda siguiente de un bracket mientras avanzan los ganadores. |
+| `en_curso` | Jugable, con partidos por resolver. | Automático: al generarse el fixture / la ronda, o al completarse sus cruces. |
+| `cerrada` | No admite más carga de resultados. | Automático cuando terminan todos sus partidos, o manual con **Cerrar ronda**. |
+
+Cosas a tener en cuenta:
+
+- Cerrar una ronda con partidos sin jugar es válido (sirve para congelar una
+  fecha), y esos partidos dejan de ofrecer el botón "Cargar resultado".
+- El recálculo automático **nunca reabre** una ronda: un cierre manual se
+  deshace únicamente con **Reabrir ronda**.
+- Una ronda cuyos partidos terminaron todos no se puede reabrir. Si hay que
+  cambiar un resultado, se usa la corrección de resultados.
+- La **corrección** de resultados sigue funcionando en rondas cerradas: si no,
+  un error detectado tarde quedaría sin arreglo.
+- Cada cierre y cada reapertura quedan en Auditoría (`cerrar_ronda` /
+  `reabrir_ronda`), con el estado anterior y el nuevo.
+
 ## Respaldo de la base de datos
 
 ```bash

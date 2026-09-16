@@ -72,6 +72,10 @@ $router->post('admin/torneos/{id}/inscribir',     'TorneoController', 'inscribir
 $router->post('admin/torneos/{id}/desinscribir',  'TorneoController', 'desinscribir');
 $router->post('admin/torneos/eliminar/{id}',      'TorneoController', 'eliminar');
 
+// Cerrar / reabrir rondas (mismo controlador desde los dos paneles)
+$router->post('admin/rondas/{id}/cerrar',         'TorneoController', 'cerrarRonda');
+$router->post('admin/rondas/{id}/reabrir',        'TorneoController', 'reabrirRonda');
+
 // ─── ADMIN — RESULTADOS ─────────────────────────────────────
 $router->post('admin/resultados/cargar',          'ResultadoController', 'cargar');
 $router->post('admin/resultados/corregir',        'ResultadoController', 'corregir');
@@ -97,6 +101,8 @@ $router->post('organizador/torneos/{id}/inscribir','OrganizadorController','insc
 $router->post('organizador/torneos/{id}/desinscribir','OrganizadorController','desinscribir');
 $router->post('organizador/resultados/cargar',    'ResultadoController', 'cargar');
 $router->post('organizador/resultados/programar', 'ResultadoController', 'programar');
+$router->post('organizador/rondas/{id}/cerrar',   'TorneoController', 'cerrarRonda');
+$router->post('organizador/rondas/{id}/reabrir',  'TorneoController', 'reabrirRonda');
 // El organizador NO corrige directamente: solicita corrección (requiere aprobación admin)
 $router->post('organizador/correcciones/solicitar','CorreccionController', 'solicitar');
 

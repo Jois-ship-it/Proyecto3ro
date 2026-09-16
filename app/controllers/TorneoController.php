@@ -216,6 +216,71 @@ class TorneoController extends BaseController
         $this->redirect("/admin/torneos/{$id}");
     }
 
+    // ─── Cerrar / reabrir rondas ─────────────────────────────
+    // Facultad del organizador según el §5.2 de la letra ("publicar o cerrar
+    // rondas"). Comparten implementación entre el panel de admin y el de
+    // organizador, igual que la carga de resultados: la ruta cambia, la regla no.
+
+    public function cerrarRonda(string $id): void
+    {
+        $this->accionSobreRonda((int)$id, 'cerrar');
+    }
+
+    public function reabrirRonda(string $id): void
+    {
+        $this->accionSobreRonda((int)$id, 'reabrir');
+    }
+
+    /** Tronco común de cerrar/reabrir: propiedad del torneo, CSRF y vuelta al panel. */
+    private function accionSobreRonda(int $rondaId, string $accion): void
+    {
+        $this->requireOrganizador();
+
+        $rondaService = new RondaService();
+        $ronda        = $rondaService->getById($rondaId);
+        if (!$ronda) {
+            $this->flash('error', 'Ronda no encontrada.');
+            $this->redirect($this->volverATorneos());
+        }
+
+        $torneoId = (int) $ronda['torneo_id'];
+        // El organizador solo puede tocar rondas de SUS torneos; el admin, todas.
+        $this->requireTorneoOwnership($torneoId, $this->volverATorneos());
+        $this->checkCsrf();
+
+        try {
+            if ($accion === 'cerrar') {
+                $rondaService->cerrar($rondaId, Auth::id());
+                $this->flash('success', "Ronda «{$ronda['nombre']}» cerrada.");
+            } else {
+                $rondaService->reabrir($rondaId, Auth::id());
+                $this->flash('success', "Ronda «{$ronda['nombre']}» reabierta.");
+            }
+        } catch (RuntimeException $e) {
+            $this->flash('error', $e->getMessage());
+        }
+
+        $this->redirect($this->volverAlTorneo($torneoId));
+    }
+
+    /** Panel al que corresponde volver según desde dónde se entró. */
+    private function panelBase(): string
+    {
+        return str_starts_with((string)($_SERVER['REQUEST_URI'] ?? ''), '/organizador')
+            ? '/organizador'
+            : '/admin';
+    }
+
+    private function volverATorneos(): string
+    {
+        return $this->panelBase() . '/torneos';
+    }
+
+    private function volverAlTorneo(int $torneoId): string
+    {
+        return $this->panelBase() . '/torneos/' . $torneoId;
+    }
+
     public function inscribir(string $id): void
     {
         $this->requireOrganizador();

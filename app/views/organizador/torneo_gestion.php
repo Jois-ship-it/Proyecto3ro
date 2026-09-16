@@ -6,6 +6,7 @@ $esLiga    = $slug === 'liga';
 $esElim    = $slug === 'eliminacion_directa';
 $esSuizo   = $slug === 'suizo';
 $puedeEditar = true;
+$panelBase = '/organizador';   // prefijo de rutas que usan los partials compartidos
 ?>
 <section class="page-header">
   <div class="page-title">

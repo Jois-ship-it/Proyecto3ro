@@ -182,7 +182,10 @@ CREATE TABLE IF NOT EXISTS rondas (
     torneo_id   INT UNSIGNED NOT NULL,
     numero      TINYINT NOT NULL,
     nombre      VARCHAR(80) NOT NULL,
-    estado      ENUM('pendiente','en_curso','cerrada','bloqueada') NOT NULL DEFAULT 'pendiente',
+    -- pendiente: le faltan cruces por definir | en_curso: jugable, con partidos
+    -- por resolver | cerrada: no admite mas carga (terminó sola o la cerró el
+    -- organizador). Ver app/services/RondaService.php.
+    estado      ENUM('pendiente','en_curso','cerrada') NOT NULL DEFAULT 'pendiente',
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_ronda (torneo_id, numero),
     FOREIGN KEY (torneo_id) REFERENCES torneos(id) ON DELETE CASCADE,

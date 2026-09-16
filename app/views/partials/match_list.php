@@ -1,6 +1,8 @@
 <?php
 // Variables: $partidos (array), $torneo (array), $puedeEditar (bool), $csrf (string)
+// Opcional: $ronda (array) — si la ronda está cerrada no se ofrece cargar resultados.
 // Se puede incluir desde liga_fixture, suizo_rondas o bracket
+$rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
 ?>
 <div class="table-scroll">
   <table>
@@ -64,7 +66,9 @@
           <td><?= View::estadoChip($p['estado']) ?></td>
           <?php if ($puedeEditar ?? false): ?>
           <td>
-            <?php if (in_array($p['estado'], ['pendiente', 'en_curso']) && !$p['es_bye']): ?>
+            <?php if ($rondaCerrada && in_array($p['estado'], ['pendiente', 'en_curso']) && !$p['es_bye']): ?>
+              <span class="muted" style="font-size:.85rem">Ronda cerrada</span>
+            <?php elseif (in_array($p['estado'], ['pendiente', 'en_curso']) && !$p['es_bye']): ?>
               <button class="btn small primary"
                 data-modal-cargar
                 data-enf-id="<?= (int)$p['id'] ?>"

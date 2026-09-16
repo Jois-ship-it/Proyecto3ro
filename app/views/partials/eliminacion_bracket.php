@@ -22,9 +22,11 @@ $bk_nombreRonda = function (int $matchesEnRonda): string {
 // Lookup de partidos reales por [numero_ronda][orden]
 $bk_lookup = [];
 $bk_labels = [];
+$bk_estados = [];
 foreach ($rondasConPartidos as $bloque) {
     $num = (int) $bloque['ronda']['numero'];
     $bk_labels[$num] = $bloque['ronda']['nombre'];
+    $bk_estados[$num] = $bloque['ronda']['estado'] ?? '';
     foreach ($bloque['partidos'] as $p) {
         $bk_lookup[$num][(int) $p['orden']] = $p;
     }
@@ -69,6 +71,22 @@ $resModel = new ResultadoModel();
   <?php if ($M1 === 0): ?>
     <p class="muted">El bracket aún no fue generado.</p>
   <?php else: ?>
+  <?php if ($puedeEditar ?? false): ?>
+    <div class="panel" style="margin-bottom:1rem">
+      <strong style="display:block;margin-bottom:.6rem">Rondas</strong>
+      <?php foreach ($rondasConPartidos as $bk_bloque): ?>
+        <?php $ronda = $bk_bloque['ronda']; ?>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.35rem 0">
+          <span><?= View::e($ronda['nombre']) ?></span>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <?= View::estadoChip($ronda['estado']) ?>
+            <?php include __DIR__ . '/ronda_acciones.php'; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+
   <div class="bk-scroll">
     <div class="bk" style="width:<?= $bk_rem($totalW) ?>;height:<?= $bk_rem($totalH) ?>">
 
@@ -100,8 +118,10 @@ $resModel = new ResultadoModel();
             $clickAttrs = '';
             $clickClass = '';
             $hasActionMenu = false;
+            // Una ronda cerrada no admite carga: no se ofrece el menú de acciones.
+            $bk_rondaCerrada = ($bk_estados[$numRonda] ?? '') === 'cerrada';
             if (($puedeEditar ?? false) && $p) {
-                if (in_array($p['estado'], ['pendiente', 'en_curso'], true) && !$esBye && $nombreA && $nombreB) {
+                if (!$bk_rondaCerrada && in_array($p['estado'], ['pendiente', 'en_curso'], true) && !$esBye && $nombreA && $nombreB) {
                     $clickClass = ' clickable';
                     $fpInput = !empty($p['fecha_programada']) ? date('Y-m-d\\TH:i', strtotime((string)$p['fecha_programada'])) : '';
                     $clickAttrs = 'data-enf-id="' . (int) $p['id'] . '"'

@@ -91,6 +91,7 @@ class View
             'programado'  => 'warning',
             'inscripcion' => 'warning',
             'corregido'   => 'warning',
+            'cerrada'     => 'success',
             'borrador'    => 'warning',
             'suspendido'  => 'danger',
             'cancelado'   => 'danger',
