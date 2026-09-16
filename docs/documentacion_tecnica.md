@@ -223,6 +223,54 @@ querría decir nada, porque para entonces el torneo ya arrancó.
 
 Cubierto por `tests/configuracion_torneo_test.php`.
 
+## Orden de la tabla de posiciones
+
+Un solo comparador, `TablaPosicionesService::comparar()`, y lo usan los dos
+lugares que necesitan el criterio: el orden de la tabla y la decisión de si hay
+que jugar un desempate.
+
+```
+puntos → [diferencia → puntos a favor] → partidos ganados → buchholz → id
+```
+
+Los dos criterios entre corchetes solo cuentan si el torneo tiene
+`usa_puntos_favor`. Se apagan cuando el marcador no mide rendimiento: en ajedrez
+se anota 1, medio punto o 0, así que «puntos a favor» es una copia de «puntos» y
+ordenar por eso no agrega nada. En fútbol, en cambio, la diferencia de goles es
+el desempate de toda la vida. Apagado el criterio, la diferencia se sigue
+calculando y mostrando; lo único que cambia es que no ordena.
+
+El id al final no es un criterio deportivo: es lo que hace que el orden sea
+estable y reproducible cuando ya no queda nada que comparar. Por eso
+`hayEmpateEnCima()` lo excluye —un campeonato no puede decidirse por el id más
+chico— y cuando los dos primeros empatan en todo lo demás, el sistema crea una
+ronda «Desempate N» en vez de coronar a alguien.
+
+### Por qué el mismo comparador en los dos lados
+
+Si el orden y la decisión del campeón usaran criterios distintos, la tabla
+mostraría un líder que el sistema no reconoce como tal, o al revés. Con
+`usa_puntos_favor = 0`, dos participantes con distinta diferencia de goles están
+igual de empatados que si la tuvieran igual, porque para ese torneo la
+diferencia no es un criterio.
+
+### La trampa de `isset()` con las casillas
+
+`usa_puntos_favor` llegaba al servicio como `isset($d[...]) ? 1 : 0`. Ese idiom
+sirve cuando el formulario **siempre** manda el campo, y acá no lo mandaba: el
+valor llegaba `null`, `isset(null)` es `false`, y todo torneo guardado desde la
+app terminaba en 0 pisando el `DEFAULT 1` del esquema. Peor aún, si el campo
+hubiera llegado como `"0"`, `isset("0")` es `true` y guardaba **1**: el idiom
+estaba mal en tres de los cuatro casos posibles.
+
+El formulario manda ahora un `<input type="hidden" value="0">` delante de la
+casilla, con el mismo `name`. Así el campo llega siempre: si la casilla está
+tildada, su valor pisa al del hidden. Y el servicio distingue «vino en 0» de
+«no vino», que es lo que le deja respetar el default del esquema cuando el
+torneo lo crea un script.
+
+Cubierto por `tests/puntos_favor_test.php`.
+
 ## Estados reversibles
 
 Participantes, equipos y organizadores usan un **toggle activo↔inactivo** (`toggleActivo()` en cada servicio). Es un soft-state: no borra historial (inscripciones/resultados se conservan); reactivar restaura la disponibilidad. El estado fino (`suspendido`) sigue disponible en el formulario de edición.

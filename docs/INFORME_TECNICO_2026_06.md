@@ -309,6 +309,11 @@ cualquier torneo por URL, y el organizador anterior conservaba acceso tras la tr
 - `torneos.usa_puntos_favor` y `torneos.requiere_desempate_final`: se persisten pero **no**
   se consumen en la lógica actual. Recomendación (B): implementarlos o retirarlos del modelo
   para evitar confusión. (No se tocaron para no alterar datos.)
+  **Resuelto (09/2026):** una de cada. `usa_puntos_favor` se implementó —ahora decide si la
+  tabla desempata por diferencia y puntos a favor— y de paso se corrigió un error de dato: el
+  formulario no mandaba el campo y el `isset()` del servicio lo apagaba en silencio.
+  `requiere_desempate_final` se eliminó, porque su apagado no tenía ninguna implementación
+  defendible. Ver `database/migrations/2026_09_banderas_puntuacion.sql`.
 - Tabla `configuraciones_torneo`: existe en el esquema pero no se usa. Recomendación (B):
   usarla para settings extensibles o documentarla como reservada.
   **Resuelto (09/2026):** se implementó la primera opción. `ConfiguracionTorneoService`

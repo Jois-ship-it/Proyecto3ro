@@ -84,6 +84,9 @@ class TorneoService
                 'puntos_victoria' => (int)($d['puntos_victoria'] ?? $torneo['puntos_victoria']),
                 'puntos_empate'   => (int)($d['puntos_empate']   ?? $torneo['puntos_empate']),
                 'puntos_derrota'  => (int)($d['puntos_derrota']  ?? $torneo['puntos_derrota']),
+                'usa_puntos_favor'=> isset($d['usa_puntos_favor'])
+                                       ? (int)(bool)$d['usa_puntos_favor']
+                                       : (int)$torneo['usa_puntos_favor'],
                 'nombre_puntos'   => trim($d['nombre_puntos'] ?? $torneo['nombre_puntos']),
                 'fecha_inicio'    => $inicio ?: null,
                 'fecha_fin'       => $fin ?: null,
@@ -146,8 +149,14 @@ class TorneoService
             'puntos_victoria'          => (int)($d['puntos_victoria']  ?? 3),
             'puntos_empate'            => (int)($d['puntos_empate']    ?? 1),
             'puntos_derrota'           => (int)($d['puntos_derrota']   ?? 0),
-            'usa_puntos_favor'         => isset($d['usa_puntos_favor']) ? 1 : 0,
-            'requiere_desempate_final' => isset($d['requiere_desempate_final']) ? 1 : 0,
+            // OJO con el idiom de las casillas: `isset($d[...]) ? 1 : 0` funciona
+            // cuando el formulario SIEMPRE manda el campo, pero acá no lo mandaba
+            // y el valor llegaba null, con lo cual todo torneo guardado desde la
+            // app terminaba en 0 pisando el DEFAULT 1 del esquema. Ahora el
+            // formulario manda un hidden con 0 y la casilla lo pisa con 1, y si
+            // la clave no viene (un script, el seed) vale el default del esquema.
+            'usa_puntos_favor'         => isset($d['usa_puntos_favor'])
+                                            ? (int)(bool)$d['usa_puntos_favor'] : 1,
             'rondas_suizo'             => !empty($d['rondas_suizo']) ? (int)$d['rondas_suizo'] : null,
             'bye_suizo'                => $d['bye_suizo'] ?? 'sin_puntos',
             'puntos_bye_suizo'         => (float)($d['puntos_bye_suizo'] ?? 0),

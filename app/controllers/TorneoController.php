@@ -106,7 +106,6 @@ class TorneoController extends BaseController
                 'puntos_empate'            => $this->postInt('puntos_empate', 1),
                 'puntos_derrota'           => $this->postInt('puntos_derrota', 0),
                 'usa_puntos_favor'         => $this->post('usa_puntos_favor'),
-                'requiere_desempate_final' => $this->post('requiere_desempate_final'),
                 'rondas_suizo'             => $this->post('rondas_suizo'),
                 'bye_suizo'                => $this->postStr('bye_suizo', 'sin_puntos'),
                 'puntos_bye_suizo'         => $this->postFloat('puntos_bye_suizo', 0),

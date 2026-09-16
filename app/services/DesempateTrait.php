@@ -8,16 +8,34 @@ declare(strict_types=1);
  */
 trait DesempateTrait
 {
-    /** ¿Los dos primeros puestos están empatados en todas las métricas de orden? */
-    private function hayEmpateEnCima(array $tabla): bool
+    /**
+     * ¿Los dos primeros puestos están empatados en todo lo que el torneo mira?
+     *
+     * Usa EXACTAMENTE los mismos criterios que el orden de la tabla
+     * (`TablaPosicionesService::comparar()`), sin el id: si el torneo no usa los
+     * puntos a favor, dos participantes con distinta diferencia de goles están
+     * igual de empatados que si tuvieran la misma, porque ese criterio no cuenta
+     * para él. Que el orden y la decisión del campeón usaran criterios distintos
+     * sería incoherente: la tabla mostraría un líder que el sistema no reconoce.
+     *
+     * El id queda afuera a propósito: es el desempate técnico que hace estable al
+     * orden, no un criterio deportivo, y un campeonato no puede decidirse por él.
+     */
+    private function hayEmpateEnCima(array $tabla, ?array $torneo = null): bool
     {
         if (count($tabla) < 2) return false;
+
         $a = $tabla[0];
         $b = $tabla[1];
-        return (int)$a['puntos']     === (int)$b['puntos']
-            && (int)$a['diferencia'] === (int)$b['diferencia']
-            && (int)$a['pf']         === (int)$b['pf']
-            && (int)$a['pg']         === (int)$b['pg']
+
+        if ((int)$a['puntos'] !== (int)$b['puntos']) return false;
+
+        if (TablaPosicionesService::usaPuntosFavor($torneo)) {
+            if ((int)$a['diferencia'] !== (int)$b['diferencia']) return false;
+            if ((int)$a['pf']         !== (int)$b['pf'])         return false;
+        }
+
+        return (int)$a['pg'] === (int)$b['pg']
             && abs((float)$a['buchholz'] - (float)$b['buchholz']) < 0.01;
     }
 

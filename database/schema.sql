@@ -124,8 +124,10 @@ CREATE TABLE IF NOT EXISTS torneos (
     puntos_victoria          TINYINT NOT NULL DEFAULT 3,
     puntos_empate            TINYINT NOT NULL DEFAULT 1,
     puntos_derrota           TINYINT NOT NULL DEFAULT 0,
+    -- Si vale 1, la tabla de posiciones desempata por diferencia y puntos a
+    -- favor antes de mirar partidos ganados. Se apaga en formatos donde el
+    -- marcador no mide rendimiento (ajedrez: 1, medio punto o 0).
     usa_puntos_favor         TINYINT(1) NOT NULL DEFAULT 1,
-    requiere_desempate_final TINYINT(1) NOT NULL DEFAULT 0,
     rondas_suizo             TINYINT DEFAULT NULL,
     bye_suizo                ENUM('sin_puntos','victoria','personalizado') DEFAULT 'sin_puntos',
     puntos_bye_suizo         DECIMAL(5,2) NOT NULL DEFAULT 0,

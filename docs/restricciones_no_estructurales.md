@@ -206,8 +206,22 @@ sistema.
 | 97 | Cerrar el plazo impide anotarse, no retirarse: `desinscribir()` sigue funcionando. | `InscripcionService::desinscribir()` |
 | 98 | Cambiar los datos del evento queda auditado con el antes y el después; guardar sin cambios no deja registro. | `ConfiguracionTorneoService::guardar()` |
 
+## 17. Criterios de desempate de la tabla
+
+`torneos.usa_puntos_favor` dejó de ser una columna que se escribía y nadie leía.
+`torneos.requiere_desempate_final` se eliminó: ver la migración
+`2026_09_banderas_puntuacion.sql`.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 99 | La tabla ordena por puntos y, si el torneo usa puntos a favor, después por diferencia y por puntos a favor; luego por partidos ganados, buchholz e id. | `TablaPosicionesService::comparar()` |
+| 100 | Con `usa_puntos_favor = 0` la diferencia y los puntos a favor se siguen calculando y mostrando, pero no ordenan. | `TablaPosicionesService::comparar()` |
+| 101 | La detección de empate en la cima usa exactamente los mismos criterios que el orden, sin el id: el campeón no puede decidirse por una métrica que la tabla no mira. | `DesempateTrait::hayEmpateEnCima()` |
+| 102 | Un torneo creado sin el dato queda con el criterio activo, que es el `DEFAULT 1` de la columna. | `TorneoService::prepararDatos()` |
+| 103 | El criterio se puede cambiar con el torneo en curso, y la tabla se recalcula. | `TorneoService::editar()` |
+
 ---
 
-**Total: 98 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 103 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
 las de las secciones 14 y 15 se citan por método.

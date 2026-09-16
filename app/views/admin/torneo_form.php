@@ -122,6 +122,32 @@
       </label>
     </div>
 
+    <div class="field">
+      <?php
+        /*
+         * El hidden en 0 antes de la casilla es a proposito: un checkbox sin
+         * tildar no manda nada, y el servidor no podria distinguir "el usuario
+         * lo destildo" de "el formulario no trae el campo". Con el hidden, el
+         * campo llega siempre; si la casilla esta tildada, su valor lo pisa.
+         *
+         * Un torneo nuevo arranca con el criterio activado, que es el DEFAULT
+         * del esquema.
+         */
+        $usaPF = (int)($torneo['usa_puntos_favor'] ?? 1) === 1;
+      ?>
+      <label>
+        <input type="hidden" name="usa_puntos_favor" value="0">
+        <input type="checkbox" name="usa_puntos_favor" value="1" <?= $usaPF ? 'checked' : '' ?>>
+        Desempatar por puntos a favor
+      </label>
+      <small class="muted">
+        Con esto activado, dos participantes con los mismos puntos se ordenan por
+        diferencia y luego por puntos a favor. Conviene desactivarlo cuando el
+        marcador no mide rendimiento (ajedrez: 1, &frac12; o 0), porque ahi
+        &laquo;puntos a favor&raquo; repite lo que ya dice la columna de puntos.
+      </small>
+    </div>
+
     <!-- Solo Suizo -->
     <div class="field" id="campoRondasSuizo">
       <label>Cantidad de rondas (Suizo) *</label>

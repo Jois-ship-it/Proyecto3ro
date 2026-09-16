@@ -24,6 +24,49 @@ class TablaPosicionesService
     }
 
     /**
+     * Criterios de desempate de la tabla, en orden:
+     *
+     *   puntos → [diferencia → puntos a favor] → partidos ganados → buchholz → id
+     *
+     * Los dos criterios entre corchetes solo se aplican si el torneo tiene
+     * `usa_puntos_favor`. Hay formatos donde el marcador no mide rendimiento:
+     * en ajedrez se anota 1, ½ o 0, así que «puntos a favor» es una copia de
+     * «puntos» y ordenar por eso no agrega información. En un torneo de fútbol,
+     * en cambio, la diferencia de goles es el desempate de toda la vida.
+     *
+     * El id al final no es un criterio deportivo: es lo que garantiza que el
+     * orden sea estable y reproducible cuando ya no queda nada que comparar.
+     */
+    public static function comparar(array $a, array $b, bool $usaPuntosFavor): int
+    {
+        if ($a['puntos'] !== $b['puntos']) return $b['puntos'] - $a['puntos'];
+
+        if ($usaPuntosFavor) {
+            if ($a['diferencia'] !== $b['diferencia']) return $b['diferencia'] - $a['diferencia'];
+            if ($a['pf'] !== $b['pf'])                 return $b['pf']         - $a['pf'];
+        }
+
+        if ($a['pg'] !== $b['pg'])             return $b['pg']       - $a['pg'];
+        if ($a['buchholz'] !== $b['buchholz']) return (int)($b['buchholz'] - $a['buchholz']);
+
+        $idA = $a['participante_id'] ?? $a['equipo_id'] ?? 0;
+        $idB = $b['participante_id'] ?? $b['equipo_id'] ?? 0;
+        return $idA - $idB;
+    }
+
+    /**
+     * ¿Este torneo usa los puntos a favor como criterio de desempate?
+     *
+     * La columna es `TINYINT(1) NOT NULL DEFAULT 1`; un torneo sin el dato
+     * cargado (por ejemplo, creado desde un script) cuenta como que sí, que es
+     * lo que dice el default del esquema.
+     */
+    public static function usaPuntosFavor(?array $torneo): bool
+    {
+        return (int) ($torneo['usa_puntos_favor'] ?? 1) === 1;
+    }
+
+    /**
      * Recalcula COMPLETAMENTE la tabla de posiciones desde cero.
      * Se llama tras cada carga o corrección de resultado.
      */
@@ -107,17 +150,9 @@ class TablaPosicionesService
         }
         unset($row);
 
-        // Ordenar: puntos → diferencia → pf → pg → buchholz → id
-        uasort($tabla, function (array $a, array $b): int {
-            if ($a['puntos'] !== $b['puntos'])     return $b['puntos']     - $a['puntos'];
-            if ($a['diferencia'] !== $b['diferencia']) return $b['diferencia'] - $a['diferencia'];
-            if ($a['pf'] !== $b['pf'])             return $b['pf']         - $a['pf'];
-            if ($a['pg'] !== $b['pg'])             return $b['pg']         - $a['pg'];
-            if ($a['buchholz'] !== $b['buchholz']) return (int)($b['buchholz'] - $a['buchholz']);
-            $idA = $a['participante_id'] ?? $a['equipo_id'] ?? 0;
-            $idB = $b['participante_id'] ?? $b['equipo_id'] ?? 0;
-            return $idA - $idB;
-        });
+        // Ordenar segun los criterios del torneo (ver comparar()).
+        $usaPuntosFavor = self::usaPuntosFavor($torneo);
+        uasort($tabla, fn(array $a, array $b): int => self::comparar($a, $b, $usaPuntosFavor));
 
         // Asignar posiciones y persistir
         $pos = 1;

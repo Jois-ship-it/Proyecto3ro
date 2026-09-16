@@ -25,7 +25,10 @@ Las credenciales de prueba están en el README principal.
 
 1. Ir a **Torneos → Nuevo torneo**
 2. Completar nombre, formato y modalidad
-3. Configurar puntuación (liga/suizo) o rondas (suizo)
+3. Configurar puntuación (liga/suizo) o rondas (suizo). La casilla
+   **Desempatar por puntos a favor** decide si dos participantes con los mismos
+   puntos se ordenan por diferencia; conviene destildarla en ajedrez y formatos
+   donde el marcador no mide rendimiento
 4. El formulario muestra/oculta campos según el formato
 5. Al final, en **Datos del evento**, se pueden cargar sede, contacto, cierre de
    inscripción y observaciones. Son opcionales y aparecen en la ficha pública

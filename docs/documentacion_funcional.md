@@ -121,8 +121,18 @@ agrega un formato o un módulo, el test avisa.
 - Fixture generado automáticamente.
 - Tabla de posiciones: PJ, PG, PE, PP, PF, PC, Dif, Pts.
 - Puntuación configurable: victoria/empate/derrota.
-- Criterios de desempate: puntos → diferencia → PF → victorias → resultado directo → ID.
-- Campeón: posición 1 cuando todos los partidos están jugados.
+- Criterios de desempate: puntos → **diferencia → PF** → victorias → buchholz → ID.
+  Los dos en negrita solo cuentan si el torneo tiene activado **«Desempatar por
+  puntos a favor»**, una casilla del formulario. Conviene apagarla cuando el
+  marcador no mide rendimiento (ajedrez: 1, ½ o 0), porque ahí «puntos a favor»
+  repite lo que ya dice la columna de puntos. Apagada, la diferencia se sigue
+  mostrando en la tabla; lo único que cambia es que no ordena.
+- El ID del final no es un criterio deportivo: está para que el orden sea estable
+  cuando ya no queda nada que comparar. Por eso, si los dos primeros empatan en
+  todo lo demás, el sistema **no corona a nadie**: genera una ronda «Desempate»
+  para que lo definan jugando.
+- Campeón: posición 1 cuando todos los partidos están jugados y hay un líder
+  claro.
 
 ### Eliminación Directa (Bracket)
 - Potencia de 2 más cercana; byes automáticos para cantidades no potencia de 2.

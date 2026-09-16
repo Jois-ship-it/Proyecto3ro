@@ -136,7 +136,7 @@ class LigaService
         $esEquipos = $torneo['modalidad'] === 'equipos';
 
         // Empate exacto entre los dos primeros → generar (otro) partido de desempate.
-        if ($this->hayEmpateEnCima($tabla)) {
+        if ($this->hayEmpateEnCima($tabla, $torneo)) {
             $this->crearRondaDesempate($torneoId, $tabla[0], $tabla[1], $esEquipos);
             return false;
         }
