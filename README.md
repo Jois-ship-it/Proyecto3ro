@@ -26,6 +26,12 @@ cp .env.example .env
 docker compose build
 docker compose up -d
 
+# En la PRIMERA inicialización, el contenedor 'app' carga además los datos de
+# demostración (database/seed_demo.php): 52 torneos con historia real, 60
+# participantes, 52 equipos, correcciones de resultados, etc. Tarda un par de
+# minutos y se hace una sola vez: si la base ya tiene torneos, no se repite.
+# Para arrancar sin ellos (solo schema.sql + seed.sql):  SEED_DEMO=0 docker compose up -d
+
 # 3. Acceder a la aplicación
 #    App (HTTP):  http://localhost:8080   (redirige automáticamente a HTTPS, 301)
 #    App (HTTPS): https://localhost:443   (certificado autofirmado hasta que coloques uno real)
@@ -209,6 +215,7 @@ sufijo `_test`.
 | `modulos_toggle_test.php` | `ModuloService` + guardas de módulo en los tres formatos. |
 | `rondas_estado_test.php` | `RondaService`: estado de las rondas, cierre automático y cerrar/reabrir manual. |
 | `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
+| `datos_minimos_test.php` | El mínimo de 50 registros por componente que pide la letra, y la coherencia de los datos sembrados. |
 
 Archivos de apoyo: `tests/bootstrap.php` (conexión y autoload), `tests/lib/TestCase.php`
 (clase base con las aserciones), `tests/lib/Fixtures.php` (datos de prueba) y
@@ -217,6 +224,12 @@ Archivos de apoyo: `tests/bootstrap.php` (conexión y autoload), `tests/lib/Test
 
 Los tests de shell (`*_test.sh`) necesitan `bash`; en Windows viene con Git Bash.
 Si no está instalado, `tests/run.php` los marca como omitidos en lugar de fallar.
+
+**Duración**: la batería completa tarda del orden de diez minutos. El grueso son
+los tres archivos que regeneran todo el juego de datos con `seed_demo.php`
+(`suizo_sin_revanchas`, `rondas_estado` y `datos_minimos`): cada uno arma los 52
+torneos desde cero pasando por los servicios reales. Para iterar rápido conviene
+filtrar: `php tests/run.php tabla`, `php tests/run.php ownership`, etc.
 
 ### Sobre PHPUnit
 

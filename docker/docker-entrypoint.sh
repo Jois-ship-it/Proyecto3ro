@@ -83,4 +83,44 @@ else
     echo "==> ADVERTENCIA: la base de datos no respondió a tiempo; arrancando igual." >&2
 fi
 
+# ── Datos de demostración (solo en la primera inicialización) ────────────────
+# La imagen de MySQL corre schema.sql y seed.sql desde /docker-entrypoint-initdb.d,
+# pero seed_demo.php es PHP y no puede ejecutarse ahí: se corre desde este
+# contenedor, que sí tiene PHP y llega a la base por la red interna.
+#
+# Solo se siembra si todavía no hay torneos, así reiniciar el contenedor no pisa
+# los datos con los que se estuvo trabajando. SEED_DEMO=0 lo desactiva.
+SEED_DEMO_SCRIPT="/var/www/flexarena/database/seed_demo.php"
+
+if [ "$DB_READY" -eq 1 ] && [ "${SEED_DEMO:-1}" != "0" ]; then
+    if [ ! -f "$SEED_DEMO_SCRIPT" ]; then
+        echo "==> No está $SEED_DEMO_SCRIPT (¿falta el bind mount del proyecto?): se omite la siembra." >&2
+    else
+        TORNEOS="$(php -r '
+            try {
+                $pdo = new PDO(
+                    "mysql:host=" . (getenv("DB_HOST") ?: "db") . ";port=" . (getenv("DB_PORT") ?: "3306")
+                        . ";dbname=" . getenv("DB_NAME"),
+                    getenv("DB_USER"), getenv("DB_PASS")
+                );
+                echo (int) $pdo->query("SELECT COUNT(*) FROM torneos")->fetchColumn();
+            } catch (Throwable $e) { echo "error"; }
+        ' 2>/dev/null)"
+
+        if [ "$TORNEOS" = "0" ]; then
+            echo "==> Base sin torneos: cargando datos de demostración."
+            echo "    Es la primera inicialización y tarda un par de minutos; se hace una sola vez."
+            if php "$SEED_DEMO_SCRIPT"; then
+                echo "==> Datos de demostración cargados."
+            else
+                echo "==> ADVERTENCIA: falló la carga de datos de demostración; la app arranca igual." >&2
+            fi
+        elif [ "$TORNEOS" = "error" ]; then
+            echo "==> No se pudo consultar la base para decidir la siembra; se omite." >&2
+        else
+            echo "==> La base ya tiene ${TORNEOS} torneo(s): no se vuelven a sembrar datos de demostración."
+        fi
+    fi
+fi
+
 exec apache2-foreground

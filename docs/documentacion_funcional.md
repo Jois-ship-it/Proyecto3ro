@@ -44,6 +44,38 @@ Las organizaciones deportivas y educativas carecen de herramientas accesibles pa
 
 `*` solo para torneos asignados   `**` si tiene autorización
 
+## Datos de prueba
+
+`database/seed_demo.php` genera el juego de datos de demostración **usando los
+servicios del dominio**, no INSERT sueltos: los torneos se juegan de verdad, los
+brackets avanzan, las tablas se recalculan y los campeones se definen solos. Eso
+hace que los datos de prueba sean consistentes con las reglas de negocio.
+
+Volumen que deja (la letra exige un mínimo de 50 registros por componente):
+
+| Componente | Registros |
+|---|---|
+| Usuarios | 60 |
+| Participantes | 60 (52 con cuenta, 8 sin cuenta) |
+| Equipos | 52 (208 integrantes) |
+| Torneos | 52 (18 finalizados, 10 en curso, 16 en inscripción, 5 en borrador, 3 cancelados) |
+| Inscripciones | 288 |
+| Rondas | 106 |
+| Enfrentamientos | 318 |
+| Resultados | 264 |
+| Tabla de posiciones | 118 |
+| Configuraciones de torneo | 174 |
+| Solicitudes de corrección | 55 (aprobadas, rechazadas y pendientes) |
+| Auditoría | 879 |
+
+**Excepción documentada: las tablas de catálogo.** `roles` (3), `tipos_torneo`
+(3), `modulos` (9) y `permisos` (9) no llegan a 50 y no deberían: tienen tantas
+filas como conceptos existen en el sistema —tres roles, tres formatos de torneo,
+nueve módulos— y rellenarlas con entradas inventadas sería ruido, no datos de
+prueba. `tests/datos_minimos_test.php` verifica que tengan exactamente la
+cantidad esperada, así la excepción no se convierte en un agujero: si alguien
+agrega un formato o un módulo, el test avisa.
+
 ## Formatos de torneo
 
 ### Liga (Round-robin)

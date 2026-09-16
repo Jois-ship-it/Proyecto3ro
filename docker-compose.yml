@@ -21,6 +21,10 @@ services:
       - APP_SECRET=${APP_SECRET:-change_me}
       - APP_URL=${APP_URL:-http://localhost:8080}
       - HTTPS_PORT=${HTTPS_PORT:-443}
+      # Carga database/seed_demo.php en la PRIMERA inicialización (cuando la
+      # base todavía no tiene torneos). Poner 0 para arrancar solo con lo que
+      # traen schema.sql y seed.sql.
+      - SEED_DEMO=${SEED_DEMO:-1}
     depends_on:
       db:
         condition: service_healthy
