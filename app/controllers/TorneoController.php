@@ -17,6 +17,7 @@ class TorneoController extends BaseController
     public function listadoAdmin(): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'ver');
         // Un organizador solo ve SUS torneos desde este listado; el admin, todos
         // (misma regla que OrganizadorController::misTorneos()).
         $torneos = Auth::isAdmin()
@@ -35,6 +36,7 @@ class TorneoController extends BaseController
         // del proyecto, "crear y configurar torneos" es función del administrador;
         // el organizador únicamente "configura torneos asignados".
         if ($id) {
+            $this->requirePermiso('torneos', 'editar', '/admin/torneos');
             $this->requireTorneoOwnership((int)$id, '/admin/torneos');
         } elseif (!Auth::isAdmin()) {
             $this->flash('error', 'Solo un administrador puede crear torneos nuevos.');
@@ -68,6 +70,7 @@ class TorneoController extends BaseController
         $this->requireOrganizador();
         $torneoActual = $id ? $this->torneoService->getById((int)$id) : null;
         if ($id) {
+            $this->requirePermiso('torneos', 'editar', '/admin/torneos');
             $this->requireTorneoOwnership((int)$id, '/admin/torneos');
         } elseif (!Auth::isAdmin()) {
             $this->flash('error', 'Solo un administrador puede crear torneos nuevos.');
@@ -121,6 +124,7 @@ class TorneoController extends BaseController
     public function gestion(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'ver');
         $this->requireTorneoOwnership((int)$id, '/admin/torneos');
         $torneo = $this->torneoService->getById((int)$id);
         if (!$torneo) {
@@ -187,8 +191,16 @@ class TorneoController extends BaseController
         $torneo = $this->torneoService->getById((int)$id);
         if (!$torneo) { $this->flash('error', 'Torneo no encontrado.'); $this->redirect('/admin/torneos'); }
 
+        // Letra §5.2 «generar rondas o llaves»: el permiso se pide sobre el
+        // modulo del formato concreto (ver OrganizadorController).
+        $tipo = $this->tipoModel->findById((int)$torneo['tipo_torneo_id']);
+        if (!$tipo) {
+            $this->flash('error', 'El torneo no tiene un formato valido asignado.');
+            $this->redirect("/admin/torneos/{$id}");
+        }
+        $this->requirePermiso((string)$tipo['slug'], 'crear', "/admin/torneos/{$id}");
+
         try {
-            $tipo = $this->tipoModel->findById((int)$torneo['tipo_torneo_id']);
             match ($tipo['slug']) {
                 'liga'               => (new LigaService())->generarFixture((int)$id),
                 'eliminacion_directa'=> (new EliminacionDirectaService())->generarBracket((int)$id),
@@ -235,6 +247,8 @@ class TorneoController extends BaseController
     private function accionSobreRonda(int $rondaId, string $accion): void
     {
         $this->requireOrganizador();
+        // Letra §5.2: «publicar o cerrar rondas».
+        $this->requirePermiso('torneos', 'editar', $this->volverATorneos());
 
         $rondaService = new RondaService();
         $ronda        = $rondaService->getById($rondaId);
@@ -284,6 +298,7 @@ class TorneoController extends BaseController
     public function inscribir(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'editar', "/admin/torneos/{$id}");
         $this->requireTorneoOwnership((int)$id, '/admin/torneos');
         $this->checkCsrf();
         try {
@@ -305,6 +320,7 @@ class TorneoController extends BaseController
     public function desinscribir(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'editar', "/admin/torneos/{$id}");
         $this->requireTorneoOwnership((int)$id, '/admin/torneos');
         $this->checkCsrf();
         try {

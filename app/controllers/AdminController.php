@@ -8,6 +8,7 @@ class AdminController extends BaseController
     private EquipoService      $equipoService;
     private AuditoriaService   $auditoriaService;
     private ModuloService      $moduloService;
+    private PermisoService     $permisoService;
 
     public function __construct()
     {
@@ -16,6 +17,7 @@ class AdminController extends BaseController
         $this->equipoService       = new EquipoService();
         $this->auditoriaService    = new AuditoriaService();
         $this->moduloService       = new ModuloService();
+        $this->permisoService      = new PermisoService();
     }
 
     // ─── Dashboard ───────────────────────────────────────────
@@ -376,5 +378,37 @@ class AdminController extends BaseController
             $this->flash('error', $e->getMessage());
         }
         $this->redirect('/admin/modulos');
+    }
+
+    // ─── Permisos por rol ─────────────────────────────
+
+    public function permisos(): void
+    {
+        $this->requireAdmin();
+        $datos = $this->permisoService->matrizCompleta();
+        $this->render('admin/permisos', [
+            'pageTitle'    => 'Permisos',
+            'roles'        => $datos['roles'],
+            'modulos'      => $datos['modulos'],
+            'permisos'     => $datos['permisos'],
+            'rolAdminId'   => $datos['rol_admin_id'],
+            'acciones'     => PermisoService::ACCIONES,
+        ], 'admin');
+    }
+
+    public function permisosGuardar(): void
+    {
+        $this->requireAdmin();
+        $this->checkCsrf();
+        try {
+            // El formulario manda permisos[rol_id][slug][accion] = 1 solo para
+            // las casillas tildadas; las que no vienen se toman como negadas.
+            $marcados = $_POST['permisos'] ?? [];
+            $filas = $this->permisoService->guardarMatriz(is_array($marcados) ? $marcados : []);
+            $this->flash('success', "Permisos actualizados: {$filas} combinacion(es) rol/modulo con acceso.");
+        } catch (RuntimeException $e) {
+            $this->flash('error', $e->getMessage());
+        }
+        $this->redirect('/admin/permisos');
     }
 }

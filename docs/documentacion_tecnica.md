@@ -32,12 +32,12 @@ Request → Router → Controller → Service → Model → PDO → MySQL
 
 ```
 sgdm/
-├── app/controllers/     — 7 controladores
-├── app/models/          — 14 modelos
-├── app/services/        — 13 servicios
-├── app/views/           — ~40 vistas PHP
+├── app/controllers/     — 8 controladores
+├── app/models/          — 15 modelos
+├── app/services/        — 18 servicios + 2 traits
+├── app/views/           — 47 vistas PHP
 ├── config/              — app.php, database.php, routes.php
-├── core/                — 8 clases base (Router, DB, Auth, CSRF, etc.)
+├── core/                — 10 clases base (Router, DB, Auth, CSRF, etc.)
 ├── database/            — schema.sql, seed.sql
 ├── docs/                — Documentación
 ├── public/              — Front controller + assets
@@ -121,6 +121,59 @@ Los participantes **no se crean manualmente**: se auto-registran desde `/registr
 - `app/services/StatsService.php` — agregación de estadísticas e historial para participantes (`participante()`) y equipos (`equipo()`): PJ/PG/PE/PP/PF/PC, % victorias, torneos (activos/finalizados), campeonatos, posiciones, historial cronológico y **evolución** (win-rate acumulado). Cruza los tres formatos. Sin tablas nuevas.
 - `app/views/partials/perfil_stats.php` — panel reutilizable (KPIs + barra de rendimiento + sparkline SVG de evolución + form guide + torneos + historial), usado por el perfil de participante y de equipo.
 - Perfiles: privado autogestionado (`/participante/perfil`, con subida de foto) y públicos read-only (`/jugador/{id}`, `/equipo/{id}`). `View::avatar()` muestra imagen o iniciales.
+
+## Las tres compuertas de autorización
+
+Una acción del panel pasa por tres comprobaciones distintas, y las tres tienen
+que dar verde. Cada una responde una pregunta que las otras no pueden responder:
+
+| Compuerta | Pregunta | Granularidad | Dónde |
+|---|---|---|---|
+| **Rol** | ¿Qué tipo de usuario es? | por rol | `Auth::requireRole()` |
+| **Permiso de módulo** | ¿Su rol puede hacer esa acción en ese módulo? | rol × módulo × acción | `PermisoService` sobre la tabla `permisos` |
+| **Propiedad** | ¿Es **su** torneo? | por fila | `BaseController::requireTorneoOwnership()` |
+
+Un cuarto interruptor, `modulos.estado`, es de otra naturaleza: apaga un módulo
+para **todo el sistema**. No es autorización de un usuario, es disponibilidad de
+una funcionalidad, y por eso vive aparte (`ModuloActivoTrait`).
+
+Orden en el que se llaman dentro de una acción:
+
+```php
+$this->requireOrganizador();                                   // 1. rol
+$this->requirePermiso('torneos', 'editar', '/admin/torneos');  // 2. módulo
+$this->requireTorneoOwnership((int)$id, '/admin/torneos');     // 3. propiedad
+$this->checkCsrf();
+```
+
+### Por qué tres y no una
+
+La tabla `permisos` **no puede** expresar la propiedad del torneo: es por rol y
+módulo, no por fila. Y el rol solo no puede expresar «este organizador sí puede
+corregir resultados y aquel no», que es literalmente lo que pide la letra del
+proyecto en §5.2: «corregir resultados **si cuenta con autorización**». Cada
+compuerta cubre lo que las otras no alcanzan.
+
+### Negar por omisión
+
+Sin fila en `permisos`, el rol no puede nada. Es deliberado: agregar un módulo
+nuevo al catálogo no le abre la puerta a nadie hasta que un administrador lo
+habilite desde Sistema → Permisos.
+
+El administrador es la única excepción: pasa sin consultar la tabla (§5.1, «control
+completo sobre el sistema») y **no se le guardan filas**. Sin esa excepción, un
+descuido en la pantalla de permisos dejaría el sistema sin nadie que pueda
+entrar a arreglarlo.
+
+### Historia
+
+Hasta septiembre de 2026 la tabla `permisos` existía en el esquema, tenía clave
+foránea a `modulos`, índice único y hasta una migración propia
+(`2026_06_fk_permisos_modulos.sql`)… y ninguna consulta la leía. El control era
+solo por rol, y cuatro restricciones del documento de RNE citaban un
+`PermisoService` que no existía. Cubierto por `tests/permisos_test.php`, que
+además verifica que las guardas estén puestas en los controladores: que el
+servicio decida bien no sirve de nada si nadie lo llama.
 
 ## Estados reversibles
 

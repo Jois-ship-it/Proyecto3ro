@@ -6,6 +6,10 @@ class ParticipanteController extends BaseController
     public function dashboard(): void
     {
         $this->requireRole(['participante', 'administrador']);
+        // Letra §5.3: el participante consulta sus torneos, calendario,
+        // resultados y posicion. El perfil propio NO se filtra por modulo: son
+        // sus datos, y la letra se los concede por rol.
+        $this->requirePermiso('consulta_publica', 'ver');
         $participante = (new ParticipanteModel())->findByUsuario((int)Auth::id());
 
         $torneos   = [];
@@ -103,6 +107,8 @@ class ParticipanteController extends BaseController
     public function misTorneos(): void
     {
         $this->requireRole(['participante', 'administrador']);
+        // Ademas de consultar, la vista muestra resultados y posiciones.
+        $this->requirePermiso('resultados', 'ver');
         $participante = (new ParticipanteModel())->findByUsuario((int)Auth::id());
         $torneos = $participante
             ? (new InscripcionModel())->getByParticipante((int)$participante['id'])

@@ -35,6 +35,7 @@
 
   <div class="side-section-title">Sistema</div>
   <a class="side-link" href="/admin/modulos"><span>Módulos</span><span>›</span></a>
+  <a class="side-link" href="/admin/permisos"><span>Permisos</span><span>›</span></a>
   <a class="side-link" href="/admin/auditoria"><span>Auditoría</span><span>›</span></a>
 
   <div class="side-section-title">Otros roles</div>

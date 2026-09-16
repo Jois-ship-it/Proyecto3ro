@@ -90,6 +90,8 @@ $router->post('admin/correcciones/{id}/rechazar', 'CorreccionController', 'recha
 $router->get('admin/auditoria',                   'AdminController', 'auditoria');
 $router->get('admin/modulos',                     'AdminController', 'modulos');
 $router->post('admin/modulos/toggle/{id}',        'AdminController', 'moduloToggle');
+$router->get('admin/permisos',                    'AdminController', 'permisos');
+$router->post('admin/permisos',                   'AdminController', 'permisosGuardar');
 
 // ─── ORGANIZADOR ────────────────────────────────────────────
 $router->get('organizador',                       'OrganizadorController', 'dashboard');

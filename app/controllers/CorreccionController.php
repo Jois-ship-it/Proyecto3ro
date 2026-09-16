@@ -14,6 +14,9 @@ class CorreccionController extends BaseController
     public function solicitar(): void
     {
         $this->requireOrganizador();
+        // Misma autorizacion que corregir (letra §5.2): pedir la correccion es
+        // el camino del organizador que NO puede aplicarla por su cuenta.
+        $this->requirePermiso('resultados', 'editar', '/organizador/torneos');
         $this->checkCsrf();
 
         $enfId   = $this->postInt('enfrentamiento_id');

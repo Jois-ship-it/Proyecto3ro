@@ -45,9 +45,32 @@ El servidor valida con `hash_equals()` para prevenir timing attacks.
 
 ## Roles y permisos
 
+El acceso se decide con **tres comprobaciones independientes**, y las tres tienen
+que dar verde. Ninguna reemplaza a las otras:
+
+| Compuerta | Pregunta que responde | Dónde vive |
+|---|---|---|
+| Rol | ¿Es administrador / organizador / participante? | `Auth::requireRole()` |
+| Permiso de módulo | ¿Ese rol puede hacer esa acción en ese módulo? | tabla `permisos` → `PermisoService` |
+| Propiedad | ¿Es **su** torneo? | `BaseController::requireTorneoOwnership()` |
+
+A eso se suma `modulos.estado`, que apaga un módulo para **todo** el sistema sin
+importar qué diga la matriz de permisos.
+
+Detalles de la tabla `permisos`:
+
 - 4 roles definidos en BD: administrador, organizador, participante, público
-- Tabla `permisos` para granularidad adicional por módulo
-- El administrador tiene acceso total sin pasar por la tabla de permisos
+- Una fila por combinación rol × módulo, con cuatro acciones: ver, crear,
+  editar, eliminar
+- **Se niega por omisión**: sin fila, el rol no puede nada. Agregar un módulo
+  nuevo no le abre la puerta a nadie por accidente
+- El administrador tiene acceso total sin pasar por la tabla, y **no se le
+  guardan filas**: es lo que impide dejarlo sin acceso editando la matriz
+- La matriz se edita desde el panel (Sistema → Permisos) y cada cambio queda
+  auditado con el estado anterior y el nuevo
+- El contenido sembrado reproduce la sección 5 de la letra del proyecto. En
+  particular, «corregir resultados si cuenta con autorización» (§5.2) es
+  exactamente la casilla `resultados / editar` del organizador
 
 ## Auditoría
 

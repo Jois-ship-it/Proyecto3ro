@@ -21,6 +21,8 @@ class ResultadoController extends BaseController
     public function cargar(): void
     {
         $this->requireOrganizador();
+        // Letra §5.2: «cargar resultados».
+        $this->requirePermiso('resultados', 'crear', '/organizador/torneos');
         $this->checkCsrf();
 
         $enfId   = $this->postInt('enfrentamiento_id');
@@ -43,6 +45,7 @@ class ResultadoController extends BaseController
     public function programar(): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('resultados', 'editar', '/organizador/torneos');
         $this->checkCsrf();
 
         $enfId    = $this->postInt('enfrentamiento_id');
@@ -64,6 +67,10 @@ class ResultadoController extends BaseController
     public function corregir(): void
     {
         $this->requireOrganizador();
+        // Letra §5.2: «corregir resultados SI CUENTA CON AUTORIZACION». Esa
+        // autorizacion es la fila de permisos del rol sobre el modulo
+        // resultados; sin ella el organizador puede cargar pero no rehacer.
+        $this->requirePermiso('resultados', 'editar', '/organizador/torneos');
         $this->checkCsrf();
 
         $enfId    = $this->postInt('enfrentamiento_id');

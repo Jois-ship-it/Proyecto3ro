@@ -55,9 +55,43 @@ sigue mostrando su formato actual (marcado como *módulo deshabilitado*) para no
 cambiarlo en silencio al guardar. Lo que no se puede es **pasar** un torneo a un
 formato deshabilitado.
 
-Los demás módulos del panel (`participantes`, `equipos`, `auditoria`,
-`consulta_publica`, `resultados`, `torneos`) todavía no tienen efecto funcional:
-su estado se guarda pero ningún flujo lo consulta.
+Para los demás módulos (`participantes`, `equipos`, `auditoria`,
+`consulta_publica`, `resultados`, `torneos`), el **interruptor activo/inactivo**
+sigue sin tener efecto: su estado se guarda pero ningún flujo lo consulta. Lo que
+sí decide en todos ellos son los **permisos por rol**, que son otra cosa y se
+manejan en otra pantalla (ver abajo).
+
+## Permisos por rol
+
+Panel Admin → Sistema → **Permisos**.
+
+Una tabla por rol, una fila por módulo y una casilla por acción (ver, crear,
+editar, eliminar). Se guarda todo junto con un botón, así un cambio queda
+aplicado de una sola vez y no a medias.
+
+Para qué sirve, en concreto:
+
+- **Sacarle a un organizador la posibilidad de corregir resultados** sin quitarle
+  la de cargarlos: destildar `resultados / editar` y dejar `resultados / crear`.
+  Es la «autorización» que menciona la letra del proyecto en §5.2.
+- **Habilitar a un organizador en un formato y no en otro**: tildar
+  `liga / crear` y destildar `suizo / crear`.
+- **Dejar un rol solo de lectura**: dejar únicamente las casillas `ver`.
+
+Tres cosas para tener presentes:
+
+1. **Sin ninguna casilla marcada, ese módulo queda negado** para el rol. No hace
+   falta «prohibir» explícitamente: lo que no está habilitado, no se puede.
+2. **El administrador no aparece con casillas.** Tiene control completo y no pasa
+   por esta tabla. Es a propósito: si se pudiera recortar su acceso desde acá,
+   un descuido dejaría el sistema sin nadie que pueda entrar a arreglarlo.
+3. **No reemplaza a las otras comprobaciones.** Un organizador con
+   `torneos / editar` sigue alcanzando solo **sus** torneos, y un módulo de
+   formato desactivado en la pantalla de Módulos queda cerrado para todos, tenga
+   el permiso que tenga.
+
+Cada guardado queda en **Auditoría** con la matriz anterior y la nueva, en
+formato `rol:modulo` → `VCEX` (una letra por acción habilitada, guión donde no).
 
 ## Cerrar y reabrir rondas
 

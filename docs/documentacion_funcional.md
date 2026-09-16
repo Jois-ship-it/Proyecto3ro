@@ -33,7 +33,8 @@ Las organizaciones deportivas y educativas carecen de herramientas accesibles pa
 | Acción | Admin | Organizador | Participante | Público |
 |--------|-------|-------------|--------------|---------|
 | Crear/editar usuarios | ✓ | — | — | — |
-| Crear/configurar torneos | ✓ | ✓* | — | — |
+| Crear torneos | ✓ | — | — | — |
+| Configurar torneos | ✓ | ✓* | — | — |
 | Inscribir participantes | ✓ | ✓* | — | — |
 | Generar competencia | ✓ | ✓* | — | — |
 | Cargar resultados | ✓ | ✓* | — | — |
@@ -43,6 +44,16 @@ Las organizaciones deportivas y educativas carecen de herramientas accesibles pa
 | Editar perfil | ✓ | — | ✓ | — |
 
 `*` solo para torneos asignados   `**` si tiene autorización
+
+La columna del organizador no está clavada en el código: sale de la tabla
+`permisos`, que el administrador edita desde **Sistema → Permisos**. Cada casilla
+de esta matriz es una fila rol × módulo con cuatro acciones (ver, crear, editar,
+eliminar). La autorización del `**` es exactamente la casilla
+`resultados / editar` del rol organizador.
+
+El administrador no aparece en la tabla a propósito: tiene control completo y
+pasa sin consultarla, de modo que no hay forma de dejarlo sin acceso editando la
+matriz. Ver `docs/documentacion_seguridad.md` → «Roles y permisos».
 
 ## Datos de prueba
 

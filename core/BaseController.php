@@ -54,6 +54,36 @@ abstract class BaseController
     }
 
     /**
+     * Corta la acción si el rol del usuario no tiene ese permiso sobre ese
+     * módulo (tabla `permisos`). El administrador pasa siempre: la letra le da
+     * control completo del sistema (§5.1).
+     *
+     * Es la segunda de las tres compuertas —rol, permiso de módulo y propiedad
+     * del torneo— y no reemplaza a las otras: se llama DESPUÉS de requireRole()
+     * y junto a requireTorneoOwnership() donde corresponda.
+     *
+     * @param string      $redirectUrl Si se pasa, avisa con un flash y redirige,
+     *                                 que es lo razonable después de un POST. Sin
+     *                                 él muestra el 403, igual que requireRole().
+     */
+    protected function requirePermiso(string $modulo, string $accion, string $redirectUrl = ''): void
+    {
+        if ((new PermisoService())->puedeUsuarioActual($modulo, $accion)) {
+            return;
+        }
+
+        if ($redirectUrl !== '') {
+            $this->flash('error', "Tu rol no tiene permiso para {$accion} en el módulo «{$modulo}». "
+                                . 'Un administrador puede habilitarlo desde Sistema → Permisos.');
+            $this->redirect($redirectUrl);
+        }
+
+        http_response_code(403);
+        $this->render('shared/403', [], 'public');
+        exit;
+    }
+
+    /**
      * Un organizador solo puede gestionar SUS torneos; el administrador, todos.
      * Centraliza la regla que antes estaba duplicada (y parcialmente ausente)
      * entre TorneoController, OrganizadorController y ResultadoController.

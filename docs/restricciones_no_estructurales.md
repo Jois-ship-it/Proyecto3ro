@@ -116,10 +116,18 @@ Reglas de negocio que **no** son garantizadas por el esquema de la base de datos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 59 | El administrador tiene acceso total a todos los módulos y acciones (bypass). | `PermisoService:15` |
-| 60 | Un usuario sin rol no tiene ningún permiso. | `PermisoService:12` |
-| 61 | Otros roles solo operan un módulo si una fila en `permisos` lo habilita; por defecto se niega. | `PermisoService:32` |
-| 62 | Los permisos se evalúan por acción: ver, crear, editar, eliminar. | `PermisoService:38-41` |
+| 59 | El administrador tiene acceso total a todos los módulos y acciones (bypass), y no se le guardan filas en `permisos`. | `PermisoService:81` |
+| 60 | Un visitante sin sesión no tiene ningún permiso. | `PermisoService:80` |
+| 61 | Otros roles solo operan un módulo si una fila en `permisos` lo habilita; por defecto se niega. | `PermisoService:88` |
+| 62 | Los permisos se evalúan por acción: ver, crear, editar, eliminar. Una acción fuera de esas cuatro es un error de programación y lanza excepción en vez de negar en silencio. | `PermisoService:74`, `PermisoService:90` |
+| 63 | La matriz sembrada reproduce la sección 5 de la letra: el organizador configura torneos asignados y carga resultados, pero no gestiona el padrón de participantes ni de equipos. | `database/seed.sql` → bloque PERMISOS; verificado en `tests/permisos_test.php` |
+| 64 | Cambiar la matriz de permisos queda registrado en auditoría con el antes y el después. | `PermisoService:161` |
+
+> Hasta septiembre de 2026 estas restricciones citaban un `PermisoService` que
+> **no existía**: la tabla `permisos` estaba en el esquema, tenía clave foránea y
+> índice único, y ninguna consulta la leía. El control era solo por rol. El
+> servicio existe desde entonces y las guardas lo llaman; ver
+> `docs/documentacion_tecnica.md` → «Las tres compuertas de autorización».
 
 ## 11. Propiedad del torneo (ownership)
 

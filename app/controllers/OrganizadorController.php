@@ -15,6 +15,8 @@ class OrganizadorController extends BaseController
     public function dashboard(): void
     {
         $this->requireOrganizador();
+        // Letra §5.2: el organizador trabaja sobre los torneos que administra.
+        $this->requirePermiso('torneos', 'ver');
         $torneos = $this->torneoService->getByOrganizador((int)Auth::id());
         // Si es admin, ver todos
         if (Auth::isAdmin()) {
@@ -29,6 +31,7 @@ class OrganizadorController extends BaseController
     public function misTorneos(): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'ver');
         $torneos = Auth::isAdmin()
             ? $this->torneoService->getAll()
             : $this->torneoService->getByOrganizador((int)Auth::id());
@@ -42,6 +45,7 @@ class OrganizadorController extends BaseController
     public function gestion(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'ver');
         $this->requireTorneoOwnership((int)$id, '/organizador/torneos');
         $torneo = $this->torneoService->getById((int)$id);
         if (!$torneo) { $this->flash('error', 'Torneo no encontrado.'); $this->redirect('/organizador/torneos'); }
@@ -103,6 +107,11 @@ class OrganizadorController extends BaseController
         $this->checkCsrf();
         try {
             $tipo = (new TipoTorneoModel())->findById((int)(new TorneoModel())->findById((int)$id)['tipo_torneo_id']);
+            // Letra §5.2 «generar rondas o llaves»: el permiso se pide sobre el
+            // modulo del formato concreto, no sobre «torneos» en general, para
+            // que el administrador pueda habilitar a un organizador en liga y
+            // no en suizo, por ejemplo.
+            $this->requirePermiso((string)$tipo['slug'], 'crear', "/organizador/torneos/{$id}");
             match ($tipo['slug']) {
                 'liga'               => (new LigaService())->generarFixture((int)$id),
                 'eliminacion_directa'=> (new EliminacionDirectaService())->generarBracket((int)$id),
@@ -119,6 +128,7 @@ class OrganizadorController extends BaseController
     public function siguienteRondaSuizo(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('suizo', 'crear', "/organizador/torneos/{$id}");
         $this->requireTorneoOwnership((int)$id, '/organizador/torneos');
         $this->checkCsrf();
         try {
@@ -133,6 +143,10 @@ class OrganizadorController extends BaseController
     public function inscribir(string $id): void
     {
         $this->requireOrganizador();
+        // Letra §5.2 «inscribir participantes». Es una accion sobre el torneo,
+        // no sobre el padron de participantes: gestionar participantes es del
+        // administrador (§5.1).
+        $this->requirePermiso('torneos', 'editar', "/organizador/torneos/{$id}");
         $this->requireTorneoOwnership((int)$id, '/organizador/torneos');
         $this->checkCsrf();
         try {
@@ -150,6 +164,7 @@ class OrganizadorController extends BaseController
     public function desinscribir(string $id): void
     {
         $this->requireOrganizador();
+        $this->requirePermiso('torneos', 'editar', "/organizador/torneos/{$id}");
         $this->requireTorneoOwnership((int)$id, '/organizador/torneos');
         $this->checkCsrf();
         try {

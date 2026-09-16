@@ -172,19 +172,28 @@ INSERT INTO equipo_participantes (equipo_id, participante_id, rol_en_equipo) VAL
 ON DUPLICATE KEY UPDATE rol_en_equipo = VALUES(rol_en_equipo);
 
 -- ─── PERMISOS ─────────────────────────────────────────────────
+-- Cada fila sale de la letra del proyecto, sección 5 (Roles del sistema).
+-- El ADMINISTRADOR no tiene filas a propósito: §5.1 le da "control completo
+-- sobre el sistema", y PermisoService lo deja pasar sin consultar la tabla. Así
+-- no hay forma de dejarlo sin acceso editando la matriz desde la pantalla.
 INSERT INTO permisos (rol_id, modulo_slug, puede_ver, puede_crear, puede_editar, puede_eliminar) VALUES
--- Organizador
-(2, 'torneos',          1, 0, 1, 0),
-(2, 'resultados',       1, 1, 1, 0),
-(2, 'participantes',    1, 1, 1, 0),
-(2, 'equipos',          1, 0, 0, 0),
-(2, 'liga',             1, 1, 1, 0),
+-- Organizador (§5.2): "permisos limitados a los torneos que administra".
+(2, 'torneos',          1, 0, 1, 0),   -- "configurar torneos asignados" y "publicar o cerrar rondas". Crear es del admin (§5.1).
+(2, 'resultados',       1, 1, 1, 0),   -- "cargar resultados" y "corregir resultados si cuenta con autorización".
+(2, 'participantes',    1, 0, 0, 0),   -- Solo lectura: §5.2 le da "inscribir participantes", pero "gestionar participantes y equipos" es del admin (§5.1).
+(2, 'equipos',          1, 0, 0, 0),   -- Ídem: el padrón de equipos lo gestiona el administrador.
+(2, 'liga',             1, 1, 1, 0),   -- "generar rondas o llaves" en cada formato habilitado.
 (2, 'eliminacion_directa', 1, 1, 1, 0),
 (2, 'suizo',            1, 1, 1, 0),
--- Participante
+-- Participante (§5.3): consulta y nada más. "No podrá modificar resultados,
+-- crear torneos ni alterar configuraciones de competencia."
 (3, 'consulta_publica', 1, 0, 0, 0),
 (3, 'resultados',       1, 0, 0, 0)
-ON DUPLICATE KEY UPDATE puede_ver = VALUES(puede_ver);
+ON DUPLICATE KEY UPDATE
+    puede_ver      = VALUES(puede_ver),
+    puede_crear    = VALUES(puede_crear),
+    puede_editar   = VALUES(puede_editar),
+    puede_eliminar = VALUES(puede_eliminar);
 
 -- ─── TORNEOS (3 completos, uno por formato) ───────────────────
 INSERT INTO torneos (id, nombre, descripcion, tipo_torneo_id, modalidad, estado, fecha_inicio, fecha_fin, publico,
