@@ -17,9 +17,17 @@ abstract class BaseController
         View::render($view, $data, $layout);
     }
 
+    /**
+     * Redirige, pero nunca fuera del sitio.
+     *
+     * El filtro va acá adentro a propósito, además de en cada lugar que arma un
+     * destino con datos del pedido: así un controlador nuevo que se olvide de
+     * filtrar no abre un agujero, solo manda al visitante a la portada. Ver
+     * `core/Url.php`.
+     */
     protected function redirect(string $url): never
     {
-        header('Location: ' . $url);
+        header('Location: ' . Url::interna($url, '/'));
         exit;
     }
 

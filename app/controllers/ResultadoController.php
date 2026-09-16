@@ -15,7 +15,10 @@ class ResultadoController extends BaseController
     {
         $enf = (new EnfrentamientoModel())->findById($enfId);
         if (!$enf) return; // el servicio informará "no encontrado"
-        $this->requireTorneoOwnership((int)$enf['torneo_id'], $_SERVER['HTTP_REFERER'] ?? '/organizador/torneos');
+        $this->requireTorneoOwnership(
+            (int)$enf['torneo_id'],
+            Url::interna($_SERVER['HTTP_REFERER'] ?? null, '/organizador/torneos')
+        );
     }
 
     public function cargar(): void
@@ -38,7 +41,9 @@ class ResultadoController extends BaseController
             $this->flash('error', $e->getMessage());
         }
 
-        $referer = $_SERVER['HTTP_REFERER'] ?? "/admin/torneos/{$torneoId}";
+        // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
+        // acepta solo si es del propio sitio (ver core/Url.php).
+        $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
         $this->redirect($referer);
     }
 
@@ -60,7 +65,9 @@ class ResultadoController extends BaseController
             $this->flash('error', $e->getMessage());
         }
 
-        $referer = $_SERVER['HTTP_REFERER'] ?? "/admin/torneos/{$torneoId}";
+        // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
+        // acepta solo si es del propio sitio (ver core/Url.php).
+        $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
         $this->redirect($referer);
     }
 
@@ -87,7 +94,9 @@ class ResultadoController extends BaseController
             $this->flash('error', $e->getMessage());
         }
 
-        $referer = $_SERVER['HTTP_REFERER'] ?? "/admin/torneos/{$torneoId}";
+        // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
+        // acepta solo si es del propio sitio (ver core/Url.php).
+        $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
         $this->redirect($referer);
     }
 }

@@ -14,6 +14,8 @@
 | Credenciales expuestas | Variables de entorno vía `.env` (excluido del repositorio) |
 | Clickjacking | Header `X-Frame-Options: SAMEORIGIN` vía `.htaccess` |
 | Sniffing de tipo | Header `X-Content-Type-Options: nosniff` |
+| Redirección abierta | `Url::interna()` acepta solo rutas del propio sitio; `redirect()` lo aplica siempre |
+| URL con parámetros basura | Los `{id}` de las rutas se validan como enteros positivos: si no, es 404 (`Router::PATRONES`) |
 | Índices en tablas | Email, estado, torneo_id indexados para evitar full scans |
 
 ## Control de acceso por rol

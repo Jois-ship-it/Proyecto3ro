@@ -214,6 +214,7 @@ sufijo `_test`.
 | `torneo_ownership_test.php` | `TorneoController`: quién puede crear, editar y reasignar torneos. |
 | `modulos_toggle_test.php` | `ModuloService` + guardas de módulo en los tres formatos. |
 | `rondas_estado_test.php` | `RondaService`: estado de las rondas, cierre automático y cerrar/reabrir manual. |
+| `redireccion_segura_test.php` | `Url::interna()`: solo se redirige adentro del sitio. Cubre las formas de disfrazar un destino externo y comprueba que los controladores filtren. |
 | `puntos_favor_test.php` | `usa_puntos_favor`: ordena o no por diferencia, el mismo criterio decide el campeón, y la casilla no se apaga sola al guardar. |
 | `configuracion_torneo_test.php` | `ConfiguracionTorneoService`: catálogo de claves, validaciones, y el cierre de inscripción rechazando anotarse fuera de plazo. |
 | `permisos_test.php` | `PermisoService` + tabla `permisos`: bypass del administrador, negar por omisión, la matriz contra la sección 5 de la letra, y que las guardas estén puestas en los controladores. |

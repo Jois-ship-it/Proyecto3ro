@@ -85,6 +85,22 @@ final y `/torneo/5%0A` pasaría como si fuera `/torneo/5`.
 
 Cubierto por `tests/ruta_parametros_test.php`.
 
+### A dónde se puede redirigir
+
+`BaseController::redirect()` no manda a cualquier lado: el destino pasa por
+`Url::interna()`, que acepta únicamente rutas del propio sitio. Existe porque
+varios controladores arman el destino con datos del pedido —la cabecera
+`Referer`, el campo `return` de un formulario— para devolver al usuario a la
+pantalla de la que vino, y esos valores los controla quien manda el pedido.
+
+El filtro está puesto dos veces a propósito: en cada lugar que arma el destino,
+con el destino de reserva que corresponde a esa pantalla, y adentro de
+`redirect()` con la portada como reserva. La segunda es la que hace que un
+controlador nuevo no pueda abrir un agujero por descuido.
+
+Detalle en `docs/owasp.md` → A01. Cubierto por
+`tests/redireccion_segura_test.php`.
+
 ## Base de datos
 
 Ver `database/schema.sql`. Las tablas principales son:

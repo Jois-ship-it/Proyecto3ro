@@ -115,7 +115,9 @@ class AdminController extends BaseController
         } catch (RuntimeException $e) {
             $this->flash('error', $e->getMessage());
         }
-        $return = $this->postStr('return', '/admin/organizadores');
+        // `return` viene del formulario, o sea del pedido: mismo criterio que
+        // con el Referer, solo se acepta un destino del propio sitio.
+        $return = Url::interna($this->postStr('return', ''), '/admin/organizadores');
         $this->redirect($return);
     }
 
@@ -129,7 +131,9 @@ class AdminController extends BaseController
         } catch (RuntimeException $e) {
             $this->flash('error', $e->getMessage());
         }
-        $return = $this->postStr('return', '/admin/organizadores');
+        // `return` viene del formulario, o sea del pedido: mismo criterio que
+        // con el Referer, solo se acepta un destino del propio sitio.
+        $return = Url::interna($this->postStr('return', ''), '/admin/organizadores');
         $this->redirect($return);
     }
 

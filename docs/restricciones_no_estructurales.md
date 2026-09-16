@@ -220,8 +220,23 @@ sistema.
 | 102 | Un torneo creado sin el dato queda con el criterio activo, que es el `DEFAULT 1` de la columna. | `TorneoService::prepararDatos()` |
 | 103 | El criterio se puede cambiar con el torneo en curso, y la tabla se recalcula. | `TorneoService::editar()` |
 
+## 18. Destinos de redirección
+
+Varios controladores devuelven al usuario a la pantalla de la que vino usando un
+valor del pedido (`Referer`, o el campo `return` del formulario). Ver
+`docs/owasp.md` → A01.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 104 | Solo se redirige a rutas del propio sitio; cualquier otro destino cae en el de reserva. | `Url::interna()` |
+| 105 | Se rechazan los destinos de protocolo relativo (`//host`, `/\host`), que el navegador resuelve contra otro dominio aunque empiecen con barra. | `Url::rutaInterna()` |
+| 106 | Se rechazan los esquemas que no sean `http`/`https`, y los destinos con caracteres de control. | `Url::rutaInterna()` |
+| 107 | Un host que solo empieza igual que el propio (`flexarena.local.sitio-falso.com`) no cuenta como propio. | `Url::esHostPropio()` |
+| 108 | Una URL absoluta del propio sitio se reduce a su ruta: no se arrastran esquema ni puerto, que pueden no coincidir con los del visitante. | `Url::rutaInterna()` |
+| 109 | `redirect()` aplica el filtro por su cuenta: un controlador que olvide filtrar manda a la portada, no afuera. | `BaseController::redirect()` |
+
 ---
 
-**Total: 103 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 109 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
 las de las secciones 14 y 15 se citan por método.

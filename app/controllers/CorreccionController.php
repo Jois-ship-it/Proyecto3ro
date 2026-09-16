@@ -30,7 +30,7 @@ class CorreccionController extends BaseController
         } catch (RuntimeException $e) {
             $this->flash('error', $e->getMessage());
         }
-        $this->redirect($_SERVER['HTTP_REFERER'] ?? '/organizador/torneos');
+        $this->redirect(Url::interna($_SERVER['HTTP_REFERER'] ?? null, '/organizador/torneos'));
     }
 
     /** Admin: bandeja de solicitudes. */
