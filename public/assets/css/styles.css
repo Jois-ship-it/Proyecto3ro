@@ -106,7 +106,7 @@ p  { color: var(--muted); line-height: 1.65; }
 .public-shell { min-height: 100vh; }
 .public-nav {
   position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
   padding: 1rem clamp(1rem,4vw,4rem);
   background: rgba(7,17,31,.78);
   backdrop-filter: blur(18px);
@@ -124,19 +124,26 @@ p  { color: var(--muted); line-height: 1.65; }
   box-shadow: 0 12px 30px rgba(52,152,219,.12);
 }
 .logo-mark img { width: 30px; height: 30px; object-fit: contain; }
-.nav-links { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+/* En móvil los enlaces viven detrás del botón de menú: ocultos y apilados. */
+.nav-links {
+  display: none; width: 100%;
+  flex-direction: column; align-items: stretch;
+  gap: .4rem; flex-wrap: wrap; padding-top: .75rem;
+}
+.public-nav.open { flex-wrap: wrap; }
+.public-nav.open .nav-links { display: flex; }
 .nav-link  {
-  padding: .65rem .85rem; border-radius: 999px;
+  padding: .65rem .85rem; border-radius: 14px;
   color: var(--muted); font-size: .94rem;
   transition: color .18s, background .18s;
 }
 .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255,255,255,.08); }
-.nav-toggle { display: none; }
+.nav-toggle { display: inline-flex; }
 
 /* ─── HERO ───────────────────────────────────── */
 .hero {
   display: grid;
-  grid-template-columns: minmax(0,1.15fr) minmax(280px,.85fr);
+  grid-template-columns: 1fr;
   gap: 2rem; align-items: center;
   padding: clamp(2.5rem,6vw,6rem) clamp(1rem,4vw,4rem);
 }
@@ -145,19 +152,24 @@ p  { color: var(--muted); line-height: 1.65; }
 /* ─── SECCIÓN / GRID ─────────────────────────── */
 .section { padding: 2rem clamp(1rem,4vw,4rem); }
 .grid { display: grid; gap: 1rem; }
-.grid.cols-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
-.grid.cols-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
-.grid.cols-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; }
 
 /* ─── APP SHELL (PANEL INTERNO) ──────────────── */
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) 1fr; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
 
+/* En móvil la barra lateral es un cajón que entra desde la izquierda; el botón
+   de menú de la topbar le pone la clase .open. */
 .sidebar {
-  position: sticky; top: 0; height: 100vh;
+  position: fixed; inset: 0 auto 0 0;
+  width: min(86vw,310px);
+  transform: translateX(-105%);
+  transition: transform .22s ease;
+  z-index: 80;
   padding: 1rem; border-right: 1px solid var(--line);
   background: rgba(7,17,31,.76); backdrop-filter: blur(18px);
   overflow-y: auto;
 }
+.sidebar.open { transform: translateX(0); }
 .sidebar .brand { padding: .45rem .35rem 1rem; }
 .side-section-title {
   margin: 1rem .65rem .35rem;
@@ -175,16 +187,16 @@ p  { color: var(--muted); line-height: 1.65; }
 .app-main { min-width: 0; }
 .topbar {
   position: sticky; top: 0; z-index: 45;
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 1rem;
   padding: 1rem clamp(1rem,3vw,2rem);
   border-bottom: 1px solid var(--line);
   background: rgba(7,17,31,.7); backdrop-filter: blur(16px);
 }
-.mobile-menu-btn { display: none; }
+.mobile-menu-btn { display: inline-flex; }
 .page            { padding: clamp(1rem,3vw,2rem); }
-.page-header     { display: flex; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+.page-header     { display: flex; flex-direction: column; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
 .page-title h1   { font-size: clamp(1.8rem,4vw,3.1rem); margin: .1rem 0 .45rem; }
-.kpi-row         { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-row         { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
 
 /* ─── TABLAS ─────────────────────────────────── */
 .table-wrap   { overflow: hidden; }
@@ -197,7 +209,7 @@ td { color: #edf6ff; }
 tr:hover td { background: rgba(255,255,255,.035); }
 
 /* ─── FORMULARIOS ────────────────────────────── */
-.form-grid    { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.form-grid    { display: grid; grid-template-columns: 1fr; gap: 1rem; }
 .field        { display: grid; gap: .45rem; }
 label         { color: #d7eaff; font-weight: 700; font-size: .9rem; }
 
@@ -319,32 +331,45 @@ input:focus, select:focus, textarea:focus {
 /* ─── FLASH MESSAGES ─────────────────────────── */
 .flash-msg { margin-bottom: .75rem; }
 
-/* ─── RESPONSIVE ─────────────────────────────── */
-@media (max-width: 980px) {
-  .hero, .grid.cols-2, .grid.cols-3, .grid.cols-4, .kpi-row {
-    grid-template-columns: 1fr;
+/* ─── RESPONSIVE (Mobile First) ──────────────────────────────────────────────
+   Todo lo de arriba es el diseño para pantalla chica. Estos bloques solo AGREGAN
+   lo que hace falta a medida que hay más ancho disponible; no hay ningún
+   max-width. Los dos cortes son:
+
+     721px  — entra la navegación horizontal y los formularios a dos columnas.
+              Antes eran dos cortes distintos (720 y 719) que se diferenciaban
+              en un único píxel; quedaron unificados en este.
+     981px  — entra la grilla de varias columnas y la barra lateral fija.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 721px) {
+  .public-nav { align-items: center; }
+  .nav-toggle { display: none; }
+  .nav-links  {
+    display: flex; width: auto;
+    flex-direction: row; align-items: center;
+    padding-top: 0;
   }
-  .app-shell { grid-template-columns: 1fr; }
-  .sidebar {
-    position: fixed; inset: 0 auto 0 0;
-    width: min(86vw,310px);
-    transform: translateX(-105%);
-    transition: transform .22s ease;
-    z-index: 80;
-  }
-  .sidebar.open { transform: translateX(0); }
-  .mobile-menu-btn { display: inline-flex; }
-  .page-header { flex-direction: column; }
+  .nav-link   { border-radius: 999px; }
+  .form-grid  { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .topbar     { flex-direction: row; align-items: center; }
 }
-@media (max-width: 720px) {
-  .public-nav { align-items: flex-start; }
-  .nav-toggle { display: inline-flex; }
-  .nav-links  { display: none; width: 100%; flex-direction: column; align-items: stretch; padding-top: .75rem; }
-  .public-nav.open { flex-wrap: wrap; }
-  .public-nav.open .nav-links { display: flex; }
-  .nav-link   { border-radius: 14px; }
-  .form-grid  { grid-template-columns: 1fr; }
-  .topbar     { flex-direction: column; align-items: stretch; }
+
+@media (min-width: 981px) {
+  .hero      { grid-template-columns: minmax(0,1.15fr) minmax(280px,.85fr); }
+  .grid.cols-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .grid.cols-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+  .kpi-row   { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .app-shell { grid-template-columns: var(--sidebar) 1fr; }
+  /* La barra lateral deja de ser un cajón y pasa a ocupar su columna. */
+  .sidebar {
+    position: sticky; inset: auto; top: 0;
+    height: 100vh; width: auto;
+    transform: none; transition: none; z-index: auto;
+  }
+  .mobile-menu-btn { display: none; }
+  .page-header { flex-direction: row; }
 }
 
 /* Combobox styles (appended) */
@@ -382,7 +407,18 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 10px 24px rgba(0,0,0,.35);
 
   min-width: 10rem;
-  max-width: 11rem;
+  /* Ancho de móvil; a partir de 721px se achica a 11rem (ver RESPONSIVE).
+     El bloque max-width:719 que había antes solo aportaba esto: su
+     flex-direction no tenía efecto (el contenedor flex es .bk-action-inner)
+     y el width:100% de los botones ya está unas líneas más abajo. */
+  max-width: 14.5rem;
+}
+
+/* El ancho de móvil se achica apenas hay lugar. Este bloque tiene que ir
+   DESPUÉS de la regla base de .bk-action-menu: con la misma especificidad,
+   entre dos reglas que aplican gana la última del archivo. */
+@media (min-width: 721px) {
+  .bk-action-menu { max-width: 11rem; }
 }
 
 /* Inner wrapper that provides the flex layout when the menu is shown via inline display:block */
@@ -424,18 +460,11 @@ input:focus, select:focus, textarea:focus {
   outline-offset: 2px;
 }
 
-/* Desktop: place buttons in a row when there's enough horizontal space */
+/* Con ancho de sobra, los botones del menú van en fila. */
 @media (min-width: 920px) {
-  /* On wide screens allow the menu to expand and lay buttons in a row */
   .bk-action-menu { min-width: 12rem; max-width: 22rem; }
   .bk-action-inner { flex-direction: row; }
   .bk-action-inner .btn.small { flex: 1 1 auto; width: auto; }
-}
-
-/* Mobile: ensure vertical stack and avoid overflow */
-@media (max-width: 719px) {
-  .bk-action-menu { flex-direction: column; max-width: 14.5rem; }
-  .bk-action-menu .btn.small { width: 100%; }
 }
 
 

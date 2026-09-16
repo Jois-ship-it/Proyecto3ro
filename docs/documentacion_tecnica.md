@@ -96,6 +96,38 @@ Los participantes **no se crean manualmente**: se auto-registran desde `/registr
 
 Participantes, equipos y organizadores usan un **toggle activo↔inactivo** (`toggleActivo()` en cada servicio). Es un soft-state: no borra historial (inscripciones/resultados se conservan); reactivar restaura la disponibilidad. El estado fino (`suspendido`) sigue disponible en el formulario de edición.
 
+## Maquetado (Mobile First)
+
+`public/assets/css/styles.css` está escrito con la filosofía **Mobile First**
+que pide la letra: las reglas base son las de pantalla chica y los media queries
+solo **agregan** lo que hace falta a medida que hay más ancho disponible. No hay
+ningún `@media (max-width: …)`.
+
+Los cortes son dos:
+
+| Corte | Qué entra |
+|-------|-----------|
+| `min-width: 721px` | Navegación pública horizontal (se esconde el botón ☰), formularios a dos columnas, topbar en fila. |
+| `min-width: 981px` | Grillas de 2/3/4 columnas, hero a dos columnas, fila de KPIs, y la barra lateral deja de ser un cajón deslizante para ocupar su propia columna. |
+
+Hay además un `min-width: 920px` para el menú emergente del bracket, que ya
+estaba escrito en este estilo.
+
+Antes había tres cortes `max-width` (980, 720 y 719) y uno solo `min-width`.
+Los de 720 y 719 se diferenciaban en un único píxel y se unificaron en 721.
+
+Dos detalles que conviene no perder de vista al tocar este archivo:
+
+- El orden importa. `@media (min-width: …)` no aumenta la especificidad: entre
+  dos reglas que aplican con la misma especificidad gana la última del archivo.
+  Por eso el override de `.bk-action-menu` está **después** de su regla base y no
+  junto a los demás cortes de 721px.
+- La barra lateral tiene `transition: transform`. Si se mide con
+  `getComputedStyle` justo después de cambiar el ancho, se obtiene el valor
+  intermedio de la animación y no el final.
+
+Flexbox y Grid se usan en todo el maquetado (13 y 10 usos respectivamente).
+
 ## Seguridad
 
 Ver `docs/documentacion_seguridad.md` y `docs/owasp.md`.
