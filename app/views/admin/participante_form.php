@@ -1,12 +1,13 @@
 <section class="page-header">
   <div class="page-title">
     <div class="eyebrow">Participante</div>
-    <h1><?= $participante ? 'Editar participante' : 'Nuevo participante' ?></h1>
+    <h1>Editar participante</h1>
   </div>
   <a class="btn" href="/admin/participantes">← Volver</a>
 </section>
 
-<form method="POST" action="/admin/participantes/<?= $participante ? 'editar/' . (int)$participante['id'] : 'crear' ?>" class="form-card">
+<!-- Solo edición: el alta la hace la propia persona desde el registro público. -->
+<form method="POST" action="/admin/participantes/editar/<?= (int)$participante['id'] ?>" class="form-card">
   <?= Csrf::field() ?>
   <div class="form-grid">
     <div class="field">

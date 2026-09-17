@@ -218,30 +218,30 @@ final class DatosMinimosTest extends TestCase
             "hay perfiles que no coinciden con su cuenta:\n        - " . implode("\n        - ", $detalle));
     }
 
-    public function test_los_participantes_sin_cuenta_estan_completos(): void
+    public function test_ningun_participante_queda_sin_cuenta(): void
     {
-        // Un participante sin cuenta es un caso legítimo: el administrador lo
-        // carga a mano desde Participantes → Crear, y ParticipanteService::crear()
-        // no toca la tabla usuarios. Lo que no puede pasar es que además le falten
-        // los datos que sí pide esa pantalla, porque entonces no se distingue del
-        // caso de una fila a medio cargar.
+        // El seed sembraba ocho jugadores «anotados a mano por el organizador».
+        // Ese estado la aplicación no lo sabe producir: el alta manual no existe
+        // y todos se registran por sí mismos. Ver tests/alta_participantes_test.php.
         $sinCuenta = $this->db->query(
-            "SELECT COUNT(*) FROM participantes WHERE usuario_id IS NULL"
-        )->fetchColumn();
+            "SELECT nombre FROM participantes WHERE usuario_id IS NULL"
+        )->fetchAll(PDO::FETCH_COLUMN);
 
-        $this->assertGreaterThan(0, (int) $sinCuenta,
-            'el seed tiene que mostrar el caso del jugador anotado a mano');
+        $this->assertCount(0, $sinCuenta,
+            'participantes sin cuenta, que el sistema no puede crear: ' . implode(', ', $sinCuenta));
+    }
 
+    public function test_los_perfiles_tienen_sus_datos_de_contacto(): void
+    {
         $incompletos = $this->db->query(
             "SELECT nombre FROM participantes
-              WHERE usuario_id IS NULL
-                AND (documento IS NULL OR documento = ''
-                  OR nick      IS NULL OR nick      = ''
-                  OR email     IS NULL OR email     = '')"
+              WHERE documento IS NULL OR documento = ''
+                 OR nick      IS NULL OR nick      = ''
+                 OR email     IS NULL OR email     = ''"
         )->fetchAll(PDO::FETCH_COLUMN);
 
         $this->assertCount(0, $incompletos,
-            'sin cuenta pero también sin datos de contacto: ' . implode(', ', $incompletos));
+            'perfiles a medio cargar: ' . implode(', ', $incompletos));
     }
 
     public function test_los_partidos_jugados_tienen_fecha_real(): void

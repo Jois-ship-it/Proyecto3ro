@@ -15,23 +15,10 @@ class ParticipanteService
     public function getAll(): array       { return $this->model->findAllConEquipo(); }
     public function getById(int $id): ?array { return $this->model->findByIdConEquipos($id); }
 
-    public function crear(array $d): int
-    {
-        $this->validar($d);
-        if (!empty($d['documento']) && $this->model->documentoExiste(trim($d['documento']))) {
-            throw new RuntimeException('Ya existe un participante con ese documento.');
-        }
-        $id = $this->model->insert([
-            'nombre'    => trim($d['nombre']),
-            'documento' => trim($d['documento'] ?? ''),
-            'nick'      => trim($d['nick'] ?? ''),
-            'email'     => trim(strtolower($d['email'] ?? '')),
-            'telefono'  => trim($d['telefono'] ?? ''),
-            'estado'    => $d['estado'] ?? 'activo',
-        ]);
-        $this->auditoria->log('crear_participante', 'participantes', $id, "Participante creado: {$d['nombre']}");
-        return $id;
-    }
+    // No hay crear(): un participante nace de su propio registro público, que
+    // arma la cuenta y el perfil juntos (RegistroService::aprobar). El alta
+    // manual desde el panel no existe, así que un alta sin cuenta asociada no es
+    // un estado que el sistema pueda alcanzar.
 
     public function editar(int $id, array $d): void
     {

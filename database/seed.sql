@@ -112,7 +112,19 @@ INSERT INTO usuarios (id, rol_id, nombre, email, password_hash, failed_attempts,
 (57, 3, 'Malena Corbo',            'male@example.com',                '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
 (58, 3, 'Álvaro Trinidad',         'alvaro@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
 (59, 3, 'Julieta Falero',          'juli@example.com',                '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
-(60, 3, 'Ramiro Ferreira',         'ramiro@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo')
+(60, 3, 'Ramiro Ferreira',         'ramiro@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+-- Estas ocho tenian perfil en seed_demo.php pero no cuenta. Un participante sin
+-- cuenta es un estado que la aplicacion no sabe producir: el alta manual esta
+-- deshabilitada (AdminController::participanteForm) y todos se registran solos.
+-- Sembrarlo era prometer algo que el sistema no hace.
+(61, 3, 'Marcelo Da Rosa',         'marcelo@example.com',             '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(62, 3, 'Elena Zubillaga',         'elena@example.com',               '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(63, 3, 'Wilson Acosta',           'wilson@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(64, 3, 'Norma Cristiani',         'norma@example.com',               '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(65, 3, 'Óscar Buzó',              'oscar@example.com',               '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(66, 3, 'Teresa Lavagna',          'teresa@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(67, 3, 'Aníbal Gadea',            'anibal@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo'),
+(68, 3, 'Estela Montaño',          'estela@example.com',              '$2y$12$K6HKG8mWOpQwFqVxnHaJVebhJkDDc0Koz7r.lrDXr8cjuwCB/DCiG', 0, 'activo')
 ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), password_hash = VALUES(password_hash), failed_attempts = VALUES(failed_attempts), estado = VALUES(estado);
 
 -- ─── PARTICIPANTES (20+) ─────────────────────────────────────

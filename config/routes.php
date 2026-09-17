@@ -40,9 +40,10 @@ $router->post('admin/organizadores/bloquear/{id}',    'AdminController', 'usuari
 
 // ─── ADMIN — PARTICIPANTES ──────────────────────────────────
 $router->get('admin/participantes',               'AdminController', 'participantes');
-$router->get('admin/participantes/crear',         'AdminController', 'participanteForm');
-$router->post('admin/participantes/crear',        'AdminController', 'participanteGuardar');
-$router->get('admin/participantes/editar/{id}',   'AdminController', 'participanteForm');
+// No hay alta manual: los participantes se registran solos y el administrador
+// aprueba la solicitud en admin/registros. Las rutas .../crear existían pero las
+// dos terminaban en un redirect a admin/registros, sin llegar nunca al alta.
+$router->get('admin/participantes/editar/{id}',   'AdminController', 'participanteEditar');
 $router->post('admin/participantes/editar/{id}',  'AdminController', 'participanteGuardar');
 $router->post('admin/participantes/eliminar/{id}','AdminController', 'participanteEliminar');
 // Bloqueo/Desbloqueo de cuentas desde la sección Participantes (reusa lógica de Usuario)

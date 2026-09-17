@@ -186,52 +186,47 @@ class AdminController extends BaseController
         ], 'admin');
     }
 
-    public function participanteForm(string $id = ''): void
+    /**
+     * Editar un participante existente.
+     *
+     * No hay alta manual: los participantes se registran por sí mismos desde la
+     * página pública y el administrador aprueba la solicitud en «Registros». El
+     * $id, entonces, es obligatorio — sin él no hay nada que editar.
+     */
+    public function participanteEditar(string $id): void
     {
         $this->requireAdmin();
-        // Los participantes se registran por cuenta propia: no hay alta manual.
-        if (!$id) {
-            $this->flash('info', 'Los participantes se registran por sí mismos desde la página pública. Aprobá las solicitudes en “Registros”.');
-            $this->redirect('/admin/registros');
-        }
         $participante = $this->participanteService->getById((int)$id);
+        if (!$participante) {
+            $this->flash('error', 'Participante no encontrado.');
+            $this->redirect('/admin/participantes');
+        }
         $this->render('admin/participante_form', [
-            'pageTitle'    => $participante ? 'Editar participante' : 'Nuevo participante',
+            'pageTitle'    => 'Editar participante',
             'participante' => $participante,
             'equipos'      => (new EquipoModel())->findAllConConteo(),
             'csrf'         => Csrf::generate(),
         ], 'admin');
     }
 
-    public function participanteGuardar(string $id = ''): void
+    public function participanteGuardar(string $id): void
     {
         $this->requireAdmin();
         $this->checkCsrf();
-        // Alta manual deshabilitada: solo se editan participantes existentes.
-        if (!$id) {
-            $this->flash('error', 'El alta manual de participantes está deshabilitada. Se registran por sí mismos.');
-            $this->redirect('/admin/registros');
-        }
         try {
-            $datos = [
+            $this->participanteService->editar((int)$id, [
                 'nombre'    => $this->postStr('nombre'),
                 'documento' => $this->postStr('documento'),
                 'nick'      => $this->postStr('nick'),
                 'email'     => $this->postStr('email'),
                 'telefono'  => $this->postStr('telefono'),
                 'estado'    => $this->postStr('estado', 'activo'),
-            ];
-            if ($id) {
-                $this->participanteService->editar((int)$id, $datos);
-                $this->flash('success', 'Participante actualizado.');
-            } else {
-                $this->participanteService->crear($datos);
-                $this->flash('success', 'Participante creado.');
-            }
+            ]);
+            $this->flash('success', 'Participante actualizado.');
             $this->redirect('/admin/participantes');
         } catch (RuntimeException $e) {
             $this->flash('error', $e->getMessage());
-            $this->redirect($id ? "/admin/participantes/editar/{$id}" : '/admin/participantes/crear');
+            $this->redirect("/admin/participantes/editar/{$id}");
         }
     }
 

@@ -61,9 +61,15 @@ foreach ([
 $db->exec('SET FOREIGN_KEY_CHECKS = 1');
 
 // ── 2) PARTICIPANTES ──
-// Uno por cada cuenta con rol 'participante' —así todas las cuentas de prueba
-// tienen perfil, pueden iniciar sesión y aparecen en el sitio— más un puñado de
-// jugadores sin cuenta, que es un caso real: el organizador los anota a mano.
+// Uno por cada cuenta con rol 'participante': así todas las cuentas de prueba
+// tienen perfil, pueden iniciar sesión y aparecen en el sitio.
+//
+// Antes se agregaban ocho jugadores sin cuenta, supuestamente «anotados a mano
+// por el organizador». Ese estado la aplicación no lo sabe producir: el alta
+// manual está deshabilitada en AdminController::participanteForm y en
+// participanteGuardar, y todos se registran por sí mismos. Sembrar un estado
+// inalcanzable es prometer algo que el sistema no hace. Esas ocho personas
+// ahora tienen su cuenta en seed.sql (ids 61-68).
 $cuentas = $db->query(
     "SELECT u.id, u.nombre, u.email, u.estado FROM usuarios u
      JOIN roles r ON r.id = u.rol_id
@@ -99,37 +105,8 @@ foreach ($cuentas as $c) {
     if ($estadoPerfil === 'activo') $pids[] = $pid;
 }
 
-// Jugadores sin cuenta. Es lo que produce Participantes → Crear: el
-// administrador anota a alguien en el padrón y ParticipanteService::crear() no
-// toca la tabla usuarios. Esa persona compite, aparece en la tabla de
-// posiciones y puede integrar un equipo, pero no tiene con qué iniciar sesión.
-// Llevan email y teléfono igual: el organizador necesita poder contactarlos, y
-// sin ningún dato de contacto no se distinguen de una fila a medio cargar.
-$sinCuenta = [
-    ['Marcelo Da Rosa', 'MarceDR', 'marcelo.darosa@correo.example'],
-    ['Elena Zubillaga', 'EleZ',    'elena.zubillaga@correo.example'],
-    ['Wilson Acosta',   'WilsonA', 'wilson.acosta@correo.example'],
-    ['Norma Cristiani', 'NormaC',  'norma.cristiani@correo.example'],
-    ['Óscar Buzó',      'OscarB',  'oscar.buzo@correo.example'],
-    ['Teresa Lavagna',  'TereL',   'teresa.lavagna@correo.example'],
-    ['Aníbal Gadea',    'AniG',    'anibal.gadea@correo.example'],
-    ['Estela Montaño',  'EsteM',   'estela.montano@correo.example'],
-];
-foreach ($sinCuenta as $k => [$nombre, $nick, $email]) {
-    $pid = $partModel->insert([
-        'nombre'    => $nombre,
-        'nick'      => $nick,
-        'email'     => $email,
-        'telefono'  => '099' . str_pad((string)(100 + $k * 37), 6, '0', STR_PAD_LEFT),
-        'documento' => str_pad((string)(5000000 + $k * 211), 8, '0', STR_PAD_LEFT),
-        'estado'    => 'activo',
-    ]);
-    $pidsTodos[] = $pid;
-    $pids[]      = $pid;
-}
 line('Participantes: ' . count($pidsTodos)
-   . ' (' . count($cuentas) . ' con cuenta, ' . count($sinCuenta) . ' sin cuenta'
-   . ', ' . count($pids) . ' en condiciones de competir)');
+   . ' (todos con cuenta, ' . count($pids) . ' en condiciones de competir)');
 
 // ── 3) EQUIPOS (con descripción) + integrantes ──
 // Los diez primeros son los de siempre (los que aparecen en la documentación);
