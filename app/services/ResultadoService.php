@@ -132,6 +132,45 @@ class ResultadoService
     }
 
     /**
+     * El motivo por el que este partido ya no se puede corregir, o null si se puede.
+     *
+     * La regla depende del formato: en Eliminación Directa el bracket ya ubicó al
+     * ganador en la ronda siguiente, y en Suizo el emparejamiento de la ronda
+     * siguiente se armó con esos puntajes. Revertir cualquiera de las dos cosas
+     * es rehacer el torneo desde ahí. La Liga no tiene el problema: el fixture
+     * está completo desde el arranque y la tabla se recalcula entera.
+     *
+     * Es pública y devuelve el motivo en vez de lanzar porque la consultan DOS
+     * caminos: el que aplica la corrección (corregir()) y el que la pide
+     * (CorreccionService::solicitar()). Cuando solo la miraba el primero, se
+     * registraban solicitudes que nunca se iban a poder aprobar.
+     */
+    public function motivoBloqueoCorreccion(int $enfrentamientoId): ?string
+    {
+        $enf = $this->enfModel->findById($enfrentamientoId);
+        if (!$enf) return null;   // que no exista lo reporta quien llama
+
+        $torneo = $this->torneoModel->findByIdCompleto((int)$enf['torneo_id']);
+        $tipo   = $this->tipoModel->findById((int)$torneo['tipo_torneo_id']);
+
+        if ($tipo['slug'] === 'eliminacion_directa'
+            && !$this->eliminacionService->puedeCorregir($enfrentamientoId, (int)$torneo['id'])) {
+            return 'No se puede modificar este resultado porque ya generó una ronda posterior. La corrección requeriría revertir el bracket.';
+        }
+
+        if ($tipo['slug'] === 'suizo') {
+            $rondaModel  = new RondaModel();
+            $ronda       = $rondaModel->findById((int)$enf['ronda_id']);
+            $ultimaRonda = $rondaModel->getUltimaByTorneo((int)$torneo['id']);
+            if ($ronda && $ultimaRonda && (int)$ronda['numero'] < (int)$ultimaRonda['numero']) {
+                return 'No se puede modificar este resultado porque ya se generó una ronda posterior.';
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Corrige un resultado ya cargado.
      */
     public function corregir(int $enfrentamientoId, float $puntosA, float $puntosB, string $motivo, int $usuarioId): void
@@ -146,20 +185,8 @@ class ResultadoService
         $tipo   = $this->tipoModel->findById((int)$torneo['tipo_torneo_id']);
         $slug   = $tipo['slug'];
 
-        // Validaciones específicas por formato
-        if ($slug === 'eliminacion_directa') {
-            if (!$this->eliminacionService->puedeCorregir($enfrentamientoId, (int)$torneo['id'])) {
-                throw new RuntimeException('No se puede modificar este resultado porque ya generó una ronda posterior. La corrección requeriría revertir el bracket.');
-            }
-        }
-        if ($slug === 'suizo') {
-            // Verificar que no hay ronda posterior generada
-            $ronda = (new RondaModel())->findById((int)$enf['ronda_id']);
-            $ultimaRonda = (new RondaModel())->getUltimaByTorneo((int)$torneo['id']);
-            if ($ronda && $ultimaRonda && (int)$ronda['numero'] < (int)$ultimaRonda['numero']) {
-                throw new RuntimeException('No se puede modificar este resultado porque ya se generó una ronda posterior.');
-            }
-        }
+        $bloqueo = $this->motivoBloqueoCorreccion($enfrentamientoId);
+        if ($bloqueo !== null) throw new RuntimeException($bloqueo);
 
         if (empty($motivo)) throw new RuntimeException('El motivo de la corrección es obligatorio.');
         if ($puntosA < 0 || $puntosB < 0) throw new RuntimeException('Los puntos no pueden ser negativos.');

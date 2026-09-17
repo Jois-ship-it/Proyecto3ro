@@ -38,6 +38,12 @@ class CorreccionService
         if (!$this->resModel->getByEnfrentamiento($enfrentamientoId)) {
             throw new RuntimeException('El partido no tiene un resultado cargado.');
         }
+        // Misma regla que usa aprobar() al aplicarla. Se consulta acá para que el
+        // organizador se entere en el momento: una solicitud que no se va a poder
+        // aprobar no tiene por qué existir, y antes se descubría recién cuando un
+        // admin la intentaba, dejándola trabada en «pendiente».
+        $bloqueo = $this->resultadoService->motivoBloqueoCorreccion($enfrentamientoId);
+        if ($bloqueo !== null) throw new RuntimeException($bloqueo);
         if (trim($motivo) === '' || mb_strlen(trim($motivo)) < 10) {
             throw new RuntimeException('El motivo es obligatorio (mínimo 10 caracteres).');
         }

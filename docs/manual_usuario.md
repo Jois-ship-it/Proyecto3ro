@@ -66,10 +66,16 @@ Las credenciales de prueba están en el README principal.
 ## Corregir un resultado
 
 1. Buscar el partido con estado **Finalizado**
-2. Clic en **Corregir**
+2. Clic en **Corregir**. Si sos organizador dice **Solicitar corrección**: la
+   aplica un administrador después de revisarla.
 3. Modificar los valores
 4. Ingresar el **motivo obligatorio** (mínimo 10 caracteres)
 5. Confirmar — el sistema valida si la corrección es segura
+
+Si el partido ya no se puede corregir, el mensaje aparece al confirmar y explica
+por qué: en Eliminación Directa cuando el ganador ya avanzó, y en Suizo cuando
+la ronda del partido no es la última generada. En esos casos la solicitud no se
+manda, así que no queda esperando una respuesta que no va a llegar.
 
 ## Generar siguiente ronda (Suizo)
 

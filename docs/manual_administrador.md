@@ -177,7 +177,25 @@ truncado deja la base peor que como estaba.
 
 ## Corrección de resultados bloqueados
 
-En Eliminación Directa: si el ganador ya avanzó a la siguiente ronda, la corrección queda bloqueada. Para corregir manualmente:
+La corrección queda bloqueada cuando el torneo ya construyó algo encima de ese
+resultado:
+
+- **Eliminación Directa**: el ganador ya avanzó a la siguiente ronda.
+- **Sistema Suizo**: la ronda del partido no es la última generada, porque el
+  emparejamiento de la siguiente se armó con esos puntajes.
+- **Liga**: nunca se bloquea. El fixture está completo desde el arranque y la
+  tabla se recalcula entera.
+
+El bloqueo se aplica igual al organizador que pide la corrección y al
+administrador que la aplica, así que una solicitud bloqueada no se registra: el
+organizador ve el motivo en el momento.
+
+**Si una solicitud quedó pendiente y ya no se puede aprobar** (era válida cuando
+se pidió y el torneo avanzó mientras esperaba), al aprobarla aparece el motivo
+del bloqueo y la solicitud sigue pendiente. Rechazala indicando ese motivo: el
+sistema no la resuelve por vos a propósito.
+
+Para corregir igual, sabiendo que se rehace el torneo desde ahí:
 1. Identificar el enfrentamiento en la ronda posterior
 2. Eliminar el enfrentamiento posterior desde MySQL con acceso de root
 3. Luego corregir el resultado original

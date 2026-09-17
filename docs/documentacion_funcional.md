@@ -147,6 +147,8 @@ agrega un formato o un módulo, el test avisa.
 - Bye para cantidad impar: preferir participante de menor score sin bye previo.
 - Puntos de bye configurables: 0, equivalente a victoria, o personalizado.
 - Ranking: puntos → victorias → diferencia → PF → buchholz → ID.
+- Corrección bloqueada en las rondas anteriores a la última generada: el
+  emparejamiento de la ronda siguiente se armó con esos puntajes.
 - Campeón: posición 1 del ranking al completar todas las rondas.
 
 ## Flujo de carga de resultado
@@ -161,8 +163,15 @@ agrega un formato o un módulo, el test avisa.
 
 ## Flujo de corrección de resultado
 
-1. Usuario autorizado selecciona "Corregir" en un partido finalizado.
+1. Usuario autorizado selecciona "Corregir" en un partido finalizado. El
+   organizador ve "Solicitar corrección": pide, no aplica.
 2. Sistema verifica que la corrección es segura (no rompe rondas posteriores).
+   La misma verificación corre al pedirla y al aplicarla, así una solicitud que
+   no se va a poder aprobar no llega a registrarse.
 3. Usuario ingresa nuevos valores y motivo obligatorio.
 4. Sistema guarda valores anteriores y nuevos, recalcula.
 5. Registro de auditoría con valores antes/después.
+
+Si el torneo avanza mientras una solicitud espera, la aprobación falla con el
+motivo del bloqueo y la solicitud queda pendiente: el administrador la rechaza
+indicando por qué. El sistema no la resuelve por su cuenta.

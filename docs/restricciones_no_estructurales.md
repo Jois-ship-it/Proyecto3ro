@@ -89,7 +89,7 @@ Reglas de negocio que **no** son garantizadas por el esquema de la base de datos
 | 44 | Empates prohibidos en Eliminación Directa. | `ResultadoService:62` |
 | 45 | Si el torneo no permite empates, debe haber ganador. | `ResultadoService:66` |
 | 46 | Solo se corrigen partidos finalizados. | `ResultadoService:133` |
-| 47 | No se corrige un resultado que ya generó una ronda posterior (bracket). | `ResultadoService:143,151` |
+| 47 | No se corrige un resultado que ya generó una ronda posterior, ni en Eliminación Directa ni en Suizo. Ver la sección 20. | `ResultadoService::motivoBloqueoCorreccion()` |
 | 48 | El motivo de corrección es obligatorio. | `ResultadoService:155` |
 
 ## 8. Programación de partidos
@@ -247,8 +247,22 @@ combobox armado por JavaScript.
 | 111 | Toda página que dibuje un combobox tiene que cargar `combobox.js`. Sin ese script el `<input>` visible no tiene `name` y el hidden con el id viaja vacío: el formulario se manda en blanco y el usuario no puede hacer nada al respecto. | `TorneoController::gestion()` / `OrganizadorController::gestion()` |
 | 112 | El éxito se anuncia dentro de la rama que efectivamente inscribió. Si no llegó ningún id no se inscribió a nadie, y se avisa con un error. | `OrganizadorController::inscribir()` |
 
+## 20. La regla de la ronda posterior
+
+Un resultado deja de ser corregible cuando el torneo ya construyó algo encima:
+en Eliminación Directa el ganador se ubicó en la ronda siguiente, y en Suizo el
+emparejamiento de la ronda siguiente se armó con esos puntajes. La Liga no tiene
+el problema: el fixture está completo desde el arranque y la tabla se recalcula
+entera.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 113 | La regla vive en un solo lugar y la consultan los dos caminos: el que aplica la corrección y el que la pide. Si solo la mirara el primero, se registrarían solicitudes imposibles de aprobar. | `ResultadoService::motivoBloqueoCorreccion()` |
+| 114 | El organizador se entera al pedir la corrección, no cuando un admin intenta aprobarla. Una solicitud bloqueada no llega a registrarse. | `CorreccionService::solicitar()` |
+| 115 | Si el torneo avanza mientras la solicitud espera, `aprobar()` falla y la solicitud queda en «pendiente»: el sistema no la resuelve por el admin, que la rechaza con su motivo. | `CorreccionService::aprobar()` |
+
 ---
 
-**Total: 112 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 115 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
 las de las secciones 14 y 15 se citan por método.

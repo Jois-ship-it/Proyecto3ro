@@ -216,26 +216,22 @@ final class CorreccionResultadosTest extends TestCase
 
     // ─── Bloqueos por formato ───────────────────────────────────────────────
 
-    public function test_en_eliminacion_directa_aprobar_falla_si_el_ganador_ya_avanzo(): void
+    public function test_en_eliminacion_directa_no_se_corrige_si_el_ganador_ya_avanzo(): void
     {
+        // El administrador corrige directo, sin pasar por una solicitud. El
+        // bloqueo también tiene que frenarlo a él: en Eliminación Directa el
+        // ganador se ubica en la ronda siguiente apenas se carga el resultado,
+        // así que no hay ventana en la que la corrección sea inocua.
         [$torneoElim] = Fixtures::torneoArrancado('eliminacion_directa', 4);
         $partido = Fixtures::partidosPendientes($torneoElim)[0];
         (new ResultadoService())->cargar($partido, 2.0, 1.0, Fixtures::ADMIN);
 
-        $svc = new CorreccionService();
-        $svc->solicitar($partido, 1.0, 2.0, self::MOTIVO, Fixtures::ADMIN);
-        $id = (int) $this->db->query(
-            "SELECT id FROM solicitudes_correccion WHERE torneo_id = $torneoElim AND estado = 'pendiente'"
-        )->fetchColumn();
-
         $this->assertThrows(
-            fn() => $svc->aprobar($id, Fixtures::ADMIN),
-            'ya generó una ronda posterior',
-            'el bracket ya avanzó: la corrección se frena en la aprobación'
+            fn() => (new ResultadoService())->corregir(
+                $partido, 1.0, 2.0, self::MOTIVO, Fixtures::ADMIN
+            ),
+            'ya generó una ronda posterior'
         );
-
-        $estado = $this->db->query("SELECT estado FROM solicitudes_correccion WHERE id = $id")->fetchColumn();
-        $this->assertSame('pendiente', $estado, 'la solicitud no se marca resuelta si la corrección falló');
     }
 
     public function test_en_suizo_no_se_corrige_una_ronda_anterior_a_la_ultima(): void
@@ -254,6 +250,122 @@ final class CorreccionResultadosTest extends TestCase
             ),
             'ya se generó una ronda posterior'
         );
+    }
+
+    // ─── La solicitud no puede nacer imposible ──────────────────────────────
+    //
+    // El bloqueo por formato lo miraba solo quien APLICA la corrección. El que
+    // la PIDE no lo miraba, así que el organizador registraba una solicitud que
+    // nunca se iba a poder aprobar y se enteraba recién un admin, al intentarlo.
+    // La regla ahora la consultan los dos caminos.
+
+    /** @return int id de la solicitud pendiente del torneo */
+    private function pendienteDe(int $torneoId): int
+    {
+        return (int) $this->db->query(
+            "SELECT id FROM solicitudes_correccion WHERE torneo_id = {$torneoId} AND estado = 'pendiente'"
+        )->fetchColumn();
+    }
+
+    private function contarSolicitudesDe(int $torneoId): int
+    {
+        return (int) $this->db->query(
+            "SELECT COUNT(*) FROM solicitudes_correccion WHERE torneo_id = {$torneoId}"
+        )->fetchColumn();
+    }
+
+    public function test_en_eliminacion_directa_no_se_solicita_si_el_ganador_ya_avanzo(): void
+    {
+        [$torneoElim] = Fixtures::torneoArrancado('eliminacion_directa', 4);
+        $partido = Fixtures::partidosPendientes($torneoElim)[0];
+        (new ResultadoService())->cargar($partido, 2.0, 1.0, Fixtures::ADMIN);
+
+        $this->assertThrows(
+            fn() => (new CorreccionService())->solicitar($partido, 1.0, 2.0, self::MOTIVO, Fixtures::ORGANIZADOR),
+            'ya generó una ronda posterior',
+            'el organizador se entera al pedirla, no un admin tres días después'
+        );
+        $this->assertSame(0, $this->contarSolicitudesDe($torneoElim),
+            'una solicitud imposible no queda registrada');
+    }
+
+    public function test_en_suizo_no_se_solicita_sobre_una_ronda_ya_superada(): void
+    {
+        [$torneoSuizo] = Fixtures::torneoArrancado('suizo', 4, ['rondas_suizo' => 3]);
+
+        $ronda1 = Fixtures::partidosPendientes($torneoSuizo, 1);
+        foreach ($ronda1 as $eid) {
+            (new ResultadoService())->cargar($eid, 2.0, 1.0, Fixtures::ADMIN);
+        }
+        (new SistemaSuizoService())->generarSiguienteRonda($torneoSuizo);
+
+        $this->assertThrows(
+            fn() => (new CorreccionService())->solicitar($ronda1[0], 1.0, 2.0, self::MOTIVO, Fixtures::ORGANIZADOR),
+            'ya se generó una ronda posterior'
+        );
+        $this->assertSame(0, $this->contarSolicitudesDe($torneoSuizo));
+    }
+
+    public function test_solicitar_y_aprobar_usan_exactamente_la_misma_regla(): void
+    {
+        // Si las dos puntas no consultaran la misma regla, volvería a haber
+        // solicitudes que se aceptan y no se pueden aplicar.
+        [$torneoSuizo] = Fixtures::torneoArrancado('suizo', 4, ['rondas_suizo' => 3]);
+        $ronda1 = Fixtures::partidosPendientes($torneoSuizo, 1);
+        foreach ($ronda1 as $eid) {
+            (new ResultadoService())->cargar($eid, 2.0, 1.0, Fixtures::ADMIN);
+        }
+
+        $resultados = new ResultadoService();
+        $svc        = new CorreccionService();
+
+        // Antes de generar la ronda 2: las dos puntas dicen que sí.
+        $this->assertSame(null, $resultados->motivoBloqueoCorreccion($ronda1[0]));
+        $this->assertDoesNotThrow(
+            fn() => $svc->solicitar($ronda1[0], 1.0, 2.0, self::MOTIVO, Fixtures::ORGANIZADOR)
+        );
+        $svc->rechazar($this->pendienteDe($torneoSuizo), Fixtures::ADMIN, 'se prueba el otro lado');
+
+        // Después: las dos dicen que no, con el mismo motivo.
+        (new SistemaSuizoService())->generarSiguienteRonda($torneoSuizo);
+        $motivo = $resultados->motivoBloqueoCorreccion($ronda1[0]);
+        $this->assertNotNull($motivo);
+
+        $eSolicitar = $this->assertThrows(
+            fn() => $svc->solicitar($ronda1[0], 1.0, 2.0, self::MOTIVO, Fixtures::ORGANIZADOR)
+        );
+        $eCorregir = $this->assertThrows(
+            fn() => $resultados->corregir($ronda1[0], 1.0, 2.0, self::MOTIVO, Fixtures::ADMIN)
+        );
+        $this->assertSame($motivo, $eSolicitar->getMessage());
+        $this->assertSame($motivo, $eCorregir->getMessage(),
+            'pedir y aplicar tienen que dar el mismo motivo, o son dos reglas distintas');
+    }
+
+    public function test_si_la_ronda_avanza_despues_de_pedirla_el_admin_la_puede_rechazar(): void
+    {
+        // La única forma que queda de tener una solicitud inaplicable: era válida
+        // cuando se pidió y el torneo avanzó mientras esperaba. No se resuelve
+        // sola —el sistema no decide por el admin— pero tampoco queda trabada.
+        [$torneoSuizo] = Fixtures::torneoArrancado('suizo', 4, ['rondas_suizo' => 3]);
+        $ronda1 = Fixtures::partidosPendientes($torneoSuizo, 1);
+        foreach ($ronda1 as $eid) {
+            (new ResultadoService())->cargar($eid, 2.0, 1.0, Fixtures::ADMIN);
+        }
+
+        $svc = new CorreccionService();
+        $svc->solicitar($ronda1[0], 1.0, 2.0, self::MOTIVO, Fixtures::ORGANIZADOR);
+        $id = $this->pendienteDe($torneoSuizo);
+
+        (new SistemaSuizoService())->generarSiguienteRonda($torneoSuizo);
+
+        $this->assertThrows(fn() => $svc->aprobar($id, Fixtures::ADMIN), 'ya se generó una ronda posterior');
+        $this->assertSame('pendiente',
+            $this->db->query("SELECT estado FROM solicitudes_correccion WHERE id = {$id}")->fetchColumn());
+
+        $svc->rechazar($id, Fixtures::ADMIN, 'La ronda siguiente ya se generó: no se puede revertir');
+        $this->assertSame('rechazada',
+            $this->db->query("SELECT estado FROM solicitudes_correccion WHERE id = {$id}")->fetchColumn());
     }
 }
 

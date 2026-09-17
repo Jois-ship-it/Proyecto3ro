@@ -208,7 +208,7 @@ sufijo `_test`.
 | `bracket_integridad_test.php` | `EliminacionDirectaService`: rondas, avance de ganadores, byes, campeón, bloqueo de corrección. |
 | `tabla_posiciones_test.php` | `TablaPosicionesService`: cifras exactas, orden, desempate por diferencia, puntuación configurable, recálculo. |
 | `tiebreak_test.php` | `DesempateTrait` + `intentarFinalizar`: cadena de partidos de desempate hasta que haya campeón. |
-| `correccion_resultados_test.php` | `CorreccionService`: solicitar / aprobar / rechazar y los bloqueos por formato. |
+| `correccion_resultados_test.php` | `CorreccionService`: solicitar / aprobar / rechazar, y el bloqueo por ronda posterior, que pedir y aplicar consultan igual. |
 | `match_schedule_test.php` | `ResultadoService::programar`: rango de fechas del torneo, byes, partidos finalizados. |
 | `lockout_estado_test.php` | `AuthService` / `UsuarioService` / `ParticipanteService`: bloqueo a los 5 intentos y desbloqueo. |
 | `torneo_ownership_test.php` | `TorneoController`: quién puede crear, editar y reasignar torneos. |
