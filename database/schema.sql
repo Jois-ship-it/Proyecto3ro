@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS modulos (
     id          TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nombre      VARCHAR(80) NOT NULL,
     slug        VARCHAR(40) NOT NULL UNIQUE,
-    estado      ENUM('activo','inactivo','revision') NOT NULL DEFAULT 'activo',
+    estado      ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
     descripcion VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
     torneo_id       INT UNSIGNED NOT NULL,
     participante_id INT UNSIGNED DEFAULT NULL,
     equipo_id       INT UNSIGNED DEFAULT NULL,
-    estado          ENUM('activa','retirada','descalificada') NOT NULL DEFAULT 'activa',
+    estado          ENUM('activa','retirada') NOT NULL DEFAULT 'activa',
     orden_seed      INT UNSIGNED DEFAULT NULL,
     fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_inscripcion_part  (torneo_id, participante_id),
@@ -209,7 +209,7 @@ CREATE TABLE IF NOT EXISTS enfrentamientos (
     ganador_equipo_id        INT UNSIGNED DEFAULT NULL,
     perdedor_participante_id INT UNSIGNED DEFAULT NULL,
     perdedor_equipo_id       INT UNSIGNED DEFAULT NULL,
-    estado                   ENUM('pendiente','en_curso','finalizado','bye','pospuesto','cancelado','bloqueado') NOT NULL DEFAULT 'pendiente',
+    estado                   ENUM('pendiente','en_curso','finalizado','bye','cancelado') NOT NULL DEFAULT 'pendiente',
     es_bye                   TINYINT(1) NOT NULL DEFAULT 0,
     orden                    SMALLINT   NOT NULL DEFAULT 1,
     fecha_programada         DATETIME   DEFAULT NULL,
@@ -241,7 +241,7 @@ CREATE TABLE IF NOT EXISTS resultados (
     puntos_b                DECIMAL(7,2) NOT NULL DEFAULT 0,
     ganador_participante_id INT UNSIGNED DEFAULT NULL,
     ganador_equipo_id       INT UNSIGNED DEFAULT NULL,
-    estado                  ENUM('cargado','corregido','bloqueado','anulado') NOT NULL DEFAULT 'cargado',
+    estado                  ENUM('cargado','corregido') NOT NULL DEFAULT 'cargado',
     cargado_por             INT UNSIGNED DEFAULT NULL,
     corregido               TINYINT(1) NOT NULL DEFAULT 0,
     motivo_correccion       TEXT DEFAULT NULL,

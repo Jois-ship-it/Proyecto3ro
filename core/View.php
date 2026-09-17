@@ -88,19 +88,16 @@ class View
             'finalizado'  => 'success',
             'en_curso'    => '',           // primary (azul por defecto)
             'pendiente'   => 'warning',
-            'programado'  => 'warning',
             'inscripcion' => 'warning',
             'corregido'   => 'warning',
             'cerrada'     => 'success',
             'borrador'    => 'warning',
             'suspendido'  => 'danger',
             'cancelado'   => 'danger',
-            'bloqueado'   => 'danger',
             'bloqueada'   => 'danger',
             'inactivo'    => 'danger',
             'rechazado'   => 'danger',
             'bye'         => 'warning',
-            'pospuesto'   => 'warning',
         ];
 
         $clase  = $map[$estado] ?? '';
