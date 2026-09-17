@@ -235,8 +235,20 @@ valor del pedido (`Referer`, o el campo `return` del formulario). Ver
 | 108 | Una URL absoluta del propio sitio se reduce a su ruta: no se arrastran esquema ni puerto, que pueden no coincidir con los del visitante. | `Url::rutaInterna()` |
 | 109 | `redirect()` aplica el filtro por su cuenta: un controlador que olvide filtrar manda a la portada, no afuera. | `BaseController::redirect()` |
 
+## 19. Inscribir desde el panel de gestión
+
+El admin y el organizador inscriben con el mismo panel
+(`app/views/partials/inscripciones_panel.php`), que dibuja el selector como un
+combobox armado por JavaScript.
+
+| # | Restricción | Origen |
+|---|-------------|--------|
+| 110 | La inscripción no tiene validaciones distintas por rol: las dos rutas pasan por las mismas tres compuertas y por el mismo servicio. Lo único que cambia es el prefijo de las rutas y a dónde vuelve el redirect. | `TorneoController::inscribir()` / `OrganizadorController::inscribir()` |
+| 111 | Toda página que dibuje un combobox tiene que cargar `combobox.js`. Sin ese script el `<input>` visible no tiene `name` y el hidden con el id viaja vacío: el formulario se manda en blanco y el usuario no puede hacer nada al respecto. | `TorneoController::gestion()` / `OrganizadorController::gestion()` |
+| 112 | El éxito se anuncia dentro de la rama que efectivamente inscribió. Si no llegó ningún id no se inscribió a nadie, y se avisa con un error. | `OrganizadorController::inscribir()` |
+
 ---
 
-**Total: 109 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 112 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 Las referencias de línea corresponden al estado del código al 2026-06-17;
 las de las secciones 14 y 15 se citan por método.

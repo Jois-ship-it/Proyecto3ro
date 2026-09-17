@@ -97,6 +97,10 @@ class OrganizadorController extends BaseController
             'totalRondasJugadas'      => $rondasRegulares,
             'desempatePendiente'      => $desempatePendiente,
             'csrf'                    => Csrf::generate(),
+            // El panel de inscripciones dibuja el selector de participantes como
+            // combobox; sin este script el <input> visible no tiene `name` y el
+            // hidden viaja vacío, así que el formulario se manda en blanco.
+            'extraJs'                 => ['combobox.js'],
         ], 'admin');
     }
 
@@ -152,9 +156,17 @@ class OrganizadorController extends BaseController
         try {
             $participanteId = $this->postInt('participante_id');
             $equipoId       = $this->postInt('equipo_id');
-            if ($participanteId) $this->inscripcionService->inscribirParticipante((int)$id, $participanteId);
-            elseif ($equipoId)   $this->inscripcionService->inscribirEquipo((int)$id, $equipoId);
-            $this->flash('success', 'Inscripción realizada.');
+            // El éxito se anuncia dentro de cada rama: si no vino ningún id no se
+            // inscribió a nadie, y decir «realizada» ahí es mentir.
+            if ($participanteId) {
+                $this->inscripcionService->inscribirParticipante((int)$id, $participanteId);
+                $this->flash('success', 'Participante inscrito.');
+            } elseif ($equipoId) {
+                $this->inscripcionService->inscribirEquipo((int)$id, $equipoId);
+                $this->flash('success', 'Equipo inscrito.');
+            } else {
+                $this->flash('error', 'Elegí a quién inscribir antes de confirmar.');
+            }
         } catch (RuntimeException $e) {
             $this->flash('error', $e->getMessage());
         }

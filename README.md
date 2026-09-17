@@ -219,6 +219,7 @@ sufijo `_test`.
 | `configuracion_torneo_test.php` | `ConfiguracionTorneoService`: catálogo de claves, validaciones, y el cierre de inscripción rechazando anotarse fuera de plazo. |
 | `permisos_test.php` | `PermisoService` + tabla `permisos`: bypass del administrador, negar por omisión, la matriz contra la sección 5 de la letra, y que las guardas estén puestas en los controladores. |
 | `ruta_parametros_test.php` | `Router`: los `{id}` de las rutas tienen que ser enteros positivos; cualquier otra cosa es 404. Recorre las 40 rutas con parámetros. |
+| `inscripcion_organizador_test.php` | Inscribir desde el panel del organizador: renderiza las dos páginas de gestión y exige que la que dibuja un combobox cargue su script, y que el formulario no anuncie éxito sin inscribir a nadie. |
 | `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
 | `datos_minimos_test.php` | El mínimo de 50 registros por componente que pide la letra, y la coherencia de los datos sembrados. |
 
