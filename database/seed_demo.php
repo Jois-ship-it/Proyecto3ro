@@ -65,41 +65,71 @@ $db->exec('SET FOREIGN_KEY_CHECKS = 1');
 // tienen perfil, pueden iniciar sesión y aparecen en el sitio— más un puñado de
 // jugadores sin cuenta, que es un caso real: el organizador los anota a mano.
 $cuentas = $db->query(
-    "SELECT u.id, u.nombre, u.email FROM usuarios u
+    "SELECT u.id, u.nombre, u.email, u.estado FROM usuarios u
      JOIN roles r ON r.id = u.rol_id
      WHERE r.nombre = 'participante'
      ORDER BY u.id"
 )->fetchAll(PDO::FETCH_ASSOC);
 
+// El perfil hereda el estado de su cuenta. Antes se forzaba 'activo' en todos,
+// y quedaba una persona con la cuenta pendiente de aprobación y el perfil ya
+// aprobado: justo el estado que el flujo de registro no puede producir.
+// 'bloqueada' es la única que se traduce, porque no existe en participantes.
+$estadoDelPerfil = fn(string $estadoCuenta): string =>
+    $estadoCuenta === 'bloqueada' ? 'suspendido' : $estadoCuenta;
+
 $nickDesdeEmail = fn(string $email): string => ucfirst(explode('@', $email)[0]);
 
-$pids = [];
+// $pids son los inscribibles. Un perfil pendiente de aprobación o suspendido
+// existe en el padrón pero InscripcionService no lo deja competir, con razón:
+// anotarlo igual sería sembrar un estado que la aplicación no puede producir.
+$pids      = [];
+$pidsTodos = [];
 foreach ($cuentas as $c) {
-    $pids[] = $partModel->insert([
+    $estadoPerfil = $estadoDelPerfil((string)$c['estado']);
+    $pid = $partModel->insert([
         'usuario_id' => (int)$c['id'],
         'nombre'     => $c['nombre'],
         'nick'       => $nickDesdeEmail($c['email']),
         'email'      => $c['email'],
         'documento'  => str_pad((string)(4000000 + (int)$c['id'] * 137), 8, '0', STR_PAD_LEFT),
-        'estado'     => 'activo',
+        'estado'     => $estadoPerfil,
     ]);
+    $pidsTodos[] = $pid;
+    if ($estadoPerfil === 'activo') $pids[] = $pid;
 }
 
+// Jugadores sin cuenta. Es lo que produce Participantes → Crear: el
+// administrador anota a alguien en el padrón y ParticipanteService::crear() no
+// toca la tabla usuarios. Esa persona compite, aparece en la tabla de
+// posiciones y puede integrar un equipo, pero no tiene con qué iniciar sesión.
+// Llevan email y teléfono igual: el organizador necesita poder contactarlos, y
+// sin ningún dato de contacto no se distinguen de una fila a medio cargar.
 $sinCuenta = [
-    ['Marcelo Da Rosa', 'MarceDR'], ['Elena Zubillaga', 'EleZ'],
-    ['Wilson Acosta',   'WilsonA'], ['Norma Cristiani', 'NormaC'],
-    ['Óscar Buzó',      'OscarB'],  ['Teresa Lavagna',  'TereL'],
-    ['Aníbal Gadea',    'AniG'],    ['Estela Montaño',  'EsteM'],
+    ['Marcelo Da Rosa', 'MarceDR', 'marcelo.darosa@correo.example'],
+    ['Elena Zubillaga', 'EleZ',    'elena.zubillaga@correo.example'],
+    ['Wilson Acosta',   'WilsonA', 'wilson.acosta@correo.example'],
+    ['Norma Cristiani', 'NormaC',  'norma.cristiani@correo.example'],
+    ['Óscar Buzó',      'OscarB',  'oscar.buzo@correo.example'],
+    ['Teresa Lavagna',  'TereL',   'teresa.lavagna@correo.example'],
+    ['Aníbal Gadea',    'AniG',    'anibal.gadea@correo.example'],
+    ['Estela Montaño',  'EsteM',   'estela.montano@correo.example'],
 ];
-foreach ($sinCuenta as $k => [$nombre, $nick]) {
-    $pids[] = $partModel->insert([
+foreach ($sinCuenta as $k => [$nombre, $nick, $email]) {
+    $pid = $partModel->insert([
         'nombre'    => $nombre,
         'nick'      => $nick,
+        'email'     => $email,
+        'telefono'  => '099' . str_pad((string)(100 + $k * 37), 6, '0', STR_PAD_LEFT),
         'documento' => str_pad((string)(5000000 + $k * 211), 8, '0', STR_PAD_LEFT),
         'estado'    => 'activo',
     ]);
+    $pidsTodos[] = $pid;
+    $pids[]      = $pid;
 }
-line('Participantes: ' . count($pids) . ' (' . count($cuentas) . ' con cuenta, ' . count($sinCuenta) . ' sin cuenta)');
+line('Participantes: ' . count($pidsTodos)
+   . ' (' . count($cuentas) . ' con cuenta, ' . count($sinCuenta) . ' sin cuenta'
+   . ', ' . count($pids) . ' en condiciones de competir)');
 
 // ── 3) EQUIPOS (con descripción) + integrantes ──
 // Los diez primeros son los de siempre (los que aparecen en la documentación);

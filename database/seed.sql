@@ -269,36 +269,46 @@ INSERT INTO rondas (id, torneo_id, numero, nombre, estado) VALUES
 ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
 
 -- ─── ENFRENTAMIENTOS — Torneo 1, Fecha 1 (4 partidos) ───────
-INSERT INTO enfrentamientos (id, torneo_id, ronda_id, participante_a_id, participante_b_id, ganador_participante_id, perdedor_participante_id, estado, es_bye, orden) VALUES
-(1,  1, 1, 1, 5, 1, 5, 'finalizado', 0, 1),
-(2,  1, 1, 2, 6, 2, 6, 'finalizado', 0, 2),
-(3,  1, 1, 3, 7, 7, 3, 'finalizado', 0, 3),
-(4,  1, 1, 4, 8, 4, 8, 'finalizado', 0, 4),
+-- Los partidos ya jugados llevan su horario real (fecha_inicio_real /
+-- fecha_fin_real): es lo que muestra la columna Fecha del listado de partidos.
+-- Un BYE no lleva ninguno de los dos, porque no se jugó. Los pendientes llevan
+-- fecha_programada, que es la otra mitad de esa columna.
+-- Todas las fechas caen dentro del rango de su torneo y son sábados.
+INSERT INTO enfrentamientos (id, torneo_id, ronda_id, participante_a_id, participante_b_id, ganador_participante_id, perdedor_participante_id, estado, es_bye, orden, fecha_programada, fecha_inicio_real, fecha_fin_real) VALUES
+(1,  1, 1, 1, 5, 1, 5, 'finalizado', 0, 1, '2026-03-07 10:00:00', '2026-03-07 10:03:00', '2026-03-07 11:35:00'),
+(2,  1, 1, 2, 6, 2, 6, 'finalizado', 0, 2, '2026-03-07 12:00:00', '2026-03-07 12:00:00', '2026-03-07 13:31:00'),
+(3,  1, 1, 3, 7, 7, 3, 'finalizado', 0, 3, '2026-03-07 14:00:00', '2026-03-07 14:08:00', '2026-03-07 15:44:00'),
+(4,  1, 1, 4, 8, 4, 8, 'finalizado', 0, 4, '2026-03-07 16:00:00', '2026-03-07 16:01:00', '2026-03-07 17:29:00'),
 -- Fecha 2 (4 partidos)
-(5,  1, 2, 1, 6, 1, 6, 'finalizado', 0, 1),
-(6,  1, 2, 2, 7, 7, 2, 'finalizado', 0, 2),
-(7,  1, 2, 3, 8, 3, 8, 'finalizado', 0, 3),
-(8,  1, 2, 4, 5, 4, 5, 'finalizado', 0, 4),
--- Fecha 3 (en curso, pendientes)
-(9,  1, 3, 1, 7, NULL, NULL, 'pendiente', 0, 1),
-(10, 1, 3, 2, 8, NULL, NULL, 'pendiente', 0, 2),
-(11, 1, 3, 3, 5, NULL, NULL, 'pendiente', 0, 3),
-(12, 1, 3, 4, 6, NULL, NULL, 'pendiente', 0, 4),
+(5,  1, 2, 1, 6, 1, 6, 'finalizado', 0, 1, '2026-03-14 10:00:00', '2026-03-14 10:00:00', '2026-03-14 11:32:00'),
+(6,  1, 2, 2, 7, 7, 2, 'finalizado', 0, 2, '2026-03-14 12:00:00', '2026-03-14 12:05:00', '2026-03-14 13:38:00'),
+(7,  1, 2, 3, 8, 3, 8, 'finalizado', 0, 3, '2026-03-14 14:00:00', '2026-03-14 14:02:00', '2026-03-14 15:30:00'),
+(8,  1, 2, 4, 5, 4, 5, 'finalizado', 0, 4, '2026-03-14 16:00:00', '2026-03-14 16:00:00', '2026-03-14 17:33:00'),
+-- Fecha 3 (en curso: programados, todavía sin jugar)
+(9,  1, 3, 1, 7, NULL, NULL, 'pendiente', 0, 1, '2026-03-21 10:00:00', NULL, NULL),
+(10, 1, 3, 2, 8, NULL, NULL, 'pendiente', 0, 2, '2026-03-21 12:00:00', NULL, NULL),
+(11, 1, 3, 3, 5, NULL, NULL, 'pendiente', 0, 3, '2026-03-21 14:00:00', NULL, NULL),
+(12, 1, 3, 4, 6, NULL, NULL, 'pendiente', 0, 4, '2026-03-21 16:00:00', NULL, NULL),
 -- Torneo 2, Semifinales
-(13, 2, 8, NULL, NULL, NULL, NULL, 'finalizado', 0, 1),  -- equipo_a=1, equipo_b=4
-(14, 2, 8, NULL, NULL, NULL, NULL, 'finalizado', 0, 2),  -- equipo_a=2, equipo_b=3
--- Torneo 2, Final
-(15, 2, 9, NULL, NULL, NULL, NULL, 'pendiente', 0, 1),
--- Torneo 3, Ronda 1 (3 partidos + 1 bye para 7 participantes)
-(16, 3, 10, 9,  13, 9,  13, 'finalizado', 0, 1),
-(17, 3, 10, 10, 14, 14, 10, 'finalizado', 0, 2),
-(18, 3, 10, 11, 12, 11, 12, 'finalizado', 0, 3),
-(19, 3, 10, 15, NULL, 15, NULL, 'bye', 1, 4),
+(13, 2, 8, NULL, NULL, NULL, NULL, 'finalizado', 0, 1, '2026-04-11 18:00:00', '2026-04-11 18:04:00', '2026-04-11 19:21:00'),  -- equipo_a=1, equipo_b=4
+(14, 2, 8, NULL, NULL, NULL, NULL, 'finalizado', 0, 2, '2026-04-11 20:00:00', '2026-04-11 20:00:00', '2026-04-11 21:12:00'),  -- equipo_a=2, equipo_b=3
+-- Torneo 2, Final (programada, sin jugar)
+(15, 2, 9, NULL, NULL, NULL, NULL, 'pendiente', 0, 1, '2026-04-18 20:00:00', NULL, NULL),
+-- Torneo 3, Ronda 1 (3 partidos + 1 bye para 7 participantes).
+-- Las partidas de una ronda de ajedrez arrancan todas juntas.
+(16, 3, 10, 9,  13, 9,  13, 'finalizado', 0, 1, '2026-05-09 09:00:00', '2026-05-09 09:00:00', '2026-05-09 11:12:00'),
+(17, 3, 10, 10, 14, 14, 10, 'finalizado', 0, 2, '2026-05-09 09:00:00', '2026-05-09 09:00:00', '2026-05-09 10:48:00'),
+(18, 3, 10, 11, 12, 11, 12, 'finalizado', 0, 3, '2026-05-09 09:00:00', '2026-05-09 09:00:00', '2026-05-09 12:05:00'),
+(19, 3, 10, 15, NULL, 15, NULL, 'bye', 1, 4, NULL, NULL, NULL),
 -- Torneo 3, Ronda 2
-(20, 3, 11, 9,  14, NULL, NULL, 'pendiente', 0, 1),
-(21, 3, 11, 15, 11, NULL, NULL, 'pendiente', 0, 2),
-(22, 3, 11, 10, NULL, 10, NULL, 'bye', 1, 3)
-ON DUPLICATE KEY UPDATE estado = VALUES(estado);
+(20, 3, 11, 9,  14, NULL, NULL, 'pendiente', 0, 1, '2026-05-16 09:00:00', NULL, NULL),
+(21, 3, 11, 15, 11, NULL, NULL, 'pendiente', 0, 2, '2026-05-16 09:00:00', NULL, NULL),
+(22, 3, 11, 10, NULL, 10, NULL, 'bye', 1, 3, NULL, NULL, NULL)
+ON DUPLICATE KEY UPDATE
+  estado            = VALUES(estado),
+  fecha_programada  = VALUES(fecha_programada),
+  fecha_inicio_real = VALUES(fecha_inicio_real),
+  fecha_fin_real    = VALUES(fecha_fin_real);
 
 -- Actualizar equipos en enfrentamientos de torneo 2
 UPDATE enfrentamientos SET equipo_a_id=1, equipo_b_id=4, ganador_equipo_id=1, perdedor_equipo_id=4 WHERE id=13;

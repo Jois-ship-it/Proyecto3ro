@@ -192,6 +192,81 @@ final class DatosMinimosTest extends TestCase
         $this->assertSame(0, $sinPerfil, 'toda cuenta de participante debería poder ver su perfil');
     }
 
+    public function test_el_perfil_y_su_cuenta_no_se_contradicen(): void
+    {
+        // El seed forzaba 'activo' en todo perfil con cuenta, sin mirar el estado
+        // de la cuenta. Quedaba una persona con la cuenta pendiente de aprobación
+        // y el perfil ya aprobado, que es el estado que el flujo de registro
+        // justamente no puede producir.
+        $contradicciones = $this->db->query(
+            "SELECT p.nombre, p.estado AS perfil, u.estado AS cuenta
+               FROM participantes p
+               JOIN usuarios u ON u.id = p.usuario_id
+              WHERE p.estado <> u.estado
+                -- Excepción real: al bloquear una cuenta por intentos fallidos,
+                -- el perfil pasa a 'suspendido' porque 'bloqueada' no es un
+                -- estado de participante. Ver UsuarioModel::bloquear().
+                AND NOT (u.estado = 'bloqueada' AND p.estado = 'suspendido')"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $detalle = array_map(
+            fn(array $f) => "{$f['nombre']}: perfil «{$f['perfil']}» / cuenta «{$f['cuenta']}»",
+            $contradicciones
+        );
+
+        $this->assertCount(0, $contradicciones,
+            "hay perfiles que no coinciden con su cuenta:\n        - " . implode("\n        - ", $detalle));
+    }
+
+    public function test_los_participantes_sin_cuenta_estan_completos(): void
+    {
+        // Un participante sin cuenta es un caso legítimo: el administrador lo
+        // carga a mano desde Participantes → Crear, y ParticipanteService::crear()
+        // no toca la tabla usuarios. Lo que no puede pasar es que además le falten
+        // los datos que sí pide esa pantalla, porque entonces no se distingue del
+        // caso de una fila a medio cargar.
+        $sinCuenta = $this->db->query(
+            "SELECT COUNT(*) FROM participantes WHERE usuario_id IS NULL"
+        )->fetchColumn();
+
+        $this->assertGreaterThan(0, (int) $sinCuenta,
+            'el seed tiene que mostrar el caso del jugador anotado a mano');
+
+        $incompletos = $this->db->query(
+            "SELECT nombre FROM participantes
+              WHERE usuario_id IS NULL
+                AND (documento IS NULL OR documento = ''
+                  OR nick      IS NULL OR nick      = ''
+                  OR email     IS NULL OR email     = '')"
+        )->fetchAll(PDO::FETCH_COLUMN);
+
+        $this->assertCount(0, $incompletos,
+            'sin cuenta pero también sin datos de contacto: ' . implode(', ', $incompletos));
+    }
+
+    public function test_los_partidos_jugados_tienen_fecha_real(): void
+    {
+        // match_list.php muestra la hora de inicio y de fin de cada partido
+        // terminado. Si el seed no las carga, esa parte de la pantalla aparece
+        // vacía en la demo y parece que la función no está hecha.
+        $sinFecha = (int) $this->db->query(
+            "SELECT COUNT(*) FROM enfrentamientos
+              WHERE estado = 'finalizado'
+                AND (fecha_inicio_real IS NULL OR fecha_fin_real IS NULL)"
+        )->fetchColumn();
+
+        $this->assertSame(0, $sinFecha, 'los partidos ya jugados deberían tener su horario real');
+
+        // El reverso: un bye no se juega, así que no puede tener horario. La
+        // migración 2026_06_partidos_fechas.sql sí se los ponía; el sistema no.
+        $byeConFecha = (int) $this->db->query(
+            "SELECT COUNT(*) FROM enfrentamientos
+              WHERE es_bye = 1 AND (fecha_inicio_real IS NOT NULL OR fecha_fin_real IS NOT NULL)"
+        )->fetchColumn();
+
+        $this->assertSame(0, $byeConFecha, 'un bye no tiene horario porque nadie lo disputó');
+    }
+
     public function test_los_torneos_cubren_los_tres_formatos_y_las_dos_modalidades(): void
     {
         $porFormato = $this->db->query(
