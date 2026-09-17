@@ -42,6 +42,11 @@ La base de datos se inicializa automáticamente con `database/schema.sql` + `dat
 la primera vez que arranca el contenedor `db` (volumen vacío). Si el volumen
 `flexarena_mysql_data` ya existe, no se vuelve a cargar.
 
+Esos dos archivos son todo lo que hace falta: `schema.sql` ya contiene las diez
+migraciones de `database/migrations/`, que quedan solo como registro de cómo
+evolucionó el esquema. Lo comprueba `tests/migraciones_consolidadas_test.php`,
+que las aplica sobre un esquema recién creado y verifica que no cambien nada.
+
 > **Primer arranque:** MySQL puede tardar más de lo normal la primerísima vez (crea el volumen
 > de datos desde cero). Si `docker compose up -d` termina con
 > `dependency failed to start: container flexarena_db is unhealthy`, esperá unos segundos,
@@ -220,6 +225,11 @@ sufijo `_test`.
 | `permisos_test.php` | `PermisoService` + tabla `permisos`: bypass del administrador, negar por omisión, la matriz contra la sección 5 de la letra, y que las guardas estén puestas en los controladores. |
 | `ruta_parametros_test.php` | `Router`: los `{id}` de las rutas tienen que ser enteros positivos; cualquier otra cosa es 404. Recorre las 40 rutas con parámetros. |
 | `inscripcion_organizador_test.php` | Inscribir desde el panel del organizador: renderiza las dos páginas de gestión y exige que la que dibuja un combobox cargue su script, y que el formulario no anuncie éxito sin inscribir a nadie. |
+| `esquema_enums_test.php` | El catálogo de valores de cada columna ENUM. El esquema no puede declarar estados que el sistema no sabe producir, ni perder uno que el código escribe. |
+| `migraciones_consolidadas_test.php` | Que `schema.sql` ya contenga las diez migraciones: las aplica sobre un esquema recién creado y comprueba que no cambian nada. Es lo que permite instalar con solo `schema.sql` + `seed.sql`. |
+| `seed_base_test.php` | `seed.sql` por su cuenta: horarios de los partidos jugados, byes sin horario, perfiles coherentes con sus cuentas. |
+| `alta_participantes_test.php` | Que el alta de participantes tenga un solo camino —el registro público— y que no vuelvan las piezas del alta manual, que era código inalcanzable. |
+| `docs_referencias_test.php` | Que la documentación no cite código que no existe: cada `Clase::metodo()` y cada ruta de archivo que nombra tienen que estar ahí. |
 | `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
 | `datos_minimos_test.php` | El mínimo de 50 registros por componente que pide la letra, y la coherencia de los datos sembrados. |
 
@@ -261,7 +271,9 @@ sgdm/
 │   └── views/         — Plantillas PHP con layouts
 ├── config/            — Configuración de la app y rutas
 ├── core/              — Router, Database, Session, Auth, View, CSRF
-├── database/          — schema.sql, seed.sql, scripts SQL
+├── database/          — schema.sql, seed.sql, seed_demo.php y migrations/
+│                        (para instalar alcanza con schema.sql + seed.sql:
+│                         ver database/migrations/README.md)
 ├── docker/            — Entrypoint del contenedor app (prepara el certificado SSL)
 ├── docs/              — Documentación completa
 ├── public/            — Front controller y assets (CSS, JS, img)

@@ -13,115 +13,115 @@ Reglas de negocio que **no** son garantizadas por el esquema de la base de datos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 1 | Email y contraseña son obligatorios para iniciar sesión. | `AuthService:21` |
-| 2 | No se permite el acceso con email o contraseña incorrectos. | `AuthService:34` |
-| 3 | Una cuenta inactiva no puede iniciar sesión. | `AuthService:38` |
-| 4 | Al registrarse, el nombre es obligatorio. | `RegistroService:39` |
-| 5 | El email de registro debe tener formato válido. | `RegistroService:40` |
-| 6 | No se puede registrar un email ya existente. | `RegistroService:42` |
-| 7 | Una solicitud de registro solo puede aprobarse/rechazarse si está `pendiente`. | `RegistroService:91,105` |
+| 1 | Email y contraseña son obligatorios para iniciar sesión. | `AuthService::login()` |
+| 2 | No se permite el acceso con email o contraseña incorrectos. | `AuthService::login()` |
+| 3 | Una cuenta inactiva no puede iniciar sesión. | `AuthService::login()` |
+| 4 | Al registrarse, el nombre es obligatorio. | `RegistroService::registrar()` |
+| 5 | El email de registro debe tener formato válido. | `RegistroService::registrar()` |
+| 6 | No se puede registrar un email ya existente. | `RegistroService::registrar()` |
+| 7 | Una solicitud de registro solo puede aprobarse/rechazarse si está `pendiente`. | `RegistroService::aprobar()` y `::rechazar()` |
 
 ## 2. Usuarios (gestión admin)
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 8 | Nombre, email y rol son obligatorios al crear/editar usuario. | `UsuarioService:120-124` |
-| 9 | El email debe ser válido. | `UsuarioService:122` |
-| 10 | La contraseña es obligatoria al crear (no al editar). | `UsuarioService:126` |
-| 11 | No se puede repetir email entre usuarios. | `UsuarioService:51,71` |
-| 12 | Un usuario no puede eliminar su propia cuenta. | `UsuarioService:94` |
-| 13 | Un usuario no puede cambiar el estado de su propia cuenta. | `UsuarioService:106` |
+| 8 | Nombre, email y rol son obligatorios al crear/editar usuario. | `UsuarioService::validar()` |
+| 9 | El email debe ser válido. | `UsuarioService::validar()` |
+| 10 | La contraseña es obligatoria al crear (no al editar). | `UsuarioService::validar()` |
+| 11 | No se puede repetir email entre usuarios. | `UsuarioService::crear()` y `::editar()` |
+| 12 | Un usuario no puede desactivar su propia cuenta. El botón «Eliminar» del panel no borra nada: `AdminController::usuarioEliminar()` llama a `toggleActivo()`, porque una cuenta que creó torneos no se puede borrar sin perder su historial. | `UsuarioService::toggleActivo()` |
+| 13 | Un usuario no puede cambiar el estado de su propia cuenta. | `UsuarioService::toggleActivo()` |
 
 ## 3. Participantes y equipos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 14 | El nombre del participante es obligatorio. | `ParticipanteService:68,131` |
-| 15 | No se puede repetir el documento entre participantes. | `ParticipanteService:22,40` |
-| 16 | Un email de participante no puede estar en uso por otra cuenta. | `ParticipanteService:97` |
-| 17 | El nombre del equipo es obligatorio. | `EquipoService:96` |
-| 18 | No se puede repetir el nombre de equipo. | `EquipoService:23,42` |
-| 19 | Un participante no puede agregarse dos veces al mismo equipo. | `EquipoService:82` |
+| 14 | El nombre del participante es obligatorio. | `ParticipanteService::validar()` |
+| 15 | No se puede repetir el documento entre participantes. | `ParticipanteService::editar()` |
+| 16 | Un email de participante no puede estar en uso por otra cuenta. | `ParticipanteService::sincronizarCuenta()` |
+| 17 | El nombre del equipo es obligatorio. | `EquipoService::validar()` |
+| 18 | No se puede repetir el nombre de equipo. | `EquipoService::crear()` y `::editar()` |
+| 19 | Un participante no puede agregarse dos veces al mismo equipo. | `EquipoService::agregarParticipante()` |
 
 ## 4. Inscripciones
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 20 | Solo se puede inscribir si el torneo está abierto a inscripciones. | `InscripcionService:24,50` |
-| 21 | En torneo por equipos no se inscriben participantes individuales (y viceversa). | `InscripcionService:27,53` |
-| 22 | No se puede inscribir un participante/equipo ya inscrito. | `InscripcionService:30,56` |
-| 23 | El participante/equipo debe existir. | `InscripcionService:33,60` |
-| 24 | No se puede inscribir un participante/equipo inactivo. | `InscripcionService:35,62` |
+| 20 | Solo se puede inscribir si el torneo está abierto a inscripciones. | `InscripcionService::inscribirParticipante()` y `::inscribirEquipo()` |
+| 21 | En torneo por equipos no se inscriben participantes individuales (y viceversa). | `InscripcionService::inscribirParticipante()` y `::inscribirEquipo()` |
+| 22 | No se puede inscribir un participante/equipo ya inscrito. | `InscripcionService::inscribirParticipante()` y `::inscribirEquipo()` |
+| 23 | El participante/equipo debe existir. | `InscripcionService::inscribirParticipante()` y `::inscribirEquipo()` |
+| 24 | No se puede inscribir un participante/equipo inactivo. | `InscripcionService::inscribirParticipante()` y `::inscribirEquipo()` |
 
 ## 5. Torneos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 25 | No se puede modificar un torneo finalizado ni cancelado. | `TorneoService:42,45` |
-| 26 | Todo torneo debe tener un organizador asignado. | `TorneoService:49,157` |
-| 27 | El nombre y el formato (tipo) del torneo son obligatorios. | `TorneoService:58,155-156` |
-| 28 | Las fechas de inicio y fin son obligatorias y válidas. | `TorneoService:162-167` |
-| 29 | La fecha de inicio no puede ser posterior a la de fin. | `TorneoService:67,170` |
-| 30 | En modalidad equipos debe definirse mínimo de integrantes (≥1). | `TorneoService:179` |
-| 31 | La modalidad debe ser una válida (individual/equipos). | `TorneoService:176` |
-| 32 | Las rondas de Suizo deben estar entre 2 y 20. | `TorneoService:185` |
-| 33 | No se puede eliminar un torneo en curso. | `TorneoService:121` |
+| 25 | No se puede modificar un torneo finalizado ni cancelado. | `TorneoService::editar()` |
+| 26 | Todo torneo debe tener un organizador asignado. | `TorneoService::editar()` y `::validar()` |
+| 27 | El nombre y el formato (tipo) del torneo son obligatorios. | `TorneoService::validar()` |
+| 28 | Las fechas de inicio y fin son obligatorias y válidas. | `TorneoService::validar()` |
+| 29 | La fecha de inicio no puede ser posterior a la de fin. | `TorneoService::validar()` |
+| 30 | En modalidad equipos debe definirse mínimo de integrantes (≥1). | `TorneoService::validar()` |
+| 31 | La modalidad debe ser una válida (individual/equipos). | `TorneoService::validar()` |
+| 32 | Las rondas de Suizo deben estar entre 2 y 20. | `TorneoService::validar()` |
+| 33 | No se puede eliminar un torneo en curso. | `TorneoService::eliminar()` |
 
 ## 6. Generación de fixtures (límites por formato)
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 34 | Liga: entre 2 y 64 inscritos; torneo en `inscripcion`/`borrador`. | `LigaService:32-38` |
-| 35 | Eliminación Directa: entre 2 y 128 inscritos. | `EliminacionDirectaService:34-35` |
-| 36 | Sistema Suizo: entre 2 y 256 inscritos. | `SistemaSuizoService:41-42` |
-| 37 | No se puede regenerar el fixture si ya existe una ronda. | `SistemaSuizoService:36` |
-| 38 | No se genera la siguiente ronda suiza si hay partidos pendientes en la anterior. | `SistemaSuizoService:99` |
-| 39 | No se generan más rondas que el total configurado del torneo. | `SistemaSuizoService:95` |
+| 34 | Liga: entre 2 y 64 inscritos; torneo en `inscripcion`/`borrador`. | `LigaService::generarFixture()` |
+| 35 | Eliminación Directa: entre 2 y 128 inscritos. | `EliminacionDirectaService::generarBracket()` |
+| 36 | Sistema Suizo: entre 2 y 256 inscritos. | `SistemaSuizoService::generarPrimeraRonda()` |
+| 37 | No se puede regenerar el fixture si ya existe una ronda. | `SistemaSuizoService::generarPrimeraRonda()` |
+| 38 | No se genera la siguiente ronda suiza si hay partidos pendientes en la anterior. | `SistemaSuizoService::generarSiguienteRonda()` |
+| 39 | No se generan más rondas que el total configurado del torneo. | `SistemaSuizoService::generarSiguienteRonda()` |
 
 ## 7. Resultados
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 40 | Solo se cargan resultados en torneos en curso. | `ResultadoService:49` |
-| 41 | Un partido ya con resultado no se recarga (hay que corregir). | `ResultadoService:39` |
-| 42 | No se carga resultado para partidos en estado no válido. | `ResultadoService:42` |
-| 43 | Los puntos no pueden ser negativos. | `ResultadoService:53,156` |
-| 44 | Empates prohibidos en Eliminación Directa. | `ResultadoService:62` |
-| 45 | Si el torneo no permite empates, debe haber ganador. | `ResultadoService:66` |
-| 46 | Solo se corrigen partidos finalizados. | `ResultadoService:133` |
+| 40 | Solo se cargan resultados en torneos en curso. | `ResultadoService::cargar()` |
+| 41 | Un partido ya con resultado no se recarga (hay que corregir). | `ResultadoService::cargar()` |
+| 42 | No se carga resultado para partidos en estado no válido. | `ResultadoService::cargar()` |
+| 43 | Los puntos no pueden ser negativos. | `ResultadoService::cargar()` y `::corregir()` |
+| 44 | Empates prohibidos en Eliminación Directa. | `ResultadoService::cargar()` |
+| 45 | Si el torneo no permite empates, debe haber ganador. | `ResultadoService::cargar()` |
+| 46 | Solo se corrigen partidos finalizados. | `ResultadoService::corregir()` |
 | 47 | No se corrige un resultado que ya generó una ronda posterior, ni en Eliminación Directa ni en Suizo. Ver la sección 20. | `ResultadoService::motivoBloqueoCorreccion()` |
-| 48 | El motivo de corrección es obligatorio. | `ResultadoService:155` |
+| 48 | El motivo de corrección es obligatorio. | `ResultadoService::corregir()` |
 
 ## 8. Programación de partidos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 49 | No se puede programar un bye. | `ResultadoService:217` |
-| 50 | No se programa un partido finalizado o cancelado. | `ResultadoService:219` |
-| 51 | La fecha programada debe ser válida y caer dentro del rango de fechas del torneo. | `ResultadoService:225,253-258` |
+| 49 | No se puede programar un bye. | `ResultadoService::programar()` |
+| 50 | No se programa un partido finalizado o cancelado. | `ResultadoService::programar()` |
+| 51 | La fecha programada debe ser válida y caer dentro del rango de fechas del torneo. | `ResultadoService::programar()` |
 
 ## 9. Flujo de corrección (solicitudes)
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 52 | Solo se solicitan correcciones de partidos finalizados. | `CorreccionService:36` |
-| 53 | El partido debe tener resultado cargado. | `CorreccionService:39` |
-| 54 | El motivo es obligatorio (mínimo 10 caracteres). | `CorreccionService:42` |
-| 55 | Los puntos no pueden ser negativos. | `CorreccionService:45` |
-| 56 | No puede haber dos solicitudes pendientes para el mismo partido. | `CorreccionService:48` |
-| 57 | Una solicitud ya resuelta no puede volver a resolverse. | `CorreccionService:71,94` |
-| 58 | Al rechazar, el motivo de rechazo es obligatorio. | `CorreccionService:97` |
+| 52 | Solo se solicitan correcciones de partidos finalizados. | `CorreccionService::solicitar()` |
+| 53 | El partido debe tener resultado cargado. | `CorreccionService::solicitar()` |
+| 54 | El motivo es obligatorio (mínimo 10 caracteres). | `CorreccionService::solicitar()` |
+| 55 | Los puntos no pueden ser negativos. | `CorreccionService::solicitar()` |
+| 56 | No puede haber dos solicitudes pendientes para el mismo partido. | `CorreccionService::solicitar()` |
+| 57 | Una solicitud ya resuelta no puede volver a resolverse. | `CorreccionService::aprobar()` y `::rechazar()` |
+| 58 | Al rechazar, el motivo de rechazo es obligatorio. | `CorreccionService::rechazar()` |
 
 ## 10. Autorización por rol y módulo
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 59 | El administrador tiene acceso total a todos los módulos y acciones (bypass), y no se le guardan filas en `permisos`. | `PermisoService:81` |
-| 60 | Un visitante sin sesión no tiene ningún permiso. | `PermisoService:80` |
-| 61 | Otros roles solo operan un módulo si una fila en `permisos` lo habilita; por defecto se niega. | `PermisoService:88` |
-| 62 | Los permisos se evalúan por acción: ver, crear, editar, eliminar. Una acción fuera de esas cuatro es un error de programación y lanza excepción en vez de negar en silencio. | `PermisoService:74`, `PermisoService:90` |
+| 59 | El administrador tiene acceso total a todos los módulos y acciones (bypass), y no se le guardan filas en `permisos`. | `PermisoService::puede()` |
+| 60 | Un visitante sin sesión no tiene ningún permiso. | `PermisoService::puede()` |
+| 61 | Otros roles solo operan un módulo si una fila en `permisos` lo habilita; por defecto se niega. | `PermisoService::puede()` |
+| 62 | Los permisos se evalúan por acción: ver, crear, editar, eliminar. Una acción fuera de esas cuatro es un error de programación y lanza excepción en vez de negar en silencio. | `PermisoService::puede()` |
 | 63 | La matriz sembrada reproduce la sección 5 de la letra: el organizador configura torneos asignados y carga resultados, pero no gestiona el padrón de participantes ni de equipos. | `database/seed.sql` → bloque PERMISOS; verificado en `tests/permisos_test.php` |
-| 64 | Cambiar la matriz de permisos queda registrado en auditoría con el antes y el después. | `PermisoService:161` |
+| 64 | Cambiar la matriz de permisos queda registrado en auditoría con el antes y el después. | `PermisoService::guardarMatriz()` |
 
 > Hasta septiembre de 2026 estas restricciones citaban un `PermisoService` que
 > **no existía**: la tabla `permisos` estaba en el esquema, tenía clave foránea y
@@ -133,25 +133,25 @@ Reglas de negocio que **no** son garantizadas por el esquema de la base de datos
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 63 | Un organizador solo puede gestionar sus propios torneos; el admin, todos. | `OrganizadorController:21-26` |
-| 64 | Tras transferir un torneo a otro organizador, el anterior pierde el acceso. | `OrganizadorController:17` |
-| 65 | Carga/corrección/programación de resultados exige ser dueño del torneo (o admin). | `ResultadoController:16-20` |
-| 66 | El listado/dashboard de un organizador solo muestran sus torneos (el admin ve todos). | `OrganizadorController:32-48` |
+| 63 | Un organizador solo puede gestionar sus propios torneos; el admin, todos. | `BaseController::requireTorneoOwnership()` |
+| 64 | Tras transferir un torneo a otro organizador, el anterior pierde el acceso. | `PermisoService::guardarMatriz()` |
+| 65 | Carga/corrección/programación de resultados exige ser dueño del torneo (o admin). | `ResultadoController::assertPuedeGestionar()` |
+| 66 | El listado/dashboard de un organizador solo muestran sus torneos (el admin ve todos). | `OrganizadorController::dashboard()` y `::misTorneos()` |
 
 ## 12. Restricciones de acceso por rol (controladores)
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 67 | El perfil de participante solo es accesible para roles `participante` o `administrador`. | `ParticipanteController:8,31,47,82` |
-| 68 | Las acciones de sesión (logout/perfil) requieren estar logueado. | `AuthController:77` |
-| 69 | Un usuario ya logueado no puede volver a ver login/registro (se redirige). | `AuthController:15,25` |
+| 67 | El perfil de participante solo es accesible para roles `participante` o `administrador`. | `ParticipanteController`, vía `Auth::requireRole()` en cada acción |
+| 68 | Las acciones de sesión (logout/perfil) requieren estar logueado. | `AuthController::logout()` |
+| 69 | Un usuario ya logueado no puede volver a ver login/registro (se redirige). | `AuthController::loginForm()` y `::registroForm()` |
 
 ## 13. Trazabilidad / auditoría (transversal)
 
 | # | Restricción | Origen |
 |---|-------------|--------|
-| 70 | Toda acción sensible se registra asociada al usuario que la ejecuta (`Auth::id()`). | `AdminController:122,135`; `CorreccionController:25,49,62`; `ResultadoController:38,59,82` |
-| 71 | El creador del torneo queda registrado en `creado_por` al crearlo. | `TorneoController:74` |
+| 70 | Toda acción sensible se registra asociada al usuario que la ejecuta (`Auth::id()`). | `AuditoriaService::log()`, llamado desde cada servicio que escribe |
+| 71 | El creador del torneo queda registrado en `creado_por` al crearlo. | `TorneoController::guardar()` → `TorneoService::crear()` |
 
 ## 14. Módulos habilitados
 
@@ -264,5 +264,8 @@ entera.
 ---
 
 **Total: 115 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
-Las referencias de línea corresponden al estado del código al 2026-06-17;
-las de las secciones 14 y 15 se citan por método.
+
+Todas las restricciones se citan por **nombre de método**, no por número de línea.
+Hasta septiembre de 2026 se citaban por línea y las referencias se habían podrido:
+apuntaban a constructores, a métodos que no eran, o a líneas en blanco. Un número
+de línea envejece con cada edición del archivo; el nombre de un método, no.

@@ -100,7 +100,7 @@ Estado: ✅ implementada en este cambio · ⏳ recomendada (pendiente).
 | No cargar resultados si el torneo no está en curso | ❌ | Resultados en torneos borrador/cancelado/finalizado | ✅ A | `ResultadoService::cargar` |
 | Empates según reglas (Liga/Suizo) | ❌ (solo Elim) | Empate cargado en torneo que no los permite | ✅ A | `ResultadoService::cargar` |
 | Consistencia ganador/perdedor | ✅ | — | ✅ | `ResultadoService::determinarGanador` |
-| Corrección bloqueada si ya avanzó la ronda | ✅ | — | ✅ | `ResultadoService::corregir` |
+| Corrección bloqueada si ya avanzó la ronda | ✅ | — | ✅ | `ResultadoService::motivoBloqueoCorreccion()` |
 
 ### Brackets / Llaves (Eliminación Directa)
 | Regla | Estado | Nota |
@@ -166,23 +166,25 @@ La sesión MySQL ahora fija `time_zone = '-03:00'` (America/Argentina/Buenos_Air
 
 ## 5. Cómo aplicar las migraciones
 
-Migraciones nuevas (idempotentes, compatibles con datos existentes):
+> **Actualizado (2026-09-17).** Esta sección quedó vieja: listaba 2 de las 10
+> migraciones que terminaron existiendo, y daba por aplicadas las de junio. Ya no
+> hace falta aplicar ninguna.
 
-1. `2026_06_partidos_fechas.sql` — columnas `fecha_inicio_real` / `fecha_fin_real` + backfill.
-2. `2026_06_fix_fechas_fuera_rango.sql` — corrige partidos con fecha programada fuera del rango (ver §8).
+Para una base nueva alcanza con:
 
-> **Importante:** este proyecto usa su propia base: `flexarena`.
-
-XAMPP (despliegue activo) — usar `cmd` para no corromper la codificación:
-
-```bat
-cmd /c "mysql --default-character-set=utf8mb4 flexarena < sgdm\database\migrations\2026_06_partidos_fechas.sql"
+```bash
+mysql flexarena < database/schema.sql
+mysql flexarena < database/seed.sql
 ```
 
-Docker (alternativo): `docker compose exec -T db mysql -u flexarena_user -p flexarena < ...`.
-`schema.sql` ya incluye las columnas nuevas para instalaciones desde cero.
+`schema.sql` contiene las diez migraciones. Está verificado, no asumido:
+`tests/migraciones_consolidadas_test.php` las aplica sobre un esquema recién
+creado y comprueba que no cambien nada. Docker hace exactamente eso, montando
+solo esos dos archivos en `docker-entrypoint-initdb.d`.
 
-**Estado:** las migraciones ya fueron aplicadas en `flexarena`.
+Las migraciones quedan en `database/migrations/` como registro de la evolución
+del esquema. Su README explica qué hizo cada una, y una trampa de orden que
+conviene conocer si alguna vez se corren sueltas.
 
 ---
 
@@ -205,9 +207,16 @@ rango del torneo (multi-día y de una sola jornada, límites inclusive). **Resul
 php sgdm/tests/match_schedule_test.php
 ```
 
-**Recomendación (⏳ M):** incorporar PHPUnit + una base de datos de test para cubrir
-validaciones de servicio (fechas, duplicados, estados) y un test de integración de la
-serie de desempate de punta a punta. Hoy el proyecto no tiene framework de tests.
+**Resuelto.** El proyecto tiene batería propia sobre una base de pruebas
+(`flexarena_test`): `tests/lib/TestCase.php` con las aserciones, `tests/lib/Fixtures.php`
+con los datos, y `tests/run.php` que corre cada archivo en su propio proceso. Cubre
+validaciones de servicio, la serie de desempate de punta a punta, y bastante más.
+
+No se usa PHPUnit porque el proyecto no usa Composer: traerlo obligaría a versionar
+`vendor/` o a depender de una instalación global en la máquina del tribunal. Las
+aserciones imitan su API, así que migrar sería mecánico si algún día hace falta.
+
+El listado de qué cubre cada archivo está en el README.
 
 ---
 
