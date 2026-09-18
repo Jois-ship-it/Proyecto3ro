@@ -21,6 +21,11 @@ cp .env.example .env
 # ("change_this_db_password" / "change_this_root_password") a propósito: es el
 # mismo valor genérico que docker-compose.yml usa de default si te olvidás de
 # definirlos, así que conviene no dejarlo así ni en desarrollo local.
+#
+# Para desarrollo local poné además APP_ENV=development: el ejemplo viene en
+# 'production' porque es el default seguro para un servidor (oculta los errores
+# de PHP), pero mientras desarrollás vas a querer verlos en vez de recibir una
+# página en blanco. .env está en .gitignore, así que ese cambio no se commitea.
 
 # 2. Construir las imágenes y levantar los contenedores
 docker compose up -d --build
