@@ -209,4 +209,3 @@ Esta operación debe registrarse manualmente en auditoría.
 | `APP_ENV` | `development` o `production` |
 | `DB_PASS` | Contraseña del usuario flexarena_user |
 | `DB_ROOT_PASS` | Contraseña de root MySQL (para restauración) |
-| `APP_SECRET` | Clave secreta de la aplicación (cambiar en producción) |

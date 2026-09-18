@@ -23,14 +23,19 @@ cp .env.example .env
 # definirlos, así que conviene no dejarlo así ni en desarrollo local.
 
 # 2. Construir las imágenes y levantar los contenedores
-docker compose build
-docker compose up -d
+docker compose up -d --build
 
-# En la PRIMERA inicialización, el contenedor 'app' carga además los datos de
+# Usá --build siempre que cambie el Dockerfile o docker/docker-entrypoint.sh:
+# el entrypoint se COPIA dentro de la imagen, no se monta. Sin --build seguís
+# corriendo el de la imagen vieja, aunque el archivo del repo diga otra cosa.
+
+# En la primera inicialización, el contenedor 'app' carga además los datos de
 # demostración (database/seed_demo.php): 52 torneos con historia real, 60
 # participantes, 52 equipos, correcciones de resultados, etc. Tarda un par de
-# minutos y se hace una sola vez: si la base ya tiene torneos, no se repite.
-# Para arrancar sin ellos (solo schema.sql + seed.sql):  SEED_DEMO=0 docker compose up -d
+# minutos y se hace una sola vez por instalación: queda una marca en el volumen
+# flexarena_estado y no se repite en cada arranque.
+#   SEED_DEMO=0      docker compose up -d   → sin datos de demo (solo schema + seed)
+#   SEED_DEMO=force  docker compose up -d   → volver a sembrar, PISANDO lo que haya
 
 # 3. Acceder a la aplicación
 #    App (HTTP):  http://localhost:8080   (redirige automáticamente a HTTPS, 301)
@@ -47,11 +52,13 @@ migraciones de `database/migrations/`, que quedan solo como registro de cómo
 evolucionó el esquema. Lo comprueba `tests/migraciones_consolidadas_test.php`,
 que las aplica sobre un esquema recién creado y verifica que no cambien nada.
 
-> **Primer arranque:** MySQL puede tardar más de lo normal la primerísima vez (crea el volumen
-> de datos desde cero). Si `docker compose up -d` termina con
-> `dependency failed to start: container flexarena_db is unhealthy`, esperá unos segundos,
-> confirmá con `docker compose ps` que `db` ya está `healthy`, y volvé a correr
-> `docker compose up -d` — no hace falta reconstruir nada, el resto arranca al instante.
+> **Primer arranque:** crear el volumen de datos y cargar el esquema puede pasar de cuatro
+> minutos en una máquina con disco lento. El `start_period` del healthcheck contempla eso, así
+> que `docker compose up -d` espera en vez de fallar — pero tené paciencia la primera vez.
+>
+> El healthcheck consulta una tabla del esquema por TCP, a propósito: el servidor **temporal**
+> que la imagen de MySQL levanta para correr `schema.sql` y `seed.sql` escucha solo por socket.
+> Un simple `mysqladmin ping` lo daba por sano y `app` arrancaba sobre una base sin tablas.
 
 ### HTTPS y el certificado SSL
 
@@ -141,12 +148,12 @@ sudo bash scripts/install_almalinux.sh
 Opciones: `--no-deps` (Docker ya instalado), `--no-firewall`, `--no-selinux`, `--no-up`
 (preparar todo sin levantar los contenedores todavía).
 
-El script valida `.env` al final: si `APP_SECRET`, `DB_PASS` o `DB_ROOT_PASS` quedaron con
+El script valida `.env` al final: si `DB_PASS` o `DB_ROOT_PASS` quedaron con
 el valor de ejemplo — **o directamente faltan** (sin esas líneas, MySQL y la app caen en
 silencio en el default genérico de `docker-compose.yml`: `change_this_db_password` /
 `change_this_root_password`) — imprime una `ADVERTENCIA` explícita. No bloquea la
 instalación (puede ser un ambiente de prueba a propósito), pero avisa antes de dejar esto
-expuesto en producción. Revisá `.env` a mano: cambiá esos tres valores por propios, y
+expuesto en producción. Revisá `.env` a mano: cambiá esos dos valores por propios, y
 ajustá `APP_URL` al dominio o IP real del servidor. Podés levantar primero con el
 certificado autofirmado y reemplazarlo en `ssl/` cuando llegue el de la institución.
 

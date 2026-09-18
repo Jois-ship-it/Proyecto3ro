@@ -83,44 +83,47 @@ else
     echo "==> ADVERTENCIA: la base de datos no respondió a tiempo; arrancando igual." >&2
 fi
 
-# ── Datos de demostración (solo en la primera inicialización) ────────────────
+# ── Datos de demostración (una vez por instalación) ──────────────────────────
 # La imagen de MySQL corre schema.sql y seed.sql desde /docker-entrypoint-initdb.d,
 # pero seed_demo.php es PHP y no puede ejecutarse ahí: se corre desde este
 # contenedor, que sí tiene PHP y llega a la base por la red interna.
 #
-# Solo se siembra si todavía no hay torneos, así reiniciar el contenedor no pisa
-# los datos con los que se estuvo trabajando. SEED_DEMO=0 lo desactiva.
+# La condición anterior era "sembrar solo si no hay ningún torneo", y nunca se
+# cumplía: seed.sql ya crea 6. Los datos de demostración no se cargaban jamás,
+# aunque el README dijera que sí.
+#
+# Ahora se usa una marca en /var/lib/flexarena, que es un volumen propio del
+# stack. Eso da exactamente la semántica que hace falta:
+#
+#   docker compose restart / up   → la marca sigue ahí, no se vuelve a sembrar
+#   docker compose down -v        → se borra con el resto, se siembra de nuevo
+#
+# Importante: seed_demo.php TRUNCA las tablas de datos antes de sembrar. Por eso
+# la decisión no se infiere del contenido de la base —donde un falso negativo
+# borraría trabajo real— sino de una marca explícita. SEED_DEMO=0 lo desactiva;
+# SEED_DEMO=force siembra igual, pisando lo que haya.
 SEED_DEMO_SCRIPT="/var/www/flexarena/database/seed_demo.php"
+ESTADO_DIR="/var/lib/flexarena"
+MARCA_DEMO="$ESTADO_DIR/datos_demo_cargados"
 
 if [ "$DB_READY" -eq 1 ] && [ "${SEED_DEMO:-1}" != "0" ]; then
     if [ ! -f "$SEED_DEMO_SCRIPT" ]; then
         echo "==> No está $SEED_DEMO_SCRIPT (¿falta el bind mount del proyecto?): se omite la siembra." >&2
+    elif [ -f "$MARCA_DEMO" ] && [ "${SEED_DEMO:-1}" != "force" ]; then
+        echo "==> Los datos de demostración ya se cargaron en esta instalación."
+        echo "    Para volver a cargarlos: SEED_DEMO=force, o 'docker compose down -v' y arrancar de cero."
     else
-        TORNEOS="$(php -r '
-            try {
-                $pdo = new PDO(
-                    "mysql:host=" . (getenv("DB_HOST") ?: "db") . ";port=" . (getenv("DB_PORT") ?: "3306")
-                        . ";dbname=" . getenv("DB_NAME"),
-                    getenv("DB_USER"), getenv("DB_PASS")
-                );
-                echo (int) $pdo->query("SELECT COUNT(*) FROM torneos")->fetchColumn();
-            } catch (Throwable $e) { echo "error"; }
-        ' 2>/dev/null)"
-
-        if [ "$TORNEOS" = "0" ]; then
-            echo "==> Base sin torneos: cargando datos de demostración."
-            echo "    Es la primera inicialización y tarda un par de minutos; se hace una sola vez."
-            if php "$SEED_DEMO_SCRIPT"; then
-                echo "==> Datos de demostración cargados."
-            else
-                echo "==> ADVERTENCIA: falló la carga de datos de demostración; la app arranca igual." >&2
-            fi
-        elif [ "$TORNEOS" = "error" ]; then
-            echo "==> No se pudo consultar la base para decidir la siembra; se omite." >&2
+        echo "==> Cargando datos de demostración (database/seed_demo.php)."
+        echo "    Tarda un par de minutos y se hace una sola vez por instalación."
+        if php "$SEED_DEMO_SCRIPT"; then
+            mkdir -p "$ESTADO_DIR"
+            date -Iseconds > "$MARCA_DEMO"
+            echo "==> Datos de demostración cargados."
         else
-            echo "==> La base ya tiene ${TORNEOS} torneo(s): no se vuelven a sembrar datos de demostración."
+            echo "==> ADVERTENCIA: falló la carga de datos de demostración; la app arranca igual." >&2
         fi
     fi
 fi
 
+# Apache en primer plano: es el proceso principal del contenedor.
 exec apache2-foreground

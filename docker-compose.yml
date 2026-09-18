@@ -11,6 +11,10 @@ services:
     volumes:
       - .:/var/www/flexarena:z
       - flexarena_apache_logs:/var/log/apache2
+      # Estado del contenedor entre reinicios (marca de datos de demostracion
+      # ya cargados). Se borra con `docker compose down -v`, que es lo que hace
+      # que una instalacion desde cero vuelva a sembrar.
+      - flexarena_estado:/var/lib/flexarena
     environment:
       - APP_ENV=${APP_ENV:-development}
       - DB_HOST=${DB_HOST:-db}
@@ -18,7 +22,6 @@ services:
       - DB_NAME=${DB_NAME:-flexarena}
       - DB_USER=${DB_USER:-flexarena_user}
       - DB_PASS=${DB_PASS:-change_this_db_password}
-      - APP_SECRET=${APP_SECRET:-change_me}
       - APP_URL=${APP_URL:-http://localhost:8080}
       - HTTPS_PORT=${HTTPS_PORT:-443}
       # Carga database/seed_demo.php en la PRIMERA inicialización (cuando la
@@ -51,11 +54,21 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --default-time-zone=America/Argentina/Buenos_Aires
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-flexarena_user}", "-p${DB_PASS:-change_this_db_password}"]
+      # Por TCP (-h 127.0.0.1) y contra una tabla del esquema, a proposito:
+      #  - El servidor TEMPORAL que la imagen levanta para correr los scripts de
+      #    /docker-entrypoint-initdb.d escucha solo por socket. Un ping por
+      #    socket lo da por sano y 'app' arranca sobre una base sin tablas.
+      #  - Consultar `roles` garantiza ademas que schema.sql y seed.sql ya
+      #    terminaron, no solo que hay un servidor escuchando.
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u \"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" -e 'SELECT 1 FROM roles LIMIT 1' \"$$MYSQL_DATABASE\""]
       interval: 10s
       timeout: 5s
-      retries: 8
-      start_period: 60s
+      retries: 12
+      # La primera inicializacion (crear el datadir + cargar schema y seed) puede
+      # pasar de cuatro minutos en una maquina con disco lento. Con menos que
+      # esto, 'docker compose up -d' falla con "dependency failed to start" la
+      # primerisima vez y hay que reintentar a mano.
+      start_period: 360s
     networks:
       - flexarena_net
 
@@ -84,6 +97,8 @@ volumes:
     name: flexarena_mysql_data
   flexarena_apache_logs:
     name: flexarena_apache_logs
+  flexarena_estado:
+    name: flexarena_estado
 
 networks:
   flexarena_net:

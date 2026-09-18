@@ -106,7 +106,7 @@ if [ ! -f "$ENV_FILE" ]; then
   if [ -f "$PROJECT_ROOT/.env.example" ]; then
     cp "$PROJECT_ROOT/.env.example" "$ENV_FILE"
     echo "==> No existía .env: se creó a partir de .env.example."
-    echo "    Revisá APP_SECRET / DB_PASS / DB_ROOT_PASS antes de exponer esto en producción."
+    echo "    Revisá DB_PASS / DB_ROOT_PASS antes de exponer esto en producción."
   else
     echo "ERROR: no existe .env ni .env.example en $PROJECT_ROOT" >&2
     exit 1
@@ -116,7 +116,7 @@ fi
 chmod 600 "$ENV_FILE"
 
 # Cargar .env (para el resumen final y para avisar si quedaron placeholders)
-APP_NAME=""; APP_URL=""; DB_PASS=""; DB_ROOT_PASS=""; APP_SECRET=""
+APP_NAME=""; APP_URL=""; DB_PASS=""; DB_ROOT_PASS=""
 while IFS= read -r line || [ -n "$line" ]; do
   line="${line%$'\r'}"
   case "$line" in ''|\#*) continue ;; esac
@@ -127,7 +127,6 @@ while IFS= read -r line || [ -n "$line" ]; do
     APP_URL)      APP_URL="$val" ;;
     DB_PASS)      DB_PASS="$val" ;;
     DB_ROOT_PASS) DB_ROOT_PASS="$val" ;;
-    APP_SECRET)   APP_SECRET="$val" ;;
   esac
 done < "$ENV_FILE"
 
@@ -139,7 +138,6 @@ case "$DB_PASS$DB_ROOT_PASS" in
   *"-2026_Db"*|*"-Root-2026"*|*change_this_db_password*|*change_this_root_password*)
     PLACEHOLDER_FOUND=1 ;;
 esac
-case "$APP_SECRET" in change_this_secret_key*) PLACEHOLDER_FOUND=1 ;; esac
 # DB_PASS/DB_ROOT_PASS ausentes en .env (variable vacía, ni siquiera la línea)
 # caen en silencio en el default de docker-compose.yml (change_this_db_password /
 # change_this_root_password) — mismo riesgo que dejar el placeholder puesto a mano.
@@ -148,8 +146,8 @@ if [ -z "$DB_PASS" ] || [ -z "$DB_ROOT_PASS" ]; then
 fi
 if [ "$PLACEHOLDER_FOUND" -eq 1 ]; then
   echo "ADVERTENCIA: .env todavía tiene valores de ejemplo, o directamente le faltan" >&2
-  echo "             DB_PASS/DB_ROOT_PASS/APP_SECRET (sin definirlos, MySQL/la app" >&2
-  echo "             usan el default público de docker-compose.yml)." >&2
+  echo "             DB_PASS/DB_ROOT_PASS (sin definirlos, MySQL usa el default" >&2
+  echo "             público de docker-compose.yml)." >&2
   echo "             Cambialos antes de dejar esto expuesto en producción." >&2
 fi
 
