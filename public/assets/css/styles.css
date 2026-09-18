@@ -298,6 +298,28 @@ input:focus, select:focus, textarea:focus {
   display: flex; flex-direction: column;
   z-index: 2;
 }
+
+/* La tarjeta con el menú de acciones abierto se levanta por encima del resto.
+ *
+ * Hace falta porque `position: absolute` + `z-index` convierten a .bk-card en un
+ * CONTEXTO DE APILADO: el z-index del menú que lleva adentro solo ordena contra
+ * sus hermanos dentro de esa tarjeta, no contra el resto de la página. Con todas
+ * las tarjetas en z-index 2, las que vienen después en el DOM se dibujaban
+ * ENCIMA del menú abierto, y el contenido de esas tarjetas se veía atravesando
+ * el panel — parece transparencia, pero el panel es opaco: es apilado.
+ *
+ * Subir el z-index del menú no arregla nada; el que tiene que subir es el
+ * contexto que lo contiene, o sea la tarjeta.
+ *
+ * El 60 no es arbitrario: por encima de .topbar (45) y .public-nav (50), para
+ * que el menú no quede debajo de la barra fija al abrirse hacia arriba, y por
+ * debajo de los modales (100), para que el menú no tape el diálogo que él mismo
+ * abre.
+ *
+ * El atributo ya lo maneja el JS del bracket (eliminacion_bracket.php): pone
+ * aria-expanded="true" al abrir y "false" al cerrar. Por eso esto se resuelve
+ * entero en CSS, sin tocar el script. */
+.bk-card[aria-expanded="true"] { z-index: 60; }
 .bk-card.clickable { cursor: pointer; }
 .bk-card.clickable:hover { border-color: rgba(107,197,255,.6); background: rgba(52,152,219,.12); }
 .bk-row {
@@ -395,7 +417,10 @@ input:focus, select:focus, textarea:focus {
   position: absolute;
   right: .5rem;
   top: calc(100% + .25rem); /* place below the card to avoid covering names */
-  z-index: 1000; /* ensure above bracket lines/cards */
+  /* Ordena contra los hermanos DENTRO de la tarjeta (las .bk-row). No alcanza
+     para quedar sobre las otras tarjetas: .bk-card es un contexto de apilado y
+     atrapa este valor. De eso se encarga .bk-card[aria-expanded="true"]. */
+  z-index: 3;
 
   box-sizing: border-box;
   padding: .4rem;

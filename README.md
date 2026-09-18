@@ -242,6 +242,7 @@ sufijo `_test`.
 | `seed_base_test.php` | `seed.sql` por su cuenta: horarios de los partidos jugados, byes sin horario, perfiles coherentes con sus cuentas. |
 | `alta_participantes_test.php` | Que el alta de participantes tenga un solo camino —el registro público— y que no vuelvan las piezas del alta manual, que era código inalcanzable. |
 | `docs_referencias_test.php` | Que la documentación no cite código que no existe: cada `Clase::metodo()` y cada ruta de archivo que nombra tienen que estar ahí. |
+| `bracket_apilado_test.php` | El orden de apilado del menú de acciones del bracket: sobre las otras tarjetas y las barras fijas, debajo de los modales. |
 | `backup_restore_test.sh` | `scripts/backup.sh` y `scripts/restore.sh`: verificación de los respaldos. No toca Docker ni la base (usa un `docker` simulado). |
 | `datos_minimos_test.php` | El mínimo de 50 registros por componente que pide la letra, y la coherencia de los datos sembrados. |
 
