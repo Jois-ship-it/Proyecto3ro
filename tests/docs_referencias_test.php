@@ -30,6 +30,7 @@ final class DocsReferenciasTest extends TestCase
     private const DOCUMENTOS = [
         'docs/restricciones_no_estructurales.md',
         'docs/documentacion_tecnica.md',
+        'docs/INSTALACION.md',
         'database/migrations/README.md',
     ];
 

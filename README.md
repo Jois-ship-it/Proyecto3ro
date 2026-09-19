@@ -12,6 +12,9 @@ Plataforma web para organizar, administrar y consultar torneos deportivos, menta
 
 - Docker Desktop (Windows/Mac/Linux) — no hace falta instalar PHP, Apache ni MySQL aparte.
 
+> Para el paso a paso completo —incluido cómo instalarlo desde cero en un
+> servidor que ya tiene el proyecto— ver **[docs/INSTALACION.md](docs/INSTALACION.md)**.
+
 ### Levantar el proyecto (desarrollo local)
 
 ```bash
