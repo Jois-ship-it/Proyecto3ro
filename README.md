@@ -176,6 +176,21 @@ bash scripts/restore.sh <archivo.sql.gz>  # restaurar un respaldo
 bash scripts/monitor_db.sh                # estado básico de la BD
 ```
 
+Los contenedores se manejan con `server_management.sh`. Para los servicios del
+**host** —Docker, firewalld, crond, sshd— está `gestion_servicios.sh`, que es un
+envoltorio sobre `systemctl` y `journalctl`:
+
+```bash
+bash scripts/gestion_servicios.sh list                    # resumen de los conocidos
+bash scripts/gestion_servicios.sh status <servicio>
+bash scripts/gestion_servicios.sh logs <servicio> [-f]
+sudo bash scripts/gestion_servicios.sh restart <servicio> # cambiar estado exige root
+```
+
+`<servicio>` puede ser cualquier unidad systemd: la lista de conocidos solo se
+usa para el resumen, no restringe nada. Apache/PHP y MySQL **no** van por acá:
+corren dentro de los contenedores y se gestionan con `server_management.sh`.
+
 ---
 
 ## Tests
