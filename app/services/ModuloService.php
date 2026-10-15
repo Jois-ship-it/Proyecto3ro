@@ -28,13 +28,13 @@ class ModuloService
      * Activa/desactiva un módulo y lo registra en auditoría.
      *
      * @return array{modulo: array, anterior: string, nuevo: string}
-     * @throws RuntimeException si el módulo no existe.
+     * @throws ErrorNegocio si el módulo no existe.
      */
     public function toggle(int $id): array
     {
         $modulo = $this->model->findById($id);
         if (!$modulo) {
-            throw new RuntimeException('El módulo indicado no existe.');
+            throw new ErrorNegocio('El módulo indicado no existe.');
         }
 
         $anterior = (string) $modulo['estado'];

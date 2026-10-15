@@ -21,15 +21,39 @@ class TorneoController extends BaseController
         $this->requireOrganizador();
         $this->requirePermiso('torneos', 'ver');
         // Un organizador solo ve SUS torneos desde este listado; el admin, todos
-        // (misma regla que OrganizadorController::misTorneos()).
-        $torneos = Auth::isAdmin()
-            ? $this->torneoService->getAll()
-            : $this->torneoService->getByOrganizador((int)Auth::id());
+        // (misma regla que OrganizadorController::misTorneos()). La regla viaja a la consulta
+        // (organizadorId), no se aplica después sobre la lista.
+        $organizadorId = Auth::isAdmin() ? null : (int)Auth::id();
+
+        $tipos   = array_column($this->tipoModel->findAll(), 'nombre', 'slug');
+        $filtros = Filtros::desdeQuery($_GET, [
+            'q'      => 'texto',
+            'tipo'   => array_keys($tipos),
+            'estado' => array_keys(self::ESTADOS),
+        ]);
+        $pag = Paginador::de($this->torneoService->contar($filtros, $organizadorId), $this->get('page', 1), self::POR_PAGINA);
+
         $this->render('admin/torneos', [
             'pageTitle' => 'Torneos',
-            'torneos'   => $torneos,
+            'torneos'   => $this->torneoService->buscar($filtros, $pag->porPagina, $pag->desplazamiento, $organizadorId),
+            'filtros'   => $filtros,
+            'pag'       => $pag,
+            'tipos'     => $tipos,
+            'estados'   => self::ESTADOS,
         ], 'admin');
     }
+
+    /** Torneos por página en la lista del panel. */
+    public const POR_PAGINA = 15;
+
+    /** @var array<string,string> los estados por los que se puede filtrar la lista del panel, con su texto */
+    public const ESTADOS = [
+        'borrador'    => 'Borrador',
+        'inscripcion' => 'Inscripción',
+        'en_curso'    => 'En curso',
+        'finalizado'  => 'Finalizado',
+        'cancelado'   => 'Cancelado',
+    ];
 
     public function formulario(string $id = ''): void
     {
@@ -132,7 +156,7 @@ class TorneoController extends BaseController
             }
             $this->redirect('/admin/torneos');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
             $this->redirect($id ? "/admin/torneos/editar/{$id}" : '/admin/torneos/crear');
         }
     }
@@ -195,7 +219,7 @@ class TorneoController extends BaseController
             'totalRondasJugadas'      => $rondasRegulares,
             'desempatePendiente'      => $desempatePendiente,
             'csrf'                    => Csrf::generate(),
-            'extraJs'                 => ['combobox.js'],
+            'extraJs'                 => ['combobox.js', 'api.js', 'resultados.js', 'modales.js', 'gestion-torneo.js', 'bracket.js'],
         ], 'admin');
     }
 
@@ -225,7 +249,7 @@ class TorneoController extends BaseController
             };
             $this->flash('success', 'Competencia generada correctamente.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect("/admin/torneos/{$id}");
     }
@@ -239,7 +263,7 @@ class TorneoController extends BaseController
             (new SistemaSuizoService())->generarSiguienteRonda((int)$id);
             $this->flash('success', 'Siguiente ronda generada.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect("/admin/torneos/{$id}");
     }
@@ -287,7 +311,7 @@ class TorneoController extends BaseController
                 $this->flash('success', "Ronda «{$ronda['nombre']}» reabierta.");
             }
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
 
         $this->redirect($this->volverAlTorneo($torneoId));
@@ -328,7 +352,7 @@ class TorneoController extends BaseController
                 $this->flash('success', 'Equipo inscrito.');
             }
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect("/admin/torneos/{$id}");
     }
@@ -345,7 +369,7 @@ class TorneoController extends BaseController
             $this->inscripcionService->desinscribir((int)$id, $participanteId, $equipoId);
             $this->flash('success', 'Inscripción retirada.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect("/admin/torneos/{$id}");
     }
@@ -359,7 +383,7 @@ class TorneoController extends BaseController
             $this->torneoService->eliminar((int)$id);
             $this->flash('success', 'Torneo cancelado.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/torneos');
     }

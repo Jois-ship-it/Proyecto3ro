@@ -28,17 +28,24 @@ class EliminacionDirectaService
      */
     public function generarBracket(int $torneoId): void
     {
+        // Todo o nada: ni la ronda 1, ni los byes, ni el avance de los ganadores quedan a medias.
+        Database::transaccion(fn() => $this->generarBracketSinTransaccion($torneoId));
+    }
+
+    /** El cuerpo de generarBracket(), separado para que corra entero dentro de una transacción. */
+    private function generarBracketSinTransaccion(int $torneoId): void
+    {
         // Generar el bracket es EMPEZAR el torneo: si el módulo está deshabilitado
         // no se arranca nada nuevo (los brackets ya generados siguen avanzando).
         $this->assertModuloActivo('eliminacion_directa');
 
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
 
         $inscripciones = $this->insModel->getByTorneo($torneoId);
         $n = count($inscripciones);
-        if ($n < 2)   throw new RuntimeException('Se necesitan al menos 2 inscritos.');
-        if ($n > 128) throw new RuntimeException('La Eliminación Directa admite hasta 128 inscritos.');
+        if ($n < 2)   throw new ErrorNegocio('Se necesitan al menos 2 inscritos.');
+        if ($n > 128) throw new ErrorNegocio('La Eliminación Directa admite hasta 128 inscritos.');
 
         $esEquipos = $torneo['modalidad'] === 'equipos';
         $ids = InscripcionModel::idsDesdeInscripciones($inscripciones, $esEquipos);
@@ -193,6 +200,31 @@ class EliminacionDirectaService
         }
 
         $this->auditoria->log('avanzar_ganador', 'enfrentamientos', $enfrentamientoId, "Ganador {$ganadorId} avanzó a ronda {$siguienteNum}");
+    }
+
+    /**
+     * Se corrigió el resultado de un partido de un bracket YA finalizado: si era la final y cambió
+     * quién la ganó, cambia el campeón. (Un partido anterior a la final no llega acá: no se puede
+     * corregir una vez que su ganador avanzó.) Devuelve un aviso si el campeón cambió, o null.
+     *
+     * Antes la corrección de una final dejaba el resultado nuevo y el campeón viejo.
+     */
+    public function reevaluarCampeon(int $enfrentamientoId, int $ganadorId, bool $esEquipos): ?string
+    {
+        $enf = $this->enfModel->findById($enfrentamientoId);
+        if (!$enf || count($this->enfModel->getByRonda((int)$enf['ronda_id'])) !== 1) return null;   // no es la final
+
+        $torneo   = $this->torneoModel->findByIdCompleto((int)$enf['torneo_id']);
+        $actualId = (int) ($esEquipos ? $torneo['campeon_equipo_id'] : $torneo['campeon_participante_id']);
+        if ($ganadorId === 0 || $ganadorId === $actualId) return null;
+
+        $antes = (string) ($torneo['campeon_participante_nombre'] ?? $torneo['campeon_equipo_nombre'] ?? '—');
+        $ahora = (string) (($esEquipos ? (new EquipoModel())->findById($ganadorId) : (new ParticipanteModel())->findById($ganadorId))['nombre'] ?? '');
+        $this->torneoModel->setCampeon($esEquipos, (int)$enf['torneo_id'], $ganadorId);
+        $this->auditoria->log('cambiar_campeon', 'torneos', (int)$enf['torneo_id'],
+            "Campeón del torneo {$enf['torneo_id']} cambiado por una corrección de la final: antes {$antes}, ahora {$ahora}.",
+            ['campeon' => $antes], ['campeon' => $ahora]);
+        return "El campeón cambió: antes {$antes}, ahora {$ahora}.";
     }
 
     public function puedeCorregir(int $enfrentamientoId, int $torneoId): bool

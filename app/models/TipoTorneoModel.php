@@ -16,7 +16,8 @@ class TipoTorneoModel extends BaseModel
 
     /**
      * Tipos ofrecibles en el formulario de torneo: solo los que tienen su módulo
-     * habilitado en `modulos` (el slug es el mismo en ambas tablas).
+     * habilitado en `modulos`. Cada formato apunta a su módulo por una clave
+     * foránea (`tipos_torneo.modulo_slug`), no por una coincidencia de nombres.
      *
      * $incluirId conserva el formato actual de un torneo que se está editando
      * aunque su módulo se haya deshabilitado después de crearlo; si no, el select
@@ -37,7 +38,7 @@ class TipoTorneoModel extends BaseModel
         return $this->fetchAll(
             "SELECT tt.*, IF(m.estado = 'activo', 1, 0) AS modulo_activo
              FROM tipos_torneo tt
-             LEFT JOIN modulos m ON m.slug = tt.slug
+             JOIN modulos m ON m.slug = tt.modulo_slug
              WHERE {$where}
              ORDER BY tt.id ASC",
             $params

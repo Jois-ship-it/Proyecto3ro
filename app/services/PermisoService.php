@@ -54,7 +54,7 @@ class PermisoService
         if ($this->rolAdminId === null) {
             $rol = (new RolModel())->findByNombre('administrador');
             if ($rol === null) {
-                throw new RuntimeException('No existe el rol «administrador» en la tabla roles.');
+                throw new ErrorNegocio('No existe el rol «administrador» en la tabla roles.');
             }
             $this->rolAdminId = (int) $rol['id'];
         }
@@ -128,6 +128,13 @@ class PermisoService
      * @return int Cantidad de filas rol × módulo que quedaron con algún permiso.
      */
     public function guardarMatriz(array $marcados): int
+    {
+        // Todo o nada: una matriz de permisos a medio guardar es un control de acceso inconsistente.
+        return Database::transaccion(fn() => $this->guardarMatrizSinTransaccion($marcados));
+    }
+
+    /** El cuerpo de guardarMatriz(), separado para que corra entero dentro de una transacción. */
+    private function guardarMatrizSinTransaccion(array $marcados): int
     {
         $rolAdmin = $this->rolAdministradorId();
         $roles    = (new RolModel())->findAll();

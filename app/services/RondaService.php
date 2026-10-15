@@ -91,10 +91,10 @@ class RondaService
     public function cerrar(int $rondaId, ?int $usuarioId = null): array
     {
         $ronda = $this->model->findById($rondaId);
-        if (!$ronda) throw new RuntimeException('Ronda no encontrada.');
+        if (!$ronda) throw new ErrorNegocio('Ronda no encontrada.');
 
         if ($ronda['estado'] === 'cerrada') {
-            throw new RuntimeException('La ronda ya está cerrada.');
+            throw new ErrorNegocio('La ronda ya está cerrada.');
         }
 
         $this->model->updateEstado($rondaId, 'cerrada');
@@ -125,15 +125,15 @@ class RondaService
     public function reabrir(int $rondaId, ?int $usuarioId = null): array
     {
         $ronda = $this->model->findById($rondaId);
-        if (!$ronda) throw new RuntimeException('Ronda no encontrada.');
+        if (!$ronda) throw new ErrorNegocio('Ronda no encontrada.');
 
         if ($ronda['estado'] !== 'cerrada') {
-            throw new RuntimeException('La ronda no está cerrada.');
+            throw new ErrorNegocio('La ronda no está cerrada.');
         }
 
         $nuevo = $this->estadoSegunPartidos($rondaId);
         if ($nuevo === 'cerrada') {
-            throw new RuntimeException(
+            throw new ErrorNegocio(
                 'No se puede reabrir: todos los partidos de la ronda están resueltos. '
                 . 'Si hay que cambiar un resultado, usá la corrección de resultados.'
             );
@@ -163,7 +163,7 @@ class RondaService
         if (!$ronda) return; // sin ronda asociada no hay nada que controlar
 
         if ($ronda['estado'] === 'cerrada') {
-            throw new RuntimeException(
+            throw new ErrorNegocio(
                 "La ronda «{$ronda['nombre']}» está cerrada: no admite carga de resultados. "
                 . 'Reabrila para poder cargarlos.'
             );

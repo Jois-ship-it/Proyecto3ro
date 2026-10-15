@@ -36,21 +36,28 @@ class SistemaSuizoService
      */
     public function generarPrimeraRonda(int $torneoId): void
     {
+        // Todo o nada: no queda una ronda 1 sin todos sus partidos.
+        Database::transaccion(fn() => $this->generarPrimeraRondaSinTransaccion($torneoId));
+    }
+
+    /** El cuerpo de generarPrimeraRonda(), separado para que corra entero dentro de una transacción. */
+    private function generarPrimeraRondaSinTransaccion(int $torneoId): void
+    {
         // La ronda 1 es el arranque del torneo: si el módulo está deshabilitado no
         // se empieza. generarSiguienteRonda() a propósito NO tiene esta guarda: un
         // suizo ya arrancado tiene que poder completar sus rondas y coronar campeón.
         $this->assertModuloActivo('suizo');
 
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
         if ($this->rondaModel->countByTorneo($torneoId) > 0) {
-            throw new RuntimeException('Ya existe una ronda generada para este torneo.');
+            throw new ErrorNegocio('Ya existe una ronda generada para este torneo.');
         }
 
         $inscripciones = $this->insModel->getByTorneo($torneoId);
         $n = count($inscripciones);
-        if ($n < 2)   throw new RuntimeException('Se necesitan al menos 2 inscritos.');
-        if ($n > 256) throw new RuntimeException('El Sistema Suizo admite hasta 256 inscritos.');
+        if ($n < 2)   throw new ErrorNegocio('Se necesitan al menos 2 inscritos.');
+        if ($n > 256) throw new ErrorNegocio('El Sistema Suizo admite hasta 256 inscritos.');
 
         $esEquipos = $torneo['modalidad'] === 'equipos';
         $ids = InscripcionModel::idsDesdeInscripciones($inscripciones, $esEquipos);
@@ -96,18 +103,26 @@ class SistemaSuizoService
      */
     public function generarSiguienteRonda(int $torneoId): void
     {
+        // Todo o nada: no queda una ronda a medio emparejar. Si se llama desde la carga
+        // de un resultado, es un paso más de la transacción de esa carga.
+        Database::transaccion(fn() => $this->generarSiguienteRondaSinTransaccion($torneoId));
+    }
+
+    /** El cuerpo de generarSiguienteRonda(), separado para que corra entero dentro de una transacción. */
+    private function generarSiguienteRondaSinTransaccion(int $torneoId): void
+    {
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
 
         $rondasJugadas = $this->rondaModel->countByTorneo($torneoId);
         $totalRondas   = (int)$torneo['rondas_suizo'];
 
         if ($rondasJugadas >= $totalRondas) {
-            throw new RuntimeException("Ya se completaron todas las rondas ({$totalRondas}) del torneo.");
+            throw new ErrorNegocio("Ya se completaron todas las rondas ({$totalRondas}) del torneo.");
         }
 
         if (!$this->rondaModel->ultimaRondaCompleta($torneoId)) {
-            throw new RuntimeException('No se puede generar la siguiente ronda: hay partidos pendientes en la ronda anterior.');
+            throw new ErrorNegocio('No se puede generar la siguiente ronda: hay partidos pendientes en la ronda anterior.');
         }
 
         $esEquipos = $torneo['modalidad'] === 'equipos';
@@ -254,7 +269,7 @@ class SistemaSuizoService
 
         // Con $limite == n/2 cualquier combinación es válida y la primera rama de la
         // búsqueda ya la encuentra, así que llegar acá significa un error de lógica.
-        throw new RuntimeException('No se pudo emparejar la ronda: ningún emparejamiento completo encontrado.');
+        throw new ErrorNegocio('No se pudo emparejar la ronda: ningún emparejamiento completo encontrado.');
     }
 
     /**

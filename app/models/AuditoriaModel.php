@@ -34,6 +34,63 @@ class AuditoriaModel extends BaseModel
         );
     }
 
+    /**
+     * Una página de la auditoría, de la más nueva a la más vieja. Busca el texto en el nombre del
+     * usuario, la descripción y la tabla; filtra por acción y por rango de fechas (el día
+     * «hasta» entra completo).
+     *
+     * @param array{q?:string,accion?:string,desde?:string,hasta?:string} $f filtros ya saneados
+     */
+    public function buscar(array $f, ?int $limite = null, int $desde = 0): array
+    {
+        [$donde, $params] = $this->condiciones($f);
+        return $this->fetchAll(
+            "SELECT a.*, u.nombre AS usuario_nombre, u.email AS usuario_email
+             FROM auditoria a
+             LEFT JOIN usuarios u ON u.id = a.usuario_id
+             {$donde}
+             ORDER BY a.created_at DESC, a.id DESC" . $this->limiteDe($limite, $desde),
+            $params
+        );
+    }
+
+    public function contarBuscados(array $f): int
+    {
+        [$donde, $params] = $this->condiciones($f);
+        return (int) $this->fetchColumn(
+            "SELECT COUNT(*) FROM auditoria a LEFT JOIN usuarios u ON u.id = a.usuario_id {$donde}",
+            $params
+        );
+    }
+
+    /** Las acciones que aparecen en la auditoría, para el filtro. @return string[] */
+    public function acciones(): array
+    {
+        return array_column($this->fetchAll("SELECT DISTINCT accion FROM auditoria ORDER BY accion ASC"), 'accion');
+    }
+
+    /** @return array{0:string,1:array} el WHERE y sus parámetros */
+    private function condiciones(array $f): array
+    {
+        $condiciones = [];
+        $params      = [];
+        $this->agregarBusqueda($condiciones, $params, (string) ($f['q'] ?? ''),
+            ['u.nombre', 'a.descripcion', 'a.tabla_afectada']);
+        if (($f['accion'] ?? '') !== '') {
+            $condiciones[]      = 'a.accion = :accion';
+            $params[':accion']  = $f['accion'];
+        }
+        if (($f['desde'] ?? '') !== '') {
+            $condiciones[]      = 'a.created_at >= :desde';
+            $params[':desde']   = $f['desde'];
+        }
+        if (($f['hasta'] ?? '') !== '') {
+            $condiciones[]      = 'a.created_at < DATE_ADD(:hasta, INTERVAL 1 DAY)';
+            $params[':hasta']   = $f['hasta'];
+        }
+        return [$this->dondeDe($condiciones), $params];
+    }
+
     public function countTotal(): int
     {
         return (int) $this->fetchColumn("SELECT COUNT(*) FROM auditoria");

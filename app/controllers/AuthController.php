@@ -48,7 +48,7 @@ class AuthController extends BaseController
             Session::flash('success', 'Tu cuenta fue creada y quedó pendiente de aprobación. Vas a poder iniciar sesión cuando un administrador la apruebe.');
             $this->redirect('/login');
         } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
+            Session::flash('error', $this->mensajeDe($e));
             // Conservar lo ingresado (menos la contraseña)
             unset($datos['password'], $datos['password_confirm']);
             Session::flash('old', $datos);
@@ -67,7 +67,7 @@ class AuthController extends BaseController
             $user = $this->authService->login($email, (string)$password);
             $this->redirect($this->urlRolPrincipal($user['rol_nombre']));
         } catch (RuntimeException $e) {
-            Session::flash('error', $e->getMessage());
+            Session::flash('error', $this->mensajeDe($e));
             $this->redirect('/login');
         }
     }
@@ -75,8 +75,8 @@ class AuthController extends BaseController
     public function logout(): void
     {
         $this->requireLogin();
-        $this->authService->logout();
-        Session::flash('success', 'Sesión cerrada correctamente.');
+        $this->authService->logout();            // deja una sesión nueva y vacía: lo que había se fue con ella, avisos incluidos
+        Session::flash('success', 'Sesión cerrada correctamente.');   // y el aviso viaja en la nueva (antes se escribía en una sesión ya destruida y se perdía)
         $this->redirect('/login');
     }
 

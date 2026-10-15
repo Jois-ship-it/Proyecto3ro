@@ -9,6 +9,12 @@ $router->get('torneo/{id}',         'PublicoController', 'detalle');
 $router->get('equipo/{id}',         'PublicoController', 'equipo');
 $router->get('jugador/{id}',        'PublicoController', 'jugador');
 
+// ─── API JSON (solo lectura, pública) ───────────────────────
+// Sin sesión: muestra lo mismo que las páginas públicas. No hay ninguna ruta de escritura bajo /api.
+$router->get('api/torneos',                     'ApiController', 'torneos');
+$router->get('api/torneos/{id}/posiciones',     'ApiController', 'posiciones');
+$router->get('api/torneos/{id}/calendario',     'ApiController', 'calendario');
+
 // ─── AUTENTICACIÓN ──────────────────────────────────────────
 $router->get('login',               'AuthController', 'loginForm');
 $router->post('login',              'AuthController', 'login');
@@ -37,6 +43,16 @@ $router->post('admin/organizadores/eliminar/{id}',     'AdminController', 'usuar
 // Acciones de bloqueo/desbloqueo
 $router->post('admin/organizadores/desbloquear/{id}', 'AdminController', 'usuarioDesbloquear');
 $router->post('admin/organizadores/bloquear/{id}',    'AdminController', 'usuarioBloquear');
+
+// Administradores (la misma pantalla que Organizadores, con el rol administrador)
+$router->get('admin/administradores',                    'AdminController', 'administradores');
+$router->get('admin/administradores/crear',              'AdminController', 'administradorForm');
+$router->post('admin/administradores/crear',             'AdminController', 'administradorGuardar');
+$router->get('admin/administradores/editar/{id}',        'AdminController', 'administradorForm');
+$router->post('admin/administradores/editar/{id}',       'AdminController', 'administradorGuardar');
+$router->post('admin/administradores/eliminar/{id}',     'AdminController', 'administradorEliminar');
+$router->post('admin/administradores/desbloquear/{id}',  'AdminController', 'usuarioDesbloquear');
+$router->post('admin/administradores/bloquear/{id}',     'AdminController', 'usuarioBloquear');
 
 // ─── ADMIN — PARTICIPANTES ──────────────────────────────────
 $router->get('admin/participantes',               'AdminController', 'participantes');
@@ -73,6 +89,15 @@ $router->post('admin/torneos/{id}/inscribir',     'TorneoController', 'inscribir
 $router->post('admin/torneos/{id}/desinscribir',  'TorneoController', 'desinscribir');
 $router->post('admin/torneos/eliminar/{id}',      'TorneoController', 'eliminar');
 
+// Reportes (solo lectura): el general es del administrador; el de un torneo, del administrador
+// y del organizador dueño. Los .csv se descargan y quedan en la auditoría.
+$router->get('admin/reportes',                              'ReporteController', 'general');
+$router->get('admin/reportes/torneos.csv',                  'ReporteController', 'generalCsv');
+$router->get('admin/torneos/{id}/reporte',                  'ReporteController', 'torneo');
+$router->get('admin/torneos/{id}/reporte/posiciones.csv',   'ReporteController', 'posicionesCsv');
+$router->get('admin/torneos/{id}/reporte/partidos.csv',     'ReporteController', 'partidosCsv');
+$router->get('admin/torneos/{id}/reporte/inscritos.csv',    'ReporteController', 'inscritosCsv');
+
 // Cerrar / reabrir rondas (mismo controlador desde los dos paneles)
 $router->post('admin/rondas/{id}/cerrar',         'TorneoController', 'cerrarRonda');
 $router->post('admin/rondas/{id}/reabrir',        'TorneoController', 'reabrirRonda');
@@ -93,6 +118,10 @@ $router->get('admin/modulos',                     'AdminController', 'modulos');
 $router->post('admin/modulos/toggle/{id}',        'AdminController', 'moduloToggle');
 $router->get('admin/permisos',                    'AdminController', 'permisos');
 $router->post('admin/permisos',                   'AdminController', 'permisosGuardar');
+
+// ─── ADMIN — CONFIGURACIÓN GENERAL DEL SISTEMA ──────────────
+$router->get('admin/configuracion',               'ConfiguracionController', 'index');
+$router->post('admin/configuracion',              'ConfiguracionController', 'guardar');
 
 // ─── ORGANIZADOR ────────────────────────────────────────────
 $router->get('organizador',                       'OrganizadorController', 'dashboard');

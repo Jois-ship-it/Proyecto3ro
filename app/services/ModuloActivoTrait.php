@@ -21,20 +21,20 @@ trait ModuloActivoTrait
      *
      * @param string $slug Slug del módulo en `modulos` (coincide con `tipos_torneo.slug`
      *                     para los tres formatos de competencia).
-     * @throws RuntimeException si el módulo está inactivo/en revisión o no existe.
+     * @throws ErrorNegocio si el módulo está inactivo/en revisión o no existe.
      */
     private function assertModuloActivo(string $slug): void
     {
         $modulo = (new ModuloModel())->findBySlug($slug);
 
         if ($modulo === null) {
-            throw new RuntimeException(
+            throw new ErrorNegocio(
                 "El módulo «{$slug}» no está registrado en el sistema, por lo que no se puede operar con este formato."
             );
         }
 
         if ($modulo['estado'] !== 'activo') {
-            throw new RuntimeException(
+            throw new ErrorNegocio(
                 "El módulo «{$modulo['nombre']}» está en estado «{$modulo['estado']}». "
                 . "Un administrador debe reactivarlo para crear torneos o generar la estructura de este formato. "
                 . "Los torneos ya en curso pueden terminarse normalmente."

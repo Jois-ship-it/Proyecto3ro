@@ -35,6 +35,11 @@ class AuditoriaService
         return $this->model->getRecientes($limit, $offset);
     }
 
+    /** Una página de la auditoría con sus filtros, el total que los cumple y las acciones para el selector. */
+    public function buscar(array $filtros, int $limite, int $desde): array { return $this->model->buscar($filtros, $limite, $desde); }
+    public function contar(array $filtros): int                            { return $this->model->contarBuscados($filtros); }
+    public function acciones(): array                                      { return $this->model->acciones(); }
+
     public function countTotal(): int
     {
         return $this->model->countTotal();

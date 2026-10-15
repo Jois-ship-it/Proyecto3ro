@@ -10,15 +10,10 @@ class ResultadoController extends BaseController
         $this->resultadoService = new ResultadoService();
     }
 
-    /** El organizador solo opera sobre SUS torneos; el administrador, sobre todos. */
+    /** El organizador solo opera sobre partidos de SUS torneos; el administrador, sobre todos. */
     private function assertPuedeGestionar(int $enfId): void
     {
-        $enf = (new EnfrentamientoModel())->findById($enfId);
-        if (!$enf) return; // el servicio informará "no encontrado"
-        $this->requireTorneoOwnership(
-            (int)$enf['torneo_id'],
-            Url::interna($_SERVER['HTTP_REFERER'] ?? null, '/organizador/torneos')
-        );
+        $this->requirePartidoPropio($enfId, Url::interna($_SERVER['HTTP_REFERER'] ?? null, '/organizador/torneos'));
     }
 
     public function cargar(): void
@@ -34,17 +29,18 @@ class ResultadoController extends BaseController
         $torneoId = $this->postInt('torneo_id');
         $this->assertPuedeGestionar($enfId);
 
+        $falla = null;
         try {
             $this->resultadoService->cargar($enfId, $puntosA, $puntosB, (int)Auth::id());
-            $this->flash('success', 'Resultado cargado correctamente.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $falla = $e;
         }
 
         // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
         // acepta solo si es del propio sitio (ver core/Url.php).
         $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
-        $this->redirect($referer);
+        // Con un fetch responde JSON; con el formulario común, flash y redirección (terminarAccion()).
+        $this->terminarAccion($falla, 'Resultado cargado correctamente.', $referer);
     }
 
     public function programar(): void
@@ -58,26 +54,34 @@ class ResultadoController extends BaseController
         $torneoId = $this->postInt('torneo_id');
         $this->assertPuedeGestionar($enfId);
 
+        $falla = null;
         try {
             $this->resultadoService->programar($enfId, $fecha !== '' ? $fecha : null, (int)Auth::id());
-            $this->flash('success', 'Partido programado correctamente.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $falla = $e;
         }
 
         // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
         // acepta solo si es del propio sitio (ver core/Url.php).
         $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
-        $this->redirect($referer);
+        $this->terminarAccion($falla, 'Partido programado correctamente.', $referer);
     }
 
+    /**
+     * Aplica una corrección DIRECTAMENTE. Solo el administrador.
+     *
+     * Letra §5.2: el organizador corrige resultados «si cuenta con autorización». Esa autorización
+     * es la aprobación del administrador: el organizador pide la corrección (CorreccionController::
+     * solicitar) y el administrador la aprueba o la rechaza. Esta acción es el camino directo del
+     * administrador, y la pantalla del organizador no la ofrece.
+     *
+     * Antes la compuerta era «rol organizador + permiso resultados/editar», así que un organizador
+     * con ese permiso (que trae por defecto) podía mandar un POST a esta ruta y aplicar la corrección
+     * sin que nadie la aprobara, salteándose todo el flujo de revisión.
+     */
     public function corregir(): void
     {
-        $this->requireOrganizador();
-        // Letra §5.2: «corregir resultados SI CUENTA CON AUTORIZACION». Esa
-        // autorizacion es la fila de permisos del rol sobre el modulo
-        // resultados; sin ella el organizador puede cargar pero no rehacer.
-        $this->requirePermiso('resultados', 'editar', '/organizador/torneos');
+        $this->requireAdmin();
         $this->checkCsrf();
 
         $enfId    = $this->postInt('enfrentamiento_id');
@@ -85,18 +89,17 @@ class ResultadoController extends BaseController
         $puntosB  = $this->postFloat('puntos_b');
         $motivo   = $this->postStr('motivo_correccion');
         $torneoId = $this->postInt('torneo_id');
-        $this->assertPuedeGestionar($enfId);
 
+        $falla = $aviso = null;
         try {
-            $this->resultadoService->corregir($enfId, $puntosA, $puntosB, $motivo, (int)Auth::id());
-            $this->flash('success', 'Resultado corregido correctamente. La tabla fue recalculada.');
+            $aviso = $this->resultadoService->corregir($enfId, $puntosA, $puntosB, $motivo, (int)Auth::id());
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $falla = $e;
         }
 
         // El Referer lo manda el navegador y puede apuntar a cualquier lado: se
         // acepta solo si es del propio sitio (ver core/Url.php).
         $referer = Url::interna($_SERVER['HTTP_REFERER'] ?? null, "/admin/torneos/{$torneoId}");
-        $this->redirect($referer);
+        $this->terminarAccion($falla, 'Resultado corregido correctamente. La tabla fue recalculada.', $referer, $aviso);
     }
 }

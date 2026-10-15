@@ -15,11 +15,15 @@ class EquipoService
     public function getAll(): array            { return $this->model->findAllConConteo(); }
     public function getById(int $id): ?array   { return $this->model->findByIdConParticipantes($id); }
 
+    /** Una página de la lista (con búsqueda y filtro por estado) y el total que cumple el filtro. */
+    public function buscar(array $filtros, int $limite, int $desde): array { return $this->model->buscarConConteo($filtros, $limite, $desde); }
+    public function contar(array $filtros): int                            { return $this->model->contarBuscados($filtros); }
+
     public function crear(array $d): int
     {
         $this->validar($d);
         if ($this->model->nombreExiste(trim($d['nombre']))) {
-            throw new RuntimeException('Ya existe un equipo con ese nombre.');
+            throw new ErrorNegocio('Ya existe un equipo con ese nombre.');
         }
         $datos = [
             'nombre'      => trim($d['nombre']),
@@ -38,7 +42,7 @@ class EquipoService
     {
         $this->validar($d);
         if ($this->model->nombreExiste(trim($d['nombre']), $id)) {
-            throw new RuntimeException('Ya existe otro equipo con ese nombre.');
+            throw new ErrorNegocio('Ya existe otro equipo con ese nombre.');
         }
         $datos = [
             'nombre'      => trim($d['nombre']),
@@ -55,7 +59,7 @@ class EquipoService
     public function eliminar(int $id): void
     {
         $e = $this->model->findById($id);
-        if (!$e) throw new RuntimeException('Equipo no encontrado.');
+        if (!$e) throw new ErrorNegocio('Equipo no encontrado.');
         $this->model->update($id, ['estado' => 'inactivo']);
         $this->auditoria->log('eliminar_equipo', 'equipos', $id, "Equipo desactivado: {$e['nombre']}");
     }
@@ -64,7 +68,7 @@ class EquipoService
     public function toggleActivo(int $id): string
     {
         $e = $this->model->findById($id);
-        if (!$e) throw new RuntimeException('Equipo no encontrado.');
+        if (!$e) throw new ErrorNegocio('Equipo no encontrado.');
         $nuevo = $e['estado'] === 'activo' ? 'inactivo' : 'activo';
         $this->model->update($id, ['estado' => $nuevo]);
         $this->auditoria->log(
@@ -78,7 +82,7 @@ class EquipoService
     public function agregarParticipante(int $equipoId, int $participanteId, string $rol = 'jugador'): void
     {
         if ($this->model->tieneParticipante($equipoId, $participanteId)) {
-            throw new RuntimeException('El participante ya pertenece a este equipo.');
+            throw new ErrorNegocio('El participante ya pertenece a este equipo.');
         }
         $this->model->agregarParticipante($equipoId, $participanteId, $rol);
         $this->auditoria->log('agregar_a_equipo', 'equipo_participantes', $equipoId, "Participante {$participanteId} agregado al equipo {$equipoId}");
@@ -92,6 +96,11 @@ class EquipoService
 
     private function validar(array $d): void
     {
-        if (empty($d['nombre'])) throw new RuntimeException('El nombre del equipo es obligatorio.');
+        if (empty($d['nombre'])) throw new ErrorNegocio('El nombre del equipo es obligatorio.');
+        Validator::assertLargos([
+            'El nombre del equipo' => [$d['nombre'], 100],
+            'La categoría'         => [$d['categoria'] ?? '', 80],
+            'La disciplina'        => [$d['disciplina'] ?? '', 80],
+        ]);
     }
 }

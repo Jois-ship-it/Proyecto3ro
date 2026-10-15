@@ -16,11 +16,67 @@ class EquipoModel extends BaseModel
         );
     }
 
+    /**
+     * Una página de equipos con su cantidad de integrantes. Busca el texto en nombre, categoría
+     * y disciplina, y filtra por estado. Misma forma de filas que findAllConConteo().
+     *
+     * @param array{q?:string,estado?:string} $f filtros ya saneados (ver Filtros)
+     */
+    public function buscarConConteo(array $f, ?int $limite = null, int $desde = 0): array
+    {
+        [$donde, $params] = $this->condiciones($f);
+        return $this->fetchAll(
+            "SELECT e.*, COUNT(ep.participante_id) AS total_integrantes
+             FROM equipos e
+             LEFT JOIN equipo_participantes ep ON ep.equipo_id = e.id
+             {$donde}
+             GROUP BY e.id
+             ORDER BY e.nombre ASC, e.id ASC" . $this->limiteDe($limite, $desde),
+            $params
+        );
+    }
+
+    public function contarBuscados(array $f): int
+    {
+        [$donde, $params] = $this->condiciones($f);
+        return (int) $this->fetchColumn("SELECT COUNT(*) FROM equipos e {$donde}", $params);
+    }
+
+    /** @return array{0:string,1:array} el WHERE y sus parámetros */
+    private function condiciones(array $f): array
+    {
+        $condiciones = [];
+        $params      = [];
+        $this->agregarBusqueda($condiciones, $params, (string) ($f['q'] ?? ''),
+            ['e.nombre', 'e.categoria', 'e.disciplina']);
+        if (($f['estado'] ?? '') !== '') {
+            $condiciones[]      = 'e.estado = :estado';
+            $params[':estado']  = $f['estado'];
+        }
+        return [$this->dondeDe($condiciones), $params];
+    }
+
     public function findByIdConParticipantes(int $id): ?array
     {
         $equipo = $this->findById($id);
         if (!$equipo) return null;
         $equipo['participantes'] = $this->getParticipantes($id);
+        return $equipo;
+    }
+
+    /** El equipo con sus integrantes TAL COMO LOS VE UN VISITANTE (sin datos de contacto). */
+    public function findPublicoConParticipantes(int $id): ?array
+    {
+        $equipo = $this->findById($id);
+        if (!$equipo) return null;
+        $equipo['participantes'] = $this->fetchAll(
+            "SELECT pp.*, ep.rol_en_equipo
+             FROM v_participantes_publicos pp
+             JOIN equipo_participantes ep ON ep.participante_id = pp.id
+             WHERE ep.equipo_id = :eid
+             ORDER BY pp.nombre ASC",
+            [':eid' => $id]
+        );
         return $equipo;
     }
 
@@ -34,6 +90,16 @@ class EquipoModel extends BaseModel
              ORDER BY p.nombre ASC",
             [':eid' => $equipoId]
         );
+    }
+
+    /** Los identificadores de los equipos a los que pertenece un participante. @return int[] */
+    public function idsDeParticipante(int $participanteId): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT equipo_id FROM equipo_participantes WHERE participante_id = :p ORDER BY equipo_id",
+            [':p' => $participanteId]
+        );
+        return array_map(fn(array $f) => (int) $f['equipo_id'], $filas);
     }
 
     public function agregarParticipante(int $equipoId, int $participanteId, string $rol = 'jugador'): bool

@@ -29,20 +29,28 @@ class LigaService
      */
     public function generarFixture(int $torneoId): void
     {
+        // Todo o nada: si algo falla a mitad, no queda un fixture a medio crear
+        // (rondas sin partidos, torneo sin arrancar).
+        Database::transaccion(fn() => $this->generarFixtureSinTransaccion($torneoId));
+    }
+
+    /** El cuerpo de generarFixture(), separado para que corra entero dentro de una transacción. */
+    private function generarFixtureSinTransaccion(int $torneoId): void
+    {
         // Generar el fixture es EMPEZAR el torneo: si el módulo está deshabilitado
         // no se arranca nada nuevo (los torneos ya en curso sí pueden terminarse).
         $this->assertModuloActivo('liga');
 
         $torneo = $this->torneoModel->findByIdCompleto($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
         if ($torneo['estado'] !== 'inscripcion' && $torneo['estado'] !== 'borrador') {
-            throw new RuntimeException('El torneo debe estar en estado inscripción o borrador para generar el fixture.');
+            throw new ErrorNegocio('El torneo debe estar en estado inscripción o borrador para generar el fixture.');
         }
 
         $inscripciones = $this->insModel->getByTorneo($torneoId);
         $n = count($inscripciones);
-        if ($n < 2)   throw new RuntimeException('Se necesitan al menos 2 participantes/equipos inscritos.');
-        if ($n > 64)  throw new RuntimeException('La Liga admite hasta 64 participantes/equipos.');
+        if ($n < 2)   throw new ErrorNegocio('Se necesitan al menos 2 participantes/equipos inscritos.');
+        if ($n > 64)  throw new ErrorNegocio('La Liga admite hasta 64 participantes/equipos.');
 
         $esEquipos = $torneo['modalidad'] === 'equipos';
 

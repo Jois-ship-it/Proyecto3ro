@@ -7,6 +7,18 @@ class AdminController extends BaseController
     private ParticipanteService $participanteService;
     private EquipoService      $equipoService;
     private AuditoriaService   $auditoriaService;
+
+    /** Filas por página en las listas del panel (la auditoría, que es más densa, muestra más). */
+    public const POR_PAGINA           = 15;
+    public const POR_PAGINA_AUDITORIA = 50;
+
+    /** @var array<string,string> estados por los que se filtran las listas, con su texto */
+    private const ESTADOS_CUENTA = ['activo' => 'Activo', 'inactivo' => 'Inactivo', 'bloqueada' => 'Bloqueada'];
+    private const ESTADOS_PARTICIPANTE = [
+        'activo' => 'Activo', 'inactivo' => 'Inactivo', 'suspendido' => 'Suspendido',
+        'pendiente' => 'Pendiente', 'rechazado' => 'Rechazado',
+    ];
+    private const ESTADOS_EQUIPO = ['activo' => 'Activo', 'inactivo' => 'Inactivo'];
     private ModuloService      $moduloService;
     private PermisoService     $permisoService;
 
@@ -25,53 +37,101 @@ class AdminController extends BaseController
     public function dashboard(): void
     {
         $this->requireAdmin();
-        $torneoModel = new TorneoModel();
+        // Los contadores salen de la vista v_estadisticas_sistema, en una sola consulta.
+        $stats = (new EstadisticasModel())->get();
         $this->render('admin/dashboard', [
             'pageTitle'    => 'Panel Admin',
-            'totalTorneos' => $torneoModel->count(),
-            'totalParticipantes' => (new ParticipanteModel())->count(),
-            'totalEquipos' => (new EquipoModel())->count(),
+            'totalTorneos' => (int)$stats['torneos_total'],
+            'totalParticipantes' => (int)$stats['participantes_total'],
+            'totalEquipos' => (int)$stats['equipos_total'],
             'actividad'    => $this->auditoriaService->getRecientes(10),
         ], 'admin');
     }
 
-    // ─── Usuarios ────────────────────────────────────────────
+    // ─── Cuentas por rol: organizadores y administradores ────
+    //
+    // Los dos apartados son la misma pantalla con otro rol: lista, alta, edición, activar o
+    // desactivar, bloquear y desbloquear. Lo único que cambia está en contextoUsuarios().
 
-    // ─── Organizadores (apartado exclusivo de usuarios rol organizador) ──
+    /** Lo que cambia entre el apartado de organizadores y el de administradores. */
+    private function contextoUsuarios(string $rol): array
+    {
+        return match ($rol) {
+            'administrador' => [
+                'rol'         => 'administrador',
+                'singular'    => 'administrador',
+                'plural'      => 'Administradores',
+                'rolEtiqueta' => 'Administrador',
+                'ruta'        => '/admin/administradores',
+                'descripcion' => 'Usuarios con acceso completo al sistema: gestionan cuentas, permisos, módulos y todos los torneos.',
+                'aviso'       => 'Las cuentas creadas aquí tienen rol <strong>Administrador</strong>: acceso completo al sistema.',
+            ],
+            default => [
+                'rol'         => 'organizador',
+                'singular'    => 'organizador',
+                'plural'      => 'Organizadores',
+                'rolEtiqueta' => 'Organizador',
+                'ruta'        => '/admin/organizadores',
+                'descripcion' => 'Usuarios con permiso para gestionar torneos asignados.',
+                'aviso'       => 'Las cuentas creadas aquí tienen rol <strong>Organizador</strong>.',
+            ],
+        };
+    }
 
-    public function usuarios(): void
+    private function listaDeUsuarios(string $rol): void
     {
         $this->requireAdmin();
+        $ctx     = $this->contextoUsuarios($rol);
+        $filtros = Filtros::desdeQuery($_GET, [
+            'q'      => 'texto',
+            'estado' => array_keys(self::ESTADOS_CUENTA),
+        ]);
+        $pag = Paginador::de($this->usuarioService->contarPorRol($rol, $filtros), $this->get('page', 1), self::POR_PAGINA);
+
         $this->render('admin/usuarios', [
-            'pageTitle' => 'Organizadores',
-            'usuarios'  => $this->usuarioService->getOrganizadores(),
+            'pageTitle'          => $ctx['plural'],
+            'ctx'                => $ctx,
+            'usuarios'           => $this->usuarioService->buscarPorRol($rol, $filtros, $pag->porPagina, $pag->desplazamiento),
+            'unicoAdminActivoId' => $this->usuarioService->unicoAdministradorActivoId(),
+            'filtros'            => $filtros,
+            'pag'                => $pag,
+            'estados'            => self::ESTADOS_CUENTA,
         ], 'admin');
     }
 
-    public function usuarioForm(string $id = ''): void
+    private function formularioDeUsuario(string $rol, string $id): void
     {
         $this->requireAdmin();
+        $ctx     = $this->contextoUsuarios($rol);
         $usuario = $id ? $this->usuarioService->getById((int)$id) : null;
-        // Este apartado solo gestiona organizadores
-        if ($usuario && $usuario['rol_nombre'] !== 'organizador') {
-            $this->flash('error', 'Este apartado solo gestiona organizadores.');
-            $this->redirect('/admin/organizadores');
+        // Cada apartado solo gestiona las cuentas de su rol
+        if ($usuario && $usuario['rol_nombre'] !== $rol) {
+            $this->flash('error', 'Este apartado solo gestiona ' . strtolower($ctx['plural']) . '.');
+            $this->redirect($ctx['ruta']);
         }
         $this->render('admin/usuario_form', [
-            'pageTitle' => $usuario ? 'Editar organizador' : 'Nuevo organizador',
+            'pageTitle' => ($usuario ? 'Editar ' : 'Nuevo ') . $ctx['singular'],
+            'ctx'       => $ctx,
             'usuario'   => $usuario,
             'csrf'      => Csrf::generate(),
         ], 'admin');
     }
 
-    public function usuarioGuardar(string $id = ''): void
+    private function guardarUsuario(string $rol, string $id): void
     {
         $this->requireAdmin();
         $this->checkCsrf();
+        $ctx = $this->contextoUsuarios($rol);
         try {
-            // El rol se fuerza a 'organizador' (apartado exclusivo)
+            // Antes el apartado de organizadores ponía rol «organizador» sin mirar qué cuenta se
+            // editaba: por esa ruta se podía degradar a un administrador. Cada apartado solo toca
+            // las cuentas de su rol.
+            if ($id && ($this->usuarioService->getById((int)$id)['rol_nombre'] ?? null) !== $rol) {
+                throw new ErrorNegocio('Este apartado solo gestiona ' . strtolower($ctx['plural']) . '.');
+            }
+            // El rol lo fija el apartado, no el formulario
             $datos = [
-                'rol_id'   => $this->usuarioService->getRolIdOrganizador(),
+                'rol_id'   => $this->usuarioService->getRolId($rol),
                 'nombre'   => $this->postStr('nombre'),
                 'email'    => $this->postStr('email'),
                 'password' => $this->post('password', ''),
@@ -79,32 +139,52 @@ class AdminController extends BaseController
             ];
             if ($id) {
                 $this->usuarioService->editar((int)$id, $datos);
-                $this->flash('success', 'Organizador actualizado correctamente.');
+                $this->flash('success', ucfirst($ctx['singular']) . ' actualizado correctamente.');
             } else {
                 $this->usuarioService->crear($datos);
-                $this->flash('success', 'Organizador creado correctamente.');
+                $this->flash('success', ucfirst($ctx['singular']) . ' creado correctamente.');
             }
-            $this->redirect('/admin/organizadores');
+            $this->redirect($ctx['ruta']);
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
-            $this->redirect($id ? "/admin/organizadores/editar/{$id}" : '/admin/organizadores/crear');
+            $this->flash('error', $this->mensajeDe($e));
+            $this->redirect($id ? "{$ctx['ruta']}/editar/{$id}" : "{$ctx['ruta']}/crear");
         }
     }
 
-    public function usuarioEliminar(string $id): void
+    private function activarODesactivarUsuario(string $rol, string $id): void
     {
         $this->requireAdmin();
         $this->checkCsrf();
+        $ctx = $this->contextoUsuarios($rol);
         try {
+            // Igual que al guardar: cada apartado solo toca las cuentas de su rol
+            $destino = $this->usuarioService->getById((int)$id);
+            if ($destino && $destino['rol_nombre'] !== $rol) {
+                throw new ErrorNegocio('Este apartado solo gestiona ' . strtolower($ctx['plural']) . '.');
+            }
             $nuevo = $this->usuarioService->toggleActivo((int)$id);
-            $this->flash('success', $nuevo === 'activo' ? 'Organizador reactivado.' : 'Organizador desactivado.');
+            $this->flash('success', ucfirst($ctx['singular']) . ($nuevo === 'activo' ? ' reactivado.' : ' desactivado.'));
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
-        $this->redirect('/admin/organizadores');
+        $this->redirect($ctx['ruta']);
     }
 
-    // ─── Desbloqueo de cuentas ────────────────────────────────────
+    // ─── Organizadores ───────────────────────────────────────
+
+    public function usuarios(): void                     { $this->listaDeUsuarios('organizador'); }
+    public function usuarioForm(string $id = ''): void   { $this->formularioDeUsuario('organizador', $id); }
+    public function usuarioGuardar(string $id = ''): void { $this->guardarUsuario('organizador', $id); }
+    public function usuarioEliminar(string $id): void    { $this->activarODesactivarUsuario('organizador', $id); }
+
+    // ─── Administradores ─────────────────────────────────────
+
+    public function administradores(): void                    { $this->listaDeUsuarios('administrador'); }
+    public function administradorForm(string $id = ''): void   { $this->formularioDeUsuario('administrador', $id); }
+    public function administradorGuardar(string $id = ''): void { $this->guardarUsuario('administrador', $id); }
+    public function administradorEliminar(string $id): void    { $this->activarODesactivarUsuario('administrador', $id); }
+
+    // ─── Bloqueo y desbloqueo de cuentas (organizadores, administradores y participantes) ────
     public function usuarioDesbloquear(string $id): void
     {
         $this->requireAdmin();
@@ -113,7 +193,7 @@ class AdminController extends BaseController
             $this->usuarioService->desbloquear((int)$id);
             $this->flash('success', 'Cuenta desbloqueada correctamente.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         // `return` viene del formulario, o sea del pedido: mismo criterio que
         // con el Referer, solo se acepta un destino del propio sitio.
@@ -129,7 +209,7 @@ class AdminController extends BaseController
             $this->usuarioService->bloquear((int)$id);
             $this->flash('success', 'Cuenta bloqueada correctamente.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         // `return` viene del formulario, o sea del pedido: mismo criterio que
         // con el Referer, solo se acepta un destino del propio sitio.
@@ -142,9 +222,15 @@ class AdminController extends BaseController
     public function registros(): void
     {
         $this->requireAdmin();
+        $registros = new RegistroService();
+        $filtros   = Filtros::desdeQuery($_GET, ['q' => 'texto']);
+        $pag       = Paginador::de($registros->contarPendientesFiltrados($filtros), $this->get('page', 1), self::POR_PAGINA);
+
         $this->render('admin/registros', [
             'pageTitle'  => 'Registros pendientes',
-            'pendientes' => (new RegistroService())->getPendientes(),
+            'pendientes' => $registros->buscarPendientes($filtros, $pag->porPagina, $pag->desplazamiento),
+            'filtros'    => $filtros,
+            'pag'        => $pag,
             'csrf'       => Csrf::generate(),
         ], 'admin');
     }
@@ -157,7 +243,7 @@ class AdminController extends BaseController
             (new RegistroService())->aprobar((int)$id, (int)Auth::id());
             $this->flash('success', 'Registro aprobado. El participante ya puede iniciar sesión.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/registros');
     }
@@ -170,7 +256,7 @@ class AdminController extends BaseController
             (new RegistroService())->rechazar((int)$id, (int)Auth::id());
             $this->flash('success', 'Registro rechazado.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/registros');
     }
@@ -180,9 +266,18 @@ class AdminController extends BaseController
     public function participantes(): void
     {
         $this->requireAdmin();
+        $filtros = Filtros::desdeQuery($_GET, [
+            'q'      => 'texto',
+            'estado' => array_keys(self::ESTADOS_PARTICIPANTE),
+        ]);
+        $pag = Paginador::de($this->participanteService->contar($filtros), $this->get('page', 1), self::POR_PAGINA);
+
         $this->render('admin/participantes', [
             'pageTitle'     => 'Participantes',
-            'participantes' => $this->participanteService->getAll(),
+            'participantes' => $this->participanteService->buscar($filtros, $pag->porPagina, $pag->desplazamiento),
+            'filtros'       => $filtros,
+            'pag'           => $pag,
+            'estados'       => self::ESTADOS_PARTICIPANTE,
         ], 'admin');
     }
 
@@ -225,7 +320,7 @@ class AdminController extends BaseController
             $this->flash('success', 'Participante actualizado.');
             $this->redirect('/admin/participantes');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
             $this->redirect("/admin/participantes/editar/{$id}");
         }
     }
@@ -238,7 +333,7 @@ class AdminController extends BaseController
             $nuevo = $this->participanteService->toggleActivo((int)$id);
             $this->flash('success', $nuevo === 'activo' ? 'Participante reactivado.' : 'Participante desactivado.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/participantes');
     }
@@ -248,9 +343,18 @@ class AdminController extends BaseController
     public function equipos(): void
     {
         $this->requireAdmin();
+        $filtros = Filtros::desdeQuery($_GET, [
+            'q'      => 'texto',
+            'estado' => array_keys(self::ESTADOS_EQUIPO),
+        ]);
+        $pag = Paginador::de($this->equipoService->contar($filtros), $this->get('page', 1), self::POR_PAGINA);
+
         $this->render('admin/equipos', [
             'pageTitle' => 'Equipos',
-            'equipos'   => $this->equipoService->getAll(),
+            'equipos'   => $this->equipoService->buscar($filtros, $pag->porPagina, $pag->desplazamiento),
+            'filtros'   => $filtros,
+            'pag'       => $pag,
+            'estados'   => self::ESTADOS_EQUIPO,
         ], 'admin');
     }
 
@@ -297,7 +401,7 @@ class AdminController extends BaseController
             }
             $this->redirect('/admin/equipos');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
             $this->redirect($id ? "/admin/equipos/editar/{$id}" : '/admin/equipos/crear');
         }
     }
@@ -310,7 +414,7 @@ class AdminController extends BaseController
             $nuevo = $this->equipoService->toggleActivo((int)$id);
             $this->flash('success', $nuevo === 'activo' ? 'Equipo reactivado.' : 'Equipo desactivado.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/equipos');
     }
@@ -323,7 +427,7 @@ class AdminController extends BaseController
             $this->equipoService->agregarParticipante((int)$id, $this->postInt('participante_id'), $this->postStr('rol_en_equipo', 'jugador'));
             $this->flash('success', 'Participante agregado al equipo.');
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect("/admin/equipos/editar/{$id}");
     }
@@ -342,15 +446,21 @@ class AdminController extends BaseController
     public function auditoria(): void
     {
         $this->requireAdmin();
-        $page   = max(1, (int)($this->get('page', 1)));
-        $limit  = 50;
-        $offset = ($page - 1) * $limit;
+        $acciones = $this->auditoriaService->acciones();
+        $filtros  = Filtros::desdeQuery($_GET, [
+            'q'      => 'texto',
+            'accion' => $acciones,
+            'desde'  => 'fecha',
+            'hasta'  => 'fecha',
+        ]);
+        $pag = Paginador::de($this->auditoriaService->contar($filtros), $this->get('page', 1), self::POR_PAGINA_AUDITORIA);
+
         $this->render('admin/auditoria', [
             'pageTitle' => 'Auditoría',
-            'registros' => $this->auditoriaService->getRecientes($limit, $offset),
-            'total'     => $this->auditoriaService->countTotal(),
-            'page'      => $page,
-            'limit'     => $limit,
+            'registros' => $this->auditoriaService->buscar($filtros, $pag->porPagina, $pag->desplazamiento),
+            'filtros'   => $filtros,
+            'pag'       => $pag,
+            'acciones'  => array_combine($acciones, $acciones),
         ], 'admin');
     }
 
@@ -374,7 +484,7 @@ class AdminController extends BaseController
             $accion = $r['nuevo'] === 'activo' ? 'activado' : 'desactivado';
             $this->flash('success', "Módulo «{$r['modulo']['nombre']}» {$accion}.");
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/modulos');
     }
@@ -406,7 +516,7 @@ class AdminController extends BaseController
             $filas = $this->permisoService->guardarMatriz(is_array($marcados) ? $marcados : []);
             $this->flash('success', "Permisos actualizados: {$filas} combinacion(es) rol/modulo con acceso.");
         } catch (RuntimeException $e) {
-            $this->flash('error', $e->getMessage());
+            $this->flash('error', $this->mensajeDe($e));
         }
         $this->redirect('/admin/permisos');
     }

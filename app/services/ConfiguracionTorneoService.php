@@ -122,9 +122,16 @@ class ConfiguracionTorneoService
      * @param array<string, string> $valores  clave => valor (se ignoran las claves ajenas al catálogo)
      * @param array|null $torneo  El torneo, para validar el cierre contra su fecha de inicio.
      * @return int Cantidad de claves que quedaron con valor.
-     * @throws RuntimeException si algún valor no es válido.
+     * @throws ErrorNegocio si algún valor no es válido.
      */
     public function guardar(int $torneoId, array $valores, ?array $torneo = null): int
+    {
+        // Todo o nada: no queda la mitad de los datos del evento guardados.
+        return Database::transaccion(fn() => $this->guardarSinTransaccion($torneoId, $valores, $torneo));
+    }
+
+    /** El cuerpo de guardar(), separado para que corra entero dentro de una transacción. */
+    private function guardarSinTransaccion(int $torneoId, array $valores, ?array $torneo = null): int
     {
         $limpios = $this->validar($valores, $torneo);
         $antes   = $this->getPorTorneo($torneoId);
@@ -165,7 +172,7 @@ class ConfiguracionTorneoService
      * @param array<string, string> $valores
      * @param array|null $torneo Para contrastar el cierre con la fecha de inicio.
      * @return array<string, string> clave => valor normalizado ('' = sin valor)
-     * @throws RuntimeException si algún valor no sirve.
+     * @throws ErrorNegocio si algún valor no sirve.
      */
     public function validar(array $valores, ?array $torneo = null): array
     {
@@ -179,7 +186,7 @@ class ConfiguracionTorneoService
         // dejaría una fecha que no significa nada, porque el torneo ya empezó.
         if ($limpios['cierre_inscripcion'] !== '' && !empty($torneo['fecha_inicio'])) {
             if (strtotime($limpios['cierre_inscripcion']) > strtotime((string) $torneo['fecha_inicio'])) {
-                throw new RuntimeException(
+                throw new ErrorNegocio(
                     'El cierre de inscripción no puede ser posterior a la fecha de inicio del torneo ('
                     . $torneo['fecha_inicio'] . ').'
                 );
@@ -195,13 +202,13 @@ class ConfiguracionTorneoService
         $etiqueta = $def['etiqueta'];
 
         if (mb_strlen($valor) > $def['max']) {
-            throw new RuntimeException("«{$etiqueta}» no puede superar los {$def['max']} caracteres.");
+            throw new ErrorNegocio("«{$etiqueta}» no puede superar los {$def['max']} caracteres.");
         }
 
         switch ($def['tipo']) {
             case 'email':
                 if (!filter_var($valor, FILTER_VALIDATE_EMAIL)) {
-                    throw new RuntimeException("«{$etiqueta}» tiene que ser un correo electrónico válido.");
+                    throw new ErrorNegocio("«{$etiqueta}» tiene que ser un correo electrónico válido.");
                 }
                 break;
 
@@ -212,7 +219,7 @@ class ConfiguracionTorneoService
                 if (count($partes) !== 3
                     || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor)
                     || !checkdate((int) $partes[1], (int) $partes[2], (int) $partes[0])) {
-                    throw new RuntimeException("«{$etiqueta}» tiene que ser una fecha válida (AAAA-MM-DD).");
+                    throw new ErrorNegocio("«{$etiqueta}» tiene que ser una fecha válida (AAAA-MM-DD).");
                 }
                 break;
         }

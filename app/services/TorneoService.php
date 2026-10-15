@@ -20,7 +20,25 @@ class TorneoService
     public function getById(int $id): ?array { return $this->model->findByIdCompleto($id); }
     public function getByOrganizador(int $uid): array { return $this->model->findByOrganizador($uid); }
 
+    /** Una página de la lista del panel (todos los torneos, o solo los de $organizadorId). */
+    public function buscar(array $filtros, int $limite, int $desde, ?int $organizadorId = null): array
+    {
+        return $this->model->buscarParaPanel($filtros, $limite, $desde, $organizadorId);
+    }
+
+    public function contar(array $filtros, ?int $organizadorId = null): int
+    {
+        return $this->model->contarParaPanel($filtros, $organizadorId);
+    }
+
     public function crear(array $d): int
+    {
+        // El torneo, su organizador y el registro de auditoría se guardan juntos.
+        return Database::transaccion(fn() => $this->crearSinTransaccion($d));
+    }
+
+    /** El cuerpo de crear(), separado para que corra entero dentro de una transacción. */
+    private function crearSinTransaccion(array $d): int
     {
         $this->validar($d);
         $this->assertFormatoHabilitado((int)$d['tipo_torneo_id']);
@@ -35,19 +53,26 @@ class TorneoService
 
     public function editar(int $id, array $d): void
     {
+        // Los datos, el recálculo de la tabla y el cambio de organizador se guardan juntos.
+        Database::transaccion(fn() => $this->editarSinTransaccion($id, $d));
+    }
+
+    /** El cuerpo de editar(), separado para que corra entero dentro de una transacción. */
+    private function editarSinTransaccion(int $id, array $d): void
+    {
         $torneo = $this->model->findById($id);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
 
         // Un torneo finalizado o cancelado no se modifica.
         if ($torneo['estado'] === 'finalizado') {
-            throw new RuntimeException('No se puede modificar un torneo finalizado.');
+            throw new ErrorNegocio('No se puede modificar un torneo finalizado.');
         }
         if ($torneo['estado'] === 'cancelado') {
-            throw new RuntimeException('No se puede modificar un torneo cancelado.');
+            throw new ErrorNegocio('No se puede modificar un torneo cancelado.');
         }
         // Un torneo siempre debe conservar un organizador asignado
         if (array_key_exists('organizador_id', $d) && empty($d['organizador_id'])) {
-            throw new RuntimeException('El torneo debe tener un organizador asignado.');
+            throw new ErrorNegocio('El torneo debe tener un organizador asignado.');
         }
 
         if ($torneo['estado'] === 'en_curso') {
@@ -56,7 +81,7 @@ class TorneoService
             // bloqueados. Sí se pueden ajustar nombre, descripción, visibilidad,
             // puntuación, empates, unidad de puntos y fechas — y tienen efecto real.
             if (trim($d['nombre'] ?? '') === '') {
-                throw new RuntimeException('El nombre del torneo es obligatorio.');
+                throw new ErrorNegocio('El nombre del torneo es obligatorio.');
             }
 
             // Fechas: si se editan, deben ser coherentes y no dejar partidos
@@ -65,11 +90,11 @@ class TorneoService
             $fin    = ($d['fecha_fin'] ?? '')    !== '' ? $d['fecha_fin']    : ($torneo['fecha_fin'] ?? null);
             if ($inicio && $fin) {
                 if (strtotime($inicio) > strtotime($fin)) {
-                    throw new RuntimeException('La fecha de inicio no puede ser posterior a la fecha de finalización.');
+                    throw new ErrorNegocio('La fecha de inicio no puede ser posterior a la fecha de finalización.');
                 }
                 $fuera = (new EnfrentamientoModel())->contarProgramadosFueraDeRango($id, $inicio, $fin);
                 if ($fuera > 0) {
-                    throw new RuntimeException(
+                    throw new ErrorNegocio(
                         "No se puede acotar el rango de fechas: hay {$fuera} partido(s) programado(s) fuera del nuevo período. " .
                         "Reprogramalos primero."
                     );
@@ -126,8 +151,8 @@ class TorneoService
     public function eliminar(int $id): void
     {
         $t = $this->model->findById($id);
-        if (!$t) throw new RuntimeException('Torneo no encontrado.');
-        if ($t['estado'] === 'en_curso') throw new RuntimeException('No se puede eliminar un torneo en curso.');
+        if (!$t) throw new ErrorNegocio('Torneo no encontrado.');
+        if ($t['estado'] === 'en_curso') throw new ErrorNegocio('No se puede eliminar un torneo en curso.');
         $this->model->update($id, ['estado' => 'cancelado']);
         $this->auditoria->log('cancelar_torneo', 'torneos', $id, "Torneo cancelado: {$t['nombre']}");
     }
@@ -173,43 +198,47 @@ class TorneoService
     private function assertFormatoHabilitado(int $tipoTorneoId): void
     {
         $tipo = $this->tipoModel->findById($tipoTorneoId);
-        if (!$tipo) throw new RuntimeException('El formato de torneo seleccionado no existe.');
+        if (!$tipo) throw new ErrorNegocio('El formato de torneo seleccionado no existe.');
         $this->assertModuloActivo((string)$tipo['slug']);
     }
 
     private function validar(array $d): void
     {
-        if (empty($d['nombre']))         throw new RuntimeException('El nombre del torneo es obligatorio.');
-        if (empty($d['tipo_torneo_id'])) throw new RuntimeException('El formato del torneo es obligatorio.');
-        if (empty($d['organizador_id'])) throw new RuntimeException('Debés asignar un organizador al torneo.');
+        if (empty($d['nombre']))         throw new ErrorNegocio('El nombre del torneo es obligatorio.');
+        Validator::assertLargos([
+            'El nombre del torneo'   => [$d['nombre'], 150],
+            'El nombre de los puntos' => [$d['nombre_puntos'] ?? '', 30],
+        ]);
+        if (empty($d['tipo_torneo_id'])) throw new ErrorNegocio('El formato del torneo es obligatorio.');
+        if (empty($d['organizador_id'])) throw new ErrorNegocio('Debés asignar un organizador al torneo.');
 
         // Fechas: obligatorias y coherentes (inicio <= fin).
         $inicio = trim((string)($d['fecha_inicio'] ?? ''));
         $fin    = trim((string)($d['fecha_fin'] ?? ''));
-        if ($inicio === '') throw new RuntimeException('La fecha de inicio es obligatoria.');
-        if ($fin === '')    throw new RuntimeException('La fecha de finalización es obligatoria.');
+        if ($inicio === '') throw new ErrorNegocio('La fecha de inicio es obligatoria.');
+        if ($fin === '')    throw new ErrorNegocio('La fecha de finalización es obligatoria.');
         $tsInicio = strtotime($inicio);
         $tsFin    = strtotime($fin);
         if ($tsInicio === false || $tsFin === false) {
-            throw new RuntimeException('Las fechas ingresadas no son válidas.');
+            throw new ErrorNegocio('Las fechas ingresadas no son válidas.');
         }
         if ($tsInicio > $tsFin) {
-            throw new RuntimeException('La fecha de inicio no puede ser posterior a la fecha de finalización.');
+            throw new ErrorNegocio('La fecha de inicio no puede ser posterior a la fecha de finalización.');
         }
 
         // Modalidad válida; por equipos exige un mínimo de integrantes.
         $modalidad = $d['modalidad'] ?? 'individual';
         if (!in_array($modalidad, ['individual', 'equipos'], true)) {
-            throw new RuntimeException('La modalidad seleccionada no es válida.');
+            throw new ErrorNegocio('La modalidad seleccionada no es válida.');
         }
         if ($modalidad === 'equipos' && (int)($d['min_integrantes_equipo'] ?? 0) < 1) {
-            throw new RuntimeException('Definí el mínimo de integrantes por equipo (al menos 1).');
+            throw new ErrorNegocio('Definí el mínimo de integrantes por equipo (al menos 1).');
         }
 
         // Rondas suizas dentro de rango si se especifican.
         if (!empty($d['rondas_suizo'])) {
             $r = (int)$d['rondas_suizo'];
-            if ($r < 2 || $r > 20) throw new RuntimeException('La cantidad de rondas (Suizo) debe estar entre 2 y 20.');
+            if ($r < 2 || $r > 20) throw new ErrorNegocio('La cantidad de rondas (Suizo) debe estar entre 2 y 20.');
         }
     }
 }

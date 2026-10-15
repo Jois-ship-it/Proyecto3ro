@@ -34,7 +34,7 @@ class InscripcionService
         if (!$this->config->inscripcionVencida($torneoId)) return;
 
         $cierre = $this->config->cierreInscripcion($torneoId);
-        throw new RuntimeException(
+        throw new ErrorNegocio(
             "El plazo de inscripción de este torneo cerró el {$cierre}. "
             . 'Un administrador puede correr la fecha desde los datos del evento.'
         );
@@ -43,21 +43,21 @@ class InscripcionService
     public function inscribirParticipante(int $torneoId, int $participanteId): void
     {
         $torneo = $this->torneoModel->findById($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
         if (!in_array($torneo['estado'], ['borrador', 'inscripcion'])) {
-            throw new RuntimeException('El torneo no está abierto para inscripciones.');
+            throw new ErrorNegocio('El torneo no está abierto para inscripciones.');
         }
         $this->assertPlazoAbierto($torneo);
         if ($torneo['modalidad'] !== 'individual') {
-            throw new RuntimeException('Este torneo es por equipos. Inscribí un equipo.');
+            throw new ErrorNegocio('Este torneo es por equipos. Inscribí un equipo.');
         }
         if ($this->model->isInscritoParticipante($torneoId, $participanteId)) {
-            throw new RuntimeException('El participante ya está inscrito en este torneo.');
+            throw new ErrorNegocio('El participante ya está inscrito en este torneo.');
         }
         $participante = (new ParticipanteModel())->findById($participanteId);
-        if (!$participante) throw new RuntimeException('El participante no existe.');
+        if (!$participante) throw new ErrorNegocio('El participante no existe.');
         if ($participante['estado'] !== 'activo') {
-            throw new RuntimeException('No se puede inscribir un participante inactivo.');
+            throw new ErrorNegocio('No se puede inscribir un participante inactivo.');
         }
         // Si existe una fila previa (p. ej. retirada), reactivar en lugar de insertar
         $existing = $this->model->findInscripcion($torneoId, $participanteId, null);
@@ -77,29 +77,29 @@ class InscripcionService
     public function inscribirEquipo(int $torneoId, int $equipoId): void
     {
         $torneo = $this->torneoModel->findById($torneoId);
-        if (!$torneo) throw new RuntimeException('Torneo no encontrado.');
+        if (!$torneo) throw new ErrorNegocio('Torneo no encontrado.');
         if (!in_array($torneo['estado'], ['borrador', 'inscripcion'])) {
-            throw new RuntimeException('El torneo no está abierto para inscripciones.');
+            throw new ErrorNegocio('El torneo no está abierto para inscripciones.');
         }
         $this->assertPlazoAbierto($torneo);
         if ($torneo['modalidad'] !== 'equipos') {
-            throw new RuntimeException('Este torneo es individual. Inscribí un participante.');
+            throw new ErrorNegocio('Este torneo es individual. Inscribí un participante.');
         }
         if ($this->model->isInscritoEquipo($torneoId, $equipoId)) {
-            throw new RuntimeException('El equipo ya está inscrito en este torneo.');
+            throw new ErrorNegocio('El equipo ya está inscrito en este torneo.');
         }
         // El equipo debe existir y estar activo.
         $equipo = $this->equipoModel->findById($equipoId);
-        if (!$equipo) throw new RuntimeException('El equipo no existe.');
+        if (!$equipo) throw new ErrorNegocio('El equipo no existe.');
         if ($equipo['estado'] !== 'activo') {
-            throw new RuntimeException('No se puede inscribir un equipo inactivo.');
+            throw new ErrorNegocio('No se puede inscribir un equipo inactivo.');
         }
 
         // Un equipo necesita al menos 1 integrante, y cumplir el mínimo del torneo si lo hay.
         $minimo      = max(1, (int)($torneo['min_integrantes_equipo'] ?? 0));
         $integrantes = $this->equipoModel->contarIntegrantes($equipoId);
         if ($integrantes < $minimo) {
-            throw new RuntimeException(
+            throw new ErrorNegocio(
                 "El equipo no cumple el mínimo de {$minimo} integrante(s) (tiene {$integrantes}). " .
                 "Agregá jugadores antes de inscribirlo."
             );

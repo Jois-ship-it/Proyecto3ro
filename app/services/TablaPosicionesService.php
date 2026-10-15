@@ -72,6 +72,13 @@ class TablaPosicionesService
      */
     public function recalcular(int $torneoId): void
     {
+        // Se borra y se vuelve a escribir la tabla entera: o queda completa o queda como estaba.
+        Database::transaccion(fn() => $this->recalcularSinTransaccion($torneoId));
+    }
+
+    /** El cuerpo de recalcular(), separado para que corra entero dentro de una transacción. */
+    private function recalcularSinTransaccion(int $torneoId): void
+    {
         $torneo        = $this->torneoModel->findByIdCompleto($torneoId);
         $inscripciones = $this->insModel->getByTorneo($torneoId);
 

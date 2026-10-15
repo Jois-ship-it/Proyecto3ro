@@ -25,8 +25,16 @@ class RegistroService
         $this->auditoria    = new AuditoriaService();
     }
 
-    /** Registra un participante. Lanza RuntimeException con mensaje claro si falla. */
+    /** Registra un participante. Lanza ErrorNegocio con mensaje claro si falla. */
     public function registrar(array $d): int
+    {
+        // La cuenta y su perfil nacen juntos: no puede quedar una cuenta sin perfil
+        // (ni un perfil sin cuenta).
+        return Database::transaccion(fn() => $this->registrarSinTransaccion($d));
+    }
+
+    /** El cuerpo de registrar(), separado para que corra entero dentro de una transacción. */
+    private function registrarSinTransaccion(array $d): int
     {
         $nombre   = trim($d['nombre'] ?? '');
         $email    = trim(strtolower($d['email'] ?? ''));
@@ -36,16 +44,30 @@ class RegistroService
         $password = (string)($d['password'] ?? '');
         $confirm  = (string)($d['password_confirm'] ?? '');
 
-        if ($nombre === '')           throw new RuntimeException('El nombre es obligatorio.');
-        if (!Validator::email($email)) throw new RuntimeException('Ingresá un email válido.');
+        // Los largos de las columnas de usuarios y participantes.
+        Validator::assertLargos([
+            'El nombre'    => [$nombre, 100],
+            'El email'     => [$email, 150],
+            'El nick'      => [$nick, 80],
+            'El teléfono'  => [$telefono, 30],
+            'El documento' => [$documento, 50],
+        ]);
+
+        if ($nombre === '')           throw new ErrorNegocio('El nombre es obligatorio.');
+        if (!Validator::email($email)) throw new ErrorNegocio('Ingresá un email válido.');
         if ($this->usuarioModel->emailExiste($email)) {
-            throw new RuntimeException('Ese email ya está registrado.');
+            throw new ErrorNegocio('Ese email ya está registrado.');
+        }
+        // El documento identifica a una persona (índice único en la base). Se avisa
+        // acá con un mensaje claro en vez de dejar que lo rechace el motor.
+        if ($documento !== '' && $this->partModel->documentoExiste($documento)) {
+            throw new ErrorNegocio('Ya hay un participante registrado con ese documento.');
         }
         // Política de contraseñas + confirmación (autoritativo en backend)
         Validator::assertPassword($password, $confirm);
 
         $rolPart = $this->rolModel->findByNombre('participante');
-        if (!$rolPart) throw new RuntimeException('Configuración de roles inválida.');
+        if (!$rolPart) throw new LogicException('Configuración de roles inválida: falta el rol participante.');
 
         // 1) Cuenta de acceso (pendiente)
         $usuarioId = $this->usuarioModel->insert([
@@ -63,7 +85,7 @@ class RegistroService
             'nick'       => $nick ?: null,
             'email'      => $email,
             'telefono'   => $telefono ?: null,
-            'documento'  => $documento ?: null,
+            'documento'  => $documento === '' ? null : $documento,
             'estado'     => 'pendiente',
         ]);
 
@@ -79,6 +101,17 @@ class RegistroService
         return $this->usuarioModel->findParticipantesPendientes();
     }
 
+    /** Una página de los registros pendientes (con búsqueda) y el total que cumple el filtro. */
+    public function buscarPendientes(array $filtros, int $limite, int $desde): array
+    {
+        return $this->usuarioModel->buscarParticipantesPendientes($filtros, $limite, $desde);
+    }
+
+    public function contarPendientesFiltrados(array $filtros): int
+    {
+        return $this->usuarioModel->contarParticipantesPendientes($filtros);
+    }
+
     public function countPendientes(): int
     {
         return $this->usuarioModel->countParticipantesPendientes();
@@ -86,9 +119,16 @@ class RegistroService
 
     public function aprobar(int $usuarioId, int $revisorId): void
     {
+        // La cuenta y el perfil cambian de estado juntos.
+        Database::transaccion(fn() => $this->aprobarSinTransaccion($usuarioId, $revisorId));
+    }
+
+    /** El cuerpo de aprobar(), separado para que corra entero dentro de una transacción. */
+    private function aprobarSinTransaccion(int $usuarioId, int $revisorId): void
+    {
         $u = $this->usuarioModel->findByIdConRol($usuarioId);
-        if (!$u || $u['rol_nombre'] !== 'participante') throw new RuntimeException('Solicitud no encontrada.');
-        if ($u['estado'] !== 'pendiente') throw new RuntimeException('La solicitud ya fue resuelta.');
+        if (!$u || $u['rol_nombre'] !== 'participante') throw new ErrorNegocio('Solicitud no encontrada.');
+        if ($u['estado'] !== 'pendiente') throw new ErrorNegocio('La solicitud ya fue resuelta.');
 
         $this->usuarioModel->update($usuarioId, ['estado' => 'activo']);
         $part = $this->partModel->findByUsuario($usuarioId);
@@ -100,9 +140,16 @@ class RegistroService
 
     public function rechazar(int $usuarioId, int $revisorId): void
     {
+        // La cuenta y el perfil cambian de estado juntos.
+        Database::transaccion(fn() => $this->rechazarSinTransaccion($usuarioId, $revisorId));
+    }
+
+    /** El cuerpo de rechazar(), separado para que corra entero dentro de una transacción. */
+    private function rechazarSinTransaccion(int $usuarioId, int $revisorId): void
+    {
         $u = $this->usuarioModel->findByIdConRol($usuarioId);
-        if (!$u || $u['rol_nombre'] !== 'participante') throw new RuntimeException('Solicitud no encontrada.');
-        if ($u['estado'] !== 'pendiente') throw new RuntimeException('La solicitud ya fue resuelta.');
+        if (!$u || $u['rol_nombre'] !== 'participante') throw new ErrorNegocio('Solicitud no encontrada.');
+        if ($u['estado'] !== 'pendiente') throw new ErrorNegocio('La solicitud ya fue resuelta.');
 
         $this->usuarioModel->update($usuarioId, ['estado' => 'rechazado']);
         $part = $this->partModel->findByUsuario($usuarioId);
