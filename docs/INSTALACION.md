@@ -22,12 +22,16 @@ PHP, Apache ni MySQL en el sistema. Lo único que se instala es Docker.
 cp .env.example .env
 ```
 
-Abrir `.env` y cambiar **dos** valores, que vienen como marcador de posición:
+Abrir `.env` y completar estos valores. Los dos primeros vienen como marcador de
+posición; los otros dos son las contraseñas de las cuentas (el repositorio no trae
+ninguna):
 
 | Variable | Qué pasa si la dejás como viene |
 |---|---|
 | `DB_PASS` | La contraseña de la base queda en `change_this_db_password`, un valor público. |
 | `DB_ROOT_PASS` | El usuario `root` de MySQL queda en `change_this_root_password`. |
+| `ADMIN_PASS` | Vacía: se genera una contraseña al azar para el administrador y se imprime **una sola vez** en el log (`docker compose logs app`). |
+| `DEMO_PASS` | Vacía: las cuentas de demostración quedan sin clave y nadie puede entrar con ellas. |
 
 Para desarrollo conviene además poner `APP_ENV=development`: el ejemplo viene en
 `production`, que **oculta los errores de PHP**. Si algo falla vas a ver una
@@ -37,7 +41,10 @@ cambio nunca se commitea.
 > **Ojo con `DB_ROOT_PASS`:** se aplica en la **primera** inicialización del
 > volumen de MySQL y queda fijada ahí. Cambiarla en `.env` después no tiene
 > ningún efecto: hay que recrear el volumen (paso «empezar de cero», más abajo) o
-> hacer un `ALTER USER` a mano dentro del contenedor.
+> hacer un `ALTER USER` a mano dentro del contenedor. El contenedor `app` también la usa
+> al arrancar (para dejar al usuario de la aplicación con el mínimo privilegio): si no
+> coincide con la del servidor MySQL lo avisa en el log con una `ADVERTENCIA` y arranca
+> igual, pero el usuario de la aplicación conserva los privilegios de más.
 
 **2. Construir y levantar.**
 
@@ -53,14 +60,17 @@ aunque el archivo del repositorio diga otra cosa.
 Qué pasa mientras tanto, y por qué tarda:
 
 1. MySQL crea el volumen de datos desde cero y carga `database/schema.sql` y
-   `database/seed.sql`. En una máquina con disco lento **pasa de cuatro
-   minutos**. El `start_period` del healthcheck lo contempla, así que el comando
-   espera en vez de fallar.
+   `database/seed.sql` (21 tablas, 5 vistas y 51 triggers; cada sentencia espera
+   un fsync). En una máquina con disco lento **pasa de cinco minutos**: medido
+   en una PC con Docker sobre Windows, unos seis. El `start_period` del
+   healthcheck (10 minutos) lo contempla, así que el comando espera en vez de
+   fallar.
 2. Recién cuando la base está sana arranca `app`, que carga los datos de
-   demostración (`database/seed_demo.php`): unos dos minutos más.
+   demostración (`database/seed_demo.php`): en esa misma PC, unos siete minutos
+   más; en una máquina con un disco normal, un par de minutos.
 
-En total, la primera vez, entre cinco y siete minutos. Los arranques siguientes
-son inmediatos.
+En total, la primera vez, entre cinco y quince minutos según el disco (unos 13 en
+la PC de referencia). Los arranques siguientes son inmediatos.
 
 **3. Comprobar que quedó bien.**
 
@@ -77,13 +87,23 @@ docker compose logs app | grep "==>"
 | | |
 |---|---|
 | Aplicación | **https://localhost/** — `http://localhost:8080` redirige ahí |
-| phpMyAdmin | http://localhost:8081 — usuario `flexarena_user`, contraseña la de `DB_PASS` |
+| phpMyAdmin | http://localhost:8081 (solo desde la propia máquina) — usuario `flexarena_user`, contraseña la de `DB_PASS` |
+
+phpMyAdmin escucha únicamente en `127.0.0.1`: es una consola de administración de la base y
+no tiene por qué verse desde la red. En un servidor, se llega con un túnel SSH desde tu
+máquina y después se abre `http://localhost:8081` en tu navegador:
+
+```bash
+ssh -L 8081:127.0.0.1:8081 usuario@servidor
+```
 
 El certificado es autofirmado hasta que se coloque uno real, así que el
 navegador advierte la primera vez. Es esperable: ver la sección de HTTPS del
 README.
 
-Cuentas de prueba: ver `docs/CREDENCIALES.md`, que no está versionado.
+Cuentas: el administrador es `admin@flexarena.com`, con `ADMIN_PASS` (o con la contraseña
+generada que se imprime una vez en `docker compose logs app`); las de demostración, con
+`DEMO_PASS`. Ver «Contraseñas iniciales» en el README.
 
 ### Variantes útiles
 
@@ -95,6 +115,20 @@ SEED_DEMO=force docker compose up -d           # volver a sembrar, PISANDO lo qu
 Los datos de demostración se cargan **una sola vez por instalación**: queda una
 marca en el volumen `flexarena_estado`. Un `restart` o un `up` no los vuelven a
 cargar; `down -v` sí, porque borra la marca junto con la base.
+
+### Herramientas de prueba (opcional, solo para desarrollo)
+
+La aplicación no necesita nada de esto para funcionar. Para correr los tests con PHPUnit y el recorrido de punta a punta con Cypress
+(ver README → Tests):
+
+```bash
+bash scripts/instalar_herramientas_de_prueba.sh   # PHPUnit 11 (.phar, con su firma GPG verificada) y Cypress (npm; baja ~600 MB)
+bash scripts/e2e.sh subir                         # un entorno AISLADO (otra base y otros puertos: https://localhost:8643)
+bash scripts/e2e.sh probar
+bash scripts/e2e.sh bajar                         # lo apaga y borra su base
+```
+
+Hace falta `curl` y `gpg` para PHPUnit y Node.js 22 o más nuevo para Cypress. El entorno de pruebas **no toca** la instalación normal.
 
 ---
 
@@ -150,7 +184,9 @@ Qué hace, en orden:
    copiado como root hace que Apache falle al leer `public/.htaccess`, que es
    donde están las reglas que enrutan todo a `index.php`.
 5. **Abre en firewalld solo los puertos que el compose publica** — el de la
-   aplicación y el de phpMyAdmin. La base de datos **no se publica al host**.
+   aplicación y el de phpMyAdmin. La base de datos **no se publica al host**, y
+   phpMyAdmin está atado a `127.0.0.1`, de modo que su puerto no responde desde afuera
+   aunque figure abierto (ver el túnel SSH más arriba).
 6. **Construye las imágenes y levanta los contenedores.**
 7. **Verifica el aislamiento de red**: confirma que `db` no tenga ningún puerto
    publicado.
@@ -169,6 +205,10 @@ sudo nano .env
 
 - `DB_PASS` y `DB_ROOT_PASS`: valores propios. El instalador avisa con una
   `ADVERTENCIA` si quedaron los de ejemplo, pero **no bloquea** la instalación.
+- `ADMIN_PASS`: la contraseña del administrador. Si queda vacía se genera una y se imprime
+  **una sola vez** en el log del primer arranque (`docker compose logs app`).
+  `DEMO_PASS`: dejarla **vacía** en un servidor real, para que las cuentas de
+  demostración queden sin clave.
 - `APP_URL`: el dominio o la IP real del servidor. De esto sale el `ServerName`
   de Apache.
 - `APP_ENV`: dejarlo en `production`.
@@ -261,7 +301,7 @@ Con los datos de demostración cargados tienen que dar **68 usuarios** y
 
 **`dependency failed to start: container flexarena_db is unhealthy`**
 La base tardó más de lo que da el healthcheck. Ya no debería pasar —
-`start_period` está en 360s— pero si pasa en una máquina muy lenta: esperá a que
+`start_period` está en 600s— pero si pasa en una máquina muy lenta: esperá a que
 `docker compose ps` muestre `db` en `healthy` y volvé a correr
 `docker compose up -d`. No hace falta reconstruir nada.
 

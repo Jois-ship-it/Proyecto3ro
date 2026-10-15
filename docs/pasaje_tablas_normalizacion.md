@@ -36,6 +36,9 @@ Cada entidad fuerte se convierte en una tabla con clave primaria sustituta
 | Permiso | `permisos` | `id` |
 | Configuración de torneo | `configuraciones_torneo` | `id` |
 | Solicitud de corrección | `solicitudes_correccion` | `id` |
+| Ajuste del sistema | `configuracion_sistema` | `clave` |
+| Intento de inicio de sesión fallido | `intentos_login` | `id` |
+| Historial de cambios de la base | `historial_bd` | `id` |
 
 Se eligió **clave sustituta** en lugar de claves naturales (documento, email,
 slug) para: estabilidad ante cambios, joins más simples y compatibilidad con
@@ -50,6 +53,7 @@ La clave de la entidad del lado "1" se propaga como FK al lado "N".
 | roles 1—N usuarios | `usuarios.rol_id` |
 | usuarios 1—N participantes | `participantes.usuario_id` (nullable) |
 | tipos_torneo 1—N torneos | `torneos.tipo_torneo_id` |
+| modulos 1—N tipos_torneo | `tipos_torneo.modulo_slug` → `modulos.slug` |
 | usuarios 1—N torneos (creador) | `torneos.creado_por` |
 | torneos 1—N inscripciones | `inscripciones.torneo_id` |
 | torneos 1—N rondas | `rondas.torneo_id` |
@@ -100,6 +104,8 @@ Lo mismo en `torneos` con `campeon_participante_id` / `campeon_equipo_id`.
 Para mantener identidad de negocio sin usarlas como PK:
 
 - `usuarios.email`, `roles.nombre`, `tipos_torneo.slug`, `modulos.slug`
+- `equipos.nombre` y `participantes.documento` (el documento ausente es `NULL`, nunca
+  una cadena vacía: el índice único admite varios `NULL` pero no dos `''`)
 - `inscripciones (torneo_id, participante_id)` y `(torneo_id, equipo_id)`
 - `rondas (torneo_id, numero)`, `permisos (rol_id, modulo_slug)`,
   `configuraciones_torneo (torneo_id, clave)`
@@ -108,15 +114,17 @@ Para mantener identidad de negocio sin usarlas como PK:
 
 El sistema soporta torneos **individuales** y **por equipos**. En lugar de
 tablas separadas se aplicó **una sola tabla con dos FK opcionales** y un CHECK
-de presencia:
+de exclusividad:
 
 - `inscripciones`, `tabla_posiciones`, `enfrentamientos`, `resultados`
   llevan a la vez `participante_id` (nullable) y `equipo_id` (nullable).
-- `CHECK (participante_id IS NOT NULL OR equipo_id IS NOT NULL)` garantiza que
-  haya al menos un competidor.
+- En `inscripciones` y `tabla_posiciones`, `chk_inscripcion_un_competidor` y
+  `chk_tabla_un_competidor` exigen **exactamente uno** de los dos (XOR): ni los dos
+  ni ninguno. Antes el CHECK pedía «al menos uno» y dejaba pasar las filas con ambos.
 
-> Limitación conocida: el CHECK no es XOR exclusivo (ver normalización 2.5 y
-> el documento de RNE).
+> `enfrentamientos` y `resultados` no llevan ese CHECK: sus FK usan `ON DELETE SET NULL`
+> y MySQL no admite una restricción CHECK sobre una columna con acción referencial
+> (error 3823). En esas dos tablas la regla la aplica la capa de servicios.
 
 ### 1.8 Atributos de tipo enumerado
 
@@ -134,6 +142,11 @@ El pasaje también definió la política de borrado:
 - `ON DELETE SET NULL`: referencias históricas (campeón, ganador/perdedor,
   `cargado_por`, `participantes.usuario_id`, `auditoria.usuario_id`) para
   **no perder el registro histórico** del partido al borrar un competidor.
+- Sin `ON DELETE` (es decir, `RESTRICT`): `tipos_torneo.modulo_slug → modulos.slug`. No se puede
+  borrar un módulo que todavía tiene formatos de torneo; sí se puede cambiar su `slug`
+  (`ON UPDATE CASCADE`).
+- `historial_bd.usuario_app_id` **no** tiene clave foránea, a propósito: es un registro que tiene que
+  sobrevivir al usuario (aunque se borre o se anonimice), y una FK lo impediría o lo pondría en `NULL`.
 
 ---
 
@@ -214,10 +227,11 @@ de su actualización.
 
 ### 2.5 Observaciones y mejoras potenciales
 
-- **XOR participante/equipo:** el CHECK actual exige "al menos uno" pero permite
-  ambos. Para BCNF semántica estricta podría endurecerse a exclusividad
-  (CHECK XOR) — hoy se garantiza por código (ver RNE #21).
-- **`auditoria` (JSON):** desviación justificada de 1FN para log genérico.
+- **XOR participante/equipo:** resuelto en `inscripciones` y `tabla_posiciones` con un
+  CHECK de exclusividad (ver 1.7). Queda a cargo de los servicios en `enfrentamientos`
+  y `resultados`, donde el motor no lo permite.
+- **`auditoria` e `historial_bd` (JSON):** desviación justificada de 1FN para un log genérico
+  que sirve a todas las tablas con el mismo formato.
 - **Desnormalización de la tabla de posiciones:** aceptada por rendimiento;
   requiere disciplina de la capa de servicios para evitar inconsistencias.
 
@@ -225,11 +239,13 @@ de su actualización.
 
 ## Resumen
 
-- **Pasaje a tablas:** 16 entidades fuertes + 2 tablas puente (N:M), con claves
+- **Pasaje a tablas:** 19 entidades fuertes + 2 tablas puente (N:M), con claves
   sustitutas, claves naturales preservadas como UNIQUE, modalidad dual mediante
-  FK opcionales + CHECK, y políticas referenciales CASCADE/SET NULL definidas.
+  FK opcionales + CHECK de exclusividad, y políticas referenciales CASCADE/SET NULL
+  definidas. Los puntos no son negativos y un torneo no termina antes de empezar
+  (CHECK en `resultados`, `solicitudes_correccion` y `torneos`).
 - **Normalización:** el esquema cumple **3FN** en todas las tablas; las únicas
   desviaciones son deliberadas y documentadas (JSON de auditoría y campos
   derivados de la tabla de posiciones por rendimiento).
 
-Documento al 2026-06-17 · basado en `database/schema.sql`.
+Documento al 2026-06-17, actualizado el 2026-10-07 · basado en `database/schema.sql`.

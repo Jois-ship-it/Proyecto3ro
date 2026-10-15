@@ -6,20 +6,23 @@
 2. Ingresar email y contraseña
 3. Hacer clic en **Ingresar**
 
-Las credenciales de prueba están en el README principal.
+Las cuentas de demostración entran con la contraseña `DEMO_PASS` del `.env` y el administrador con `ADMIN_PASS` (ver «Contraseñas iniciales» en el README principal).
 
 ## Vista pública (sin login)
 
 - **Inicio** (`/`): Presentación del sistema y torneo destacado.
-- **Torneos** (`/torneos`): Lista de torneos públicos con filtros por formato y estado.
+- **Torneos** (`/torneos`): Lista de torneos públicos con **búsqueda por nombre** (sin importar mayúsculas ni tildes), filtros por formato y estado, y páginas de 12 torneos. La lista se actualiza sola mientras se escribe o se elige un filtro (no hace falta apretar «Buscar»); si algo falla, la lista queda como estaba y aparece un aviso en rojo.
 - **Detalle de torneo** (`/torneo/{id}`): Tabla de posiciones, bracket o ranking según formato.
 
 ## Panel del participante
 
 1. Iniciar sesión con rol participante
-2. Ver torneos en los que estás inscrito
-3. Consultar resultados y posición actual
-4. Editar datos básicos de perfil en `/participante/perfil`
+2. En **Mi panel** (`/participante`) ves tus **próximos partidos** (contra quién, en qué torneo y ronda, y cuándo si
+   ya tienen fecha), tus **últimos resultados** (victoria, empate o derrota con el marcador) y **tu posición** en
+   cada torneo: «2.º de 4» en una liga o suizo; en una llave, si seguís en carrera, si sos campeón o en qué ronda
+   quedaste afuera. Si jugás con un equipo, el panel lo dice. Tocá una fila para ir al torneo.
+3. Ver los torneos en los que estás inscrito (**Mis torneos**), con búsqueda y filtro por estado
+4. Editar datos básicos de perfil en `/participante/perfil` (la foto se achica sola: JPG, PNG, WEBP o GIF de hasta 2 MB)
 
 ## Crear un torneo (Admin/Organizador)
 
@@ -82,6 +85,19 @@ manda, así que no queda esperando una respuesta que no va a llegar.
 Aparece el botón **"Generar ronda N"** automáticamente cuando:
 - Todos los partidos de la ronda anterior están finalizados
 - El torneo no completó todas las rondas configuradas
+
+## Reporte de un torneo (Admin/Organizador)
+
+Desde **Torneos** (o **Mis torneos**) o desde la pantalla de gestión, botón **Reporte**. El administrador lo
+abre en cualquier torneo; el organizador, en los suyos.
+
+- Arriba: inscritos, partidos jugados, puntos anotados y campeón; el estado, las fechas y la sede; y una barra
+  con el avance del torneo.
+- **Tabla de posiciones** (liga y suizo) y **Partidos** ronda por ronda (un empate dice «Empate»; un bye, que
+  pasa de ronda sin jugar, no figura como partido).
+- **Imprimir / PDF** prepara la hoja para papel o para guardar en PDF.
+- **Descargar CSV** de posiciones, de partidos y de inscritos, para abrir en Excel. No incluyen datos de
+  contacto de los participantes.
 
 ## Consultar auditoría
 

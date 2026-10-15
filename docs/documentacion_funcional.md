@@ -42,6 +42,7 @@ Las organizaciones deportivas y educativas carecen de herramientas accesibles pa
 | Ver torneos públicos | ✓ | ✓ | ✓ | ✓ |
 | Ver resultados | ✓ | ✓ | ✓ | ✓ |
 | Editar perfil | ✓ | — | ✓ | — |
+| Consultar reportes y exportarlos a CSV | ✓ | ✓* | — | — |
 
 `*` solo para torneos asignados   `**` si tiene autorización
 
@@ -164,7 +165,9 @@ agrega un formato o un módulo, el test avisa.
 ## Flujo de corrección de resultado
 
 1. Usuario autorizado selecciona "Corregir" en un partido finalizado. El
-   organizador ve "Solicitar corrección": pide, no aplica.
+   administrador corrige directamente; el organizador ve "Solicitar corrección"
+   (solo en los partidos de sus torneos): pide, no aplica, y un administrador
+   aprueba o rechaza la solicitud.
 2. Sistema verifica que la corrección es segura (no rompe rondas posteriores).
    La misma verificación corre al pedirla y al aplicarla, así una solicitud que
    no se va a poder aprobar no llega a registrarse.
@@ -172,6 +175,85 @@ agrega un formato o un módulo, el test avisa.
 4. Sistema guarda valores anteriores y nuevos, recalcula.
 5. Registro de auditoría con valores antes/después.
 
+6. Si el torneo ya estaba **finalizado**, el sistema vuelve a decidir quién lo ganó con la
+   misma regla de siempre. Si el líder cambió, el campeón pasa a ser el nuevo (queda en la
+   auditoría con el anterior y quien corrige recibe un aviso aparte). Si la corrección deja a los
+   dos primeros empatados en todo, el torneo vuelve a «En curso», sin campeón, con un partido
+   de desempate. En Eliminación Directa solo la final puede cambiar al campeón (un partido anterior
+   no se corrige una vez que su ganador avanzó).
+7. Un **empate** no tiene ganador ni perdedor. Corregir (y pedir una corrección) respeta la misma
+   regla que cargar: Eliminación Directa no admite empates, y Liga y Suizo solo si el torneo los permite.
+
 Si el torneo avanza mientras una solicitud espera, la aprobación falla con el
 motivo del bloqueo y la solicitud queda pendiente: el administrador la rechaza
 indicando por qué. El sistema no la resuelve por su cuenta.
+
+
+## Búsqueda y paginación de las listas
+
+Las listas largas se pueden buscar, filtrar y recorrer por páginas, sin traer todos los datos de una vez.
+
+| Lista | Busca por | Filtra por | Por página |
+|---|---|---|---|
+| Torneos públicos (`/torneos`) | nombre | formato, estado (inscripción, en curso, finalizado) | 12 |
+| Torneos del panel | nombre | formato, estado | 15 |
+| Participantes | nombre, apodo, documento, correo | estado | 15 |
+| Equipos | nombre, categoría, disciplina | estado | 15 |
+| Organizadores y Administradores | nombre, correo | estado | 15 |
+| Auditoría | usuario, descripción, tabla | acción, desde, hasta | 50 |
+
+La búsqueda ignora mayúsculas y tildes, y busca «contiene». Los caracteres `%` y `_` se buscan tal cual. La lista
+pública nunca muestra borradores, torneos privados ni cancelados, ni siquiera filtrando por ellos. Un
+organizador solo ve sus torneos aunque busque el nombre de uno ajeno.
+
+La lista pública además se actualiza **mientras se escribe** (o se cambia el formato o el estado), sin recargar la
+página y sin apretar «Buscar». Es una mejora: con JavaScript apagado el formulario funciona igual, y la dirección
+(`/torneos?q=liga&tipo=liga`) se puede copiar y abrir de nuevo con el mismo resultado.
+
+## Panel del participante
+
+«Mi panel» muestra, además del perfil y los torneos, lo que el participante necesita saber hoy:
+
+- **Próximos partidos**: contra quién juega, en qué torneo y ronda, y cuándo si ya tiene fecha.
+- **Últimos resultados**: victoria, empate o derrota con el marcador, del más reciente al más viejo.
+- **Mi posición**: su lugar en la tabla de cada liga o suizo en que compite («2.º de 4») y, en una llave, si sigue en
+  carrera, si es campeón o en qué ronda quedó afuera.
+
+Si compite con un equipo, el panel lo dice. Cada fila lleva a la ficha del torneo.
+
+## Configuración del sistema
+
+El administrador cambia desde **Sistema → Configuración** el nombre de la plataforma, el correo de contacto del
+pie, si los perfiles de participantes y equipos se ven sin iniciar sesión, y los límites del inicio de sesión
+(intentos antes de bloquear, duración del bloqueo, intentos por dirección IP y su ventana). Si un valor no sirve no
+se guarda nada y la pantalla muestra el motivo sin perder lo escrito. Cada cambio queda en la auditoría.
+
+## Fotos de perfil y logos
+
+Al subir una foto o un logo, el sistema la reduce y la vuelve a guardar: no hace falta achicarla antes. Se aceptan
+JPG, PNG, WEBP y GIF de hasta 2 MB y 16 megapíxeles.
+
+## API pública y carga por fetch
+
+- **API de solo lectura** para consultar los torneos desde otra aplicación o un script, sin iniciar sesión:
+  la lista (con búsqueda y filtros), la tabla de posiciones y el calendario de cada torneo. Muestra lo mismo que
+  las páginas públicas. Ver `docs/api.md`.
+- **Cargar resultados sin recargar la página**: al cargar, corregir, pedir una corrección o programar un partido,
+  si el servidor rechaza lo pedido (marcador inválido, ronda cerrada…) el motivo aparece dentro del diálogo, que
+  sigue abierto con lo escrito; si sale bien, la página se actualiza con el aviso de siempre.
+
+## Reportes
+
+Letra §5.1 «acceder a reportes» (administrador) y §5.2 «consultar reportes del torneo» (organizador).
+
+1. **Reporte general** (solo administrador, *Sistema → Reportes*): totales del sistema, torneos por estado y
+   formato, correcciones por estado, cuentas, y la tabla de todos los torneos con sus partidos jugados y su campeón.
+2. **Reporte de un torneo** (administrador en cualquiera; organizador en los suyos): resumen, avance,
+   tabla de posiciones (liga y suizo) y partidos.
+3. **Salida**: se puede **imprimir o guardar en PDF** (el navegador arma la hoja) y **descargar en CSV**
+   (torneos, posiciones, partidos, inscritos). Es la funcionalidad opcional de la letra §14.
+
+Criterios de las cifras: un **partido** es un enfrentamiento que se juega; no cuenta un *bye* (un lado sin rival,
+que pasa de ronda sin jugar) ni uno cancelado. Un **empate** se reconoce por los puntos. Las cifras del reporte
+general son la suma de las de cada torneo, y los puntos anotados de una liga coinciden con los puntos a favor
+de su tabla (`tests/reportes_test.php` lo comprueba).
