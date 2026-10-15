@@ -5,8 +5,10 @@
 #
 # Corre mysql DENTRO del contenedor 'db' vía 'docker compose exec' (el
 # host no tiene acceso directo a la base — ver backup.sh/docker-compose.yml).
-# Usa el usuario root: restaurar un dump completo implica CREATE/DROP
-# TABLE, y el usuario de la app (DB_USER) solo tiene permisos de
+# Usa el usuario root, con la clave que el propio contenedor ya tiene
+# (MYSQL_ROOT_PASSWORD): no hace falta definirla en el host, igual que en
+# backup.sh. Restaurar un dump completo implica CREATE/DROP TABLE y recrear
+# vistas y triggers, y el usuario de la app (DB_USER) solo tiene
 # SELECT/INSERT/UPDATE/DELETE — no alcanza para esto.
 #
 # El archivo se verifica ANTES de pedir confirmación y antes de tocar la base:
@@ -48,18 +50,6 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
 fi
 
 DB_NAME="${DB_NAME:-flexarena}"
-# Se usa root porque restaurar un dump implica CREATE/DROP TABLE (ver encabezado).
-DB_USER="root"
-
-# Sin valor por defecto, a propósito: un default con pinta de contraseña real
-# termina commiteado en el repositorio y, encima, hace que el script "ande" con
-# la credencial equivocada en vez de avisar.
-if [ -z "${DB_ROOT_PASS:-}" ]; then
-    echo "ERROR: DB_ROOT_PASS no está definida." >&2
-    echo "       Definila en $PROJECT_ROOT/.env (DB_ROOT_PASS=...) o exportala antes de correr este script." >&2
-    exit 1
-fi
-DB_PASS="$DB_ROOT_PASS"
 
 echo "[$(date)] ADVERTENCIA: Se restaurará $DB_NAME desde $BACKUP_FILE (contenedor db)"
 read -rp "¿Confirmar? (s/N): " confirm
@@ -68,12 +58,21 @@ read -rp "¿Confirmar? (s/N): " confirm
 echo "[$(date)] Iniciando restauración..."
 
 cd "$PROJECT_ROOT"
+# mysql como root DENTRO del contenedor, con su propia clave. El nombre de la base
+# viaja como argumento posicional ($1 dentro del sh) y no pegado al texto del
+# comando: mismo criterio que backup.sh.
+mysql_en_db() {
+    docker compose exec -T db sh -c '
+      exec mysql \
+        --default-character-set=utf8mb4 \
+        --user=root \
+        --password="$MYSQL_ROOT_PASSWORD" \
+        "$1"' sh "$DB_NAME"
+}
 if [[ "$BACKUP_FILE" == *.gz ]]; then
-    gunzip -c "$BACKUP_FILE" | docker compose exec -T db mysql \
-      --default-character-set=utf8mb4 --user="$DB_USER" --password="$DB_PASS" "$DB_NAME"
+    gunzip -c "$BACKUP_FILE" | mysql_en_db
 else
-    docker compose exec -T db mysql \
-      --default-character-set=utf8mb4 --user="$DB_USER" --password="$DB_PASS" "$DB_NAME" < "$BACKUP_FILE"
+    mysql_en_db < "$BACKUP_FILE"
 fi
 
 echo "[$(date)] Restauración completada exitosamente."

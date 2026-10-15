@@ -24,6 +24,18 @@ services:
       - DB_PASS=${DB_PASS:-change_this_db_password}
       - APP_URL=${APP_URL:-http://localhost:8080}
       - HTTPS_PORT=${HTTPS_PORT:-443}
+      # Credencial de ADMINISTRACION de la base. La usa SOLO docker-entrypoint.sh,
+      # al arrancar: para dejar al usuario de la app con el minimo privilegio
+      # (database/aplicar_privilegios.php) y para sembrar los datos de demostracion
+      # (seed_demo.php hace TRUNCATE, que la app ya no puede). El entrypoint la
+      # borra del entorno antes de lanzar Apache: el codigo web nunca la ve.
+      - DB_ROOT_PASS=${DB_ROOT_PASS:-change_this_root_password}
+      # Contrasenas iniciales de las cuentas del seed (database/inicializar_cuentas.php).
+      # seed.sql no trae ninguna: sin estas dos, el administrador recibe una clave al
+      # azar (se imprime una vez en el log) y las cuentas de demostracion quedan sin
+      # clave. Tambien se borran del entorno antes de lanzar Apache.
+      - ADMIN_PASS=${ADMIN_PASS:-}
+      - DEMO_PASS=${DEMO_PASS:-}
       # Carga database/seed_demo.php en la PRIMERA inicialización (cuando la
       # base todavía no tiene torneos). Poner 0 para arrancar solo con lo que
       # traen schema.sql y seed.sql.
@@ -64,11 +76,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-      # La primera inicializacion (crear el datadir + cargar schema y seed) puede
-      # pasar de cuatro minutos en una maquina con disco lento. Con menos que
-      # esto, 'docker compose up -d' falla con "dependency failed to start" la
-      # primerisima vez y hay que reintentar a mano.
-      start_period: 360s
+      # La primera inicializacion (crear el datadir + cargar schema y seed) es lenta en
+      # una maquina con disco lento: el esquema crea 21 tablas, 5 vistas y 51 triggers, y
+      # cada sentencia DDL espera un fsync. Medido en una PC con Docker sobre Windows:
+      # unos 6 minutos desde cero. Mientras dura el start_period los fallos del healthcheck
+      # no cuentan y el primer exito ya da la base por sana, asi que un valor holgado no
+      # demora un arranque normal. Con menos de lo que tarda, 'docker compose up -d' falla
+      # con "dependency failed to start" la primerisima vez y hay que reintentar a mano.
+      start_period: 600s
     networks:
       - flexarena_net
 
@@ -77,7 +92,12 @@ services:
     container_name: flexarena_pma
     restart: unless-stopped
     ports:
-      - "${PMA_HTTP_PORT:-8081}:80"
+      # Solo en 127.0.0.1, a propósito: phpMyAdmin es una consola de administración de
+      # la base y sin esto escucha en TODAS las interfaces, o sea que cualquiera en la
+      # red con una contraseña adivinada (o un día cero de phpMyAdmin) llega a los datos.
+      # Desde la propia máquina anda igual (http://localhost:8081). Para usarlo contra un
+      # servidor, un túnel SSH: ssh -L 8081:127.0.0.1:8081 usuario@servidor
+      - "127.0.0.1:${PMA_HTTP_PORT:-8081}:80"
     environment:
       # Sin PMA_USER/PMA_PASSWORD a propósito: con esas variables, phpMyAdmin
       # usa auth_type "config" y AUTO-loguea a cualquiera que llegue al puerto,

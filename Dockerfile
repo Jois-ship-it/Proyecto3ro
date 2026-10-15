@@ -8,11 +8,13 @@ FROM php:8.2-apache
 RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
 
 # Instalar extensiones necesarias
+# gd con WebP y exif: core/Imagen.php reduce las fotos subidas (también las WebP) y respeta la
+# orientación que los celulares anotan en el EXIF de un JPEG.
 RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev \
+    libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev \
     default-mysql-client unzip openssl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo pdo_mysql gd \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) pdo pdo_mysql gd exif \
     && rm -rf /var/lib/apt/lists/*
 
 # mod_rewrite (enrutamiento), mod_ssl (HTTPS en 443, ver ssl/README.md),
@@ -71,6 +73,7 @@ RUN printf '%s\n' \
 RUN echo "date.timezone = America/Argentina/Buenos_Aires" >> /usr/local/etc/php/php.ini \
     && echo "display_errors = Off" >> /usr/local/etc/php/php.ini \
     && echo "log_errors = On" >> /usr/local/etc/php/php.ini \
+    && echo "zend.exception_ignore_args = On" >> /usr/local/etc/php/php.ini \
     && echo "error_log = /var/log/apache2/php_errors.log" >> /usr/local/etc/php/php.ini \
     && echo "session.cookie_httponly = 1" >> /usr/local/etc/php/php.ini \
     && echo "session.use_strict_mode = 1" >> /usr/local/etc/php/php.ini

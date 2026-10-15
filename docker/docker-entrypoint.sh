@@ -83,6 +83,22 @@ else
     echo "==> ADVERTENCIA: la base de datos no respondió a tiempo; arrancando igual." >&2
 fi
 
+# ── Mínimo privilegio del usuario de la aplicación ───────────────────────────
+# La imagen de MySQL le da ALL PRIVILEGES sobre la base a MYSQL_USER: podría
+# borrar tablas, cambiar la estructura y reescribir la auditoría. La aplicación
+# solo necesita leer y escribir filas. Se ajusta en cada arranque (es idempotente
+# y barato), así alcanza también a una base que ya existía y a las tablas nuevas.
+# Necesita la credencial de administración, que esta aplicación NO usa nunca.
+if [ "$DB_READY" -eq 1 ]; then
+    if [ -z "${DB_ROOT_PASS:-}" ]; then
+        echo "==> ADVERTENCIA: falta DB_ROOT_PASS; no se pueden ajustar los privilegios de la base." >&2
+        echo "    El usuario de la aplicación conserva los que tenga (en una base nueva, todos)." >&2
+    elif ! php /var/www/flexarena/database/aplicar_privilegios.php; then
+        echo "==> ADVERTENCIA: no se pudo dejar al usuario de la aplicación con el mínimo privilegio." >&2
+        echo "    Revisá que DB_ROOT_PASS sea la del servidor MySQL (se fija al crear el volumen)." >&2
+    fi
+fi
+
 # ── Datos de demostración (una vez por instalación) ──────────────────────────
 # La imagen de MySQL corre schema.sql y seed.sql desde /docker-entrypoint-initdb.d,
 # pero seed_demo.php es PHP y no puede ejecutarse ahí: se corre desde este
@@ -115,7 +131,9 @@ if [ "$DB_READY" -eq 1 ] && [ "${SEED_DEMO:-1}" != "0" ]; then
     else
         echo "==> Cargando datos de demostración (database/seed_demo.php)."
         echo "    Tarda un par de minutos y se hace una sola vez por instalación."
-        if php "$SEED_DEMO_SCRIPT"; then
+        # Con la credencial de administración y solo para este proceso: la siembra
+        # hace TRUNCATE (privilegio DROP), que el usuario de la aplicación ya no tiene.
+        if DB_USER=root DB_PASS="${DB_ROOT_PASS:-}" php "$SEED_DEMO_SCRIPT"; then
             mkdir -p "$ESTADO_DIR"
             date -Iseconds > "$MARCA_DEMO"
             echo "==> Datos de demostración cargados."
@@ -124,6 +142,34 @@ if [ "$DB_READY" -eq 1 ] && [ "${SEED_DEMO:-1}" != "0" ]; then
         fi
     fi
 fi
+
+# ── Contraseñas iniciales de las cuentas ─────────────────────────────────────
+# seed.sql no trae ninguna contraseña: cada cuenta nace "sin clave" y nadie puede
+# entrar con ella. Acá el administrador recibe ADMIN_PASS (o una al azar, que se
+# imprime una sola vez en este log) y las cuentas de demostración, DEMO_PASS.
+# Solo toca cuentas que siguen sin clave, así que correrlo en cada arranque es seguro.
+# Va DESPUÉS de la siembra: seed_demo.php vacía la auditoría y se llevaría el registro.
+if [ "$DB_READY" -eq 1 ]; then
+    php /var/www/flexarena/database/inicializar_cuentas.php \
+        || echo "==> ADVERTENCIA: las cuentas iniciales no quedaron bien configuradas (ver arriba)." >&2
+fi
+
+# ── Registro de errores de PHP ───────────────────────────────────────────────
+# Los scripts de arriba corren como root y, si avisan algo, crean php_errors.log con dueño
+# root. Apache ejecuta PHP como www-data, que entonces NO puede escribirlo: los errores de la
+# aplicación web se perdían en silencio. Se deja el archivo en manos de www-data (root puede
+# seguir escribiéndolo, así que los scripts de consola no se ven afectados).
+LOG_PHP="/var/log/apache2/php_errors.log"
+if touch "$LOG_PHP" && chown www-data:www-data "$LOG_PHP" && chmod 640 "$LOG_PHP"; then
+    :
+else
+    echo "==> ADVERTENCIA: no se pudo preparar $LOG_PHP; los errores de PHP no quedarían registrados." >&2
+fi
+
+# Las credenciales de arranque ya cumplieron su función. Se borran del entorno ANTES
+# de lanzar Apache: `exec` hereda las variables del shell, así que el proceso web
+# (y todo el PHP que corra en él) no las tiene ni en getenv() ni en /proc/<pid>/environ.
+unset DB_ROOT_PASS ADMIN_PASS DEMO_PASS
 
 # Apache en primer plano: es el proceso principal del contenedor.
 exec apache2-foreground

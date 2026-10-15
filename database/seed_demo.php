@@ -54,7 +54,7 @@ $db->exec('SET FOREIGN_KEY_CHECKS = 0');
 foreach ([
     'solicitudes_correccion','tabla_posiciones','resultados','enfrentamientos','rondas',
     'inscripciones','torneo_organizadores','configuraciones_torneo','torneos',
-    'equipo_participantes','equipos','participantes','auditoria',
+    'equipo_participantes','equipos','participantes','auditoria','intentos_login','historial_bd',
 ] as $t) {
     $db->exec("TRUNCATE TABLE $t");
 }
@@ -520,7 +520,9 @@ line("Configuraciones de torneo: {$configs}");
 $correccionService = new CorreccionService();
 
 $candidatos = $db->query(
-    "SELECT e.id, r.puntos_a, r.puntos_b
+    "SELECT e.id, r.puntos_a, r.puntos_b,
+            (SELECT o.usuario_id FROM torneo_organizadores o WHERE o.torneo_id = e.torneo_id
+              ORDER BY o.usuario_id LIMIT 1) AS organizador_id
      FROM enfrentamientos e
      JOIN resultados r    ON r.enfrentamiento_id = e.id
      JOIN torneos t       ON t.id = e.torneo_id
@@ -555,7 +557,9 @@ foreach ($candidatos as $n => $c) {
     $nuevoA = $pa > $pb ? $pa + 1 : $pa;
     $nuevoB = $pb > $pa ? $pb + 1 : $pb;
 
-    $correccionService->solicitar((int)$c['id'], $nuevoA, $nuevoB, $motivos[$n % count($motivos)], 4 + ($n % 3));
+    // Quien pide la corrección es el organizador del torneo (antes figuraban los usuarios 4, 5 y 6,
+    // que son participantes: algo que el sistema ya no permite).
+    $correccionService->solicitar((int)$c['id'], $nuevoA, $nuevoB, $motivos[$n % count($motivos)], (int)$c['organizador_id']);
 
     $solicitudId = (int) $db->query(
         "SELECT id FROM solicitudes_correccion

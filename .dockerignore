@@ -15,6 +15,7 @@ database/
 docs/
 tests/
 scripts/
+tools/
 _restore_point/
 backups/
 README.md

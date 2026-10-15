@@ -15,3 +15,11 @@ _restore_point/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Herramientas de prueba (solo desarrollo): se instalan con scripts/instalar_herramientas_de_prueba.sh
+tools/phpunit/*.phar
+tests/e2e/node_modules/
+tests/e2e/cypress/screenshots/
+tests/e2e/cypress/videos/
+tests/e2e/cypress/downloads/
+tests/e2e/npm_install.log
