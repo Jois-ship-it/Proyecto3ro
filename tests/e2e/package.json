@@ -1,0 +1,13 @@
+{
+  "name": "flexarena-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas de punta a punta de FlexArena con Cypress. Corren contra el entorno aislado de docker-compose.e2e.yml (bash scripts/e2e.sh).",
+  "scripts": {
+    "abrir": "cypress open",
+    "probar": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "16.1.1"
+  }
+}

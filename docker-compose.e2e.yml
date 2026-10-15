@@ -1,0 +1,95 @@
+# Entorno AISLADO para las pruebas de punta a punta (Cypress): tests/e2e y scripts/e2e.sh.
+#
+# Por qué existe: esas pruebas registran usuarios, crean torneos y cargan resultados. Contra la instalación de verdad dejarían basura en
+# los datos de demostración (que tardan en volver a sembrarse). Acá corre OTRA copia de la aplicación sobre OTRA base, con sus propios
+# volúmenes y red, así que se puede romper y tirar sin consecuencias:
+#
+#   - mismo código (monta el proyecto) y misma imagen que el stack normal;
+#   - su propio MySQL, en un volumen propio: `bash scripts/e2e.sh bajar` lo borra y la próxima vez nace de cero;
+#   - sin datos de demostración (SEED_DEMO=0): solo lo que traen schema.sql y seed.sql (cuentas, módulos, tipos), que es lo que
+#     las pruebas necesitan; todo lo demás lo crean ellas por la interfaz;
+#   - puertos propios, solo en 127.0.0.1, para no chocar con el stack normal ni con el XAMPP.
+#
+# Las credenciales (ADMIN_PASS, DEMO_PASS, DB_*) salen del mismo .env del proyecto: no se repiten ni se imprimen en ningún lado.
+#
+#   bash scripts/e2e.sh subir      levanta el entorno (la primera vez crea la base)
+#   bash scripts/e2e.sh probar     corre Cypress contra él
+#   bash scripts/e2e.sh bajar      lo apaga y borra su base
+name: flexarena_e2e
+
+services:
+  app:
+    build: .
+    image: flexarena-app:latest
+    container_name: flexarena_e2e_app
+    ports:
+      - "127.0.0.1:${E2E_HTTP_PORT:-8280}:80"
+      - "127.0.0.1:${E2E_HTTPS_PORT:-8643}:443"
+    volumes:
+      - .:/var/www/flexarena:z
+      - flexarena_e2e_logs:/var/log/apache2
+      - flexarena_e2e_estado:/var/lib/flexarena
+      # Conexiones persistentes más largas: el proxy de Cypress reutiliza una que Apache ya cerró (ver el archivo).
+      - ./docker/e2e-keepalive.conf:/etc/apache2/conf-enabled/zz-e2e-keepalive.conf:ro,z
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-flexarena}
+      - DB_USER=${DB_USER:-flexarena_user}
+      - DB_PASS=${DB_PASS:-change_this_db_password}
+      - APP_URL=https://localhost:${E2E_HTTPS_PORT:-8643}
+      - HTTPS_PORT=${E2E_HTTPS_PORT:-8643}
+      - DB_ROOT_PASS=${DB_ROOT_PASS:-change_this_root_password}
+      - ADMIN_PASS=${ADMIN_PASS:-}
+      - DEMO_PASS=${DEMO_PASS:-}
+      - SEED_DEMO=0
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - flexarena_e2e_net
+
+  db:
+    image: mysql:8.0
+    container_name: flexarena_e2e_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-change_this_root_password}
+      MYSQL_DATABASE:      ${DB_NAME:-flexarena}
+      MYSQL_USER:          ${DB_USER:-flexarena_user}
+      MYSQL_PASSWORD:      ${DB_PASS:-change_this_db_password}
+      TZ:                  America/Argentina/Buenos_Aires
+    volumes:
+      - flexarena_e2e_mysql:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro,z
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro,z
+    # Es una base descartable: sin esperar el fsync de cada confirmación la primera carga (21 tablas, vistas y 51 triggers) pasa de
+    # ~6 minutos a menos de uno. NUNCA se usa esto en una base con datos que importen.
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=America/Argentina/Buenos_Aires
+      --innodb-flush-log-at-trx-commit=2
+      --sync-binlog=0
+      --skip-log-bin
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u \"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" -e 'SELECT 1 FROM roles LIMIT 1' \"$$MYSQL_DATABASE\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 600s
+    networks:
+      - flexarena_e2e_net
+
+volumes:
+  flexarena_e2e_logs:
+    name: flexarena_e2e_logs
+  flexarena_e2e_estado:
+    name: flexarena_e2e_estado
+  flexarena_e2e_mysql:
+    name: flexarena_e2e_mysql
+
+networks:
+  flexarena_e2e_net:
+    name: flexarena_e2e_net
+    driver: bridge
