@@ -17,7 +17,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class MatchScheduleTest extends TestCase
+class MatchScheduleTest extends TestCase
 {
     private const INICIO = '2026-07-10';
     private const FIN    = '2026-07-15';
@@ -184,4 +184,4 @@ final class MatchScheduleTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(MatchScheduleTest::class));
+TestCase::correrSiEsScript(MatchScheduleTest::class);

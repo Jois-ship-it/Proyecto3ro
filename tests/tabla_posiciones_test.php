@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class TablaPosicionesTest extends TestCase
+class TablaPosicionesTest extends TestCase
 {
     /** @var int[] ids de los 4 participantes, en orden A, B, C, D */
     private array $pids = [];
@@ -225,4 +225,4 @@ final class TablaPosicionesTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(TablaPosicionesTest::class));
+TestCase::correrSiEsScript(TablaPosicionesTest::class);

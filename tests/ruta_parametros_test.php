@@ -32,7 +32,7 @@ define('APP_PATH',  BASE_PATH . '/app');
 define('CORE_PATH', BASE_PATH . '/core');
 require BASE_PATH . '/config/app.php';
 
-final class RutaParametrosTest extends TestCase
+class RutaParametrosTest extends TestCase
 {
     /** Fragmento propio de app/views/shared/404.php. */
     private const MARCA_404 = 'Página no encontrada';
@@ -250,4 +250,4 @@ final class RutaParametrosTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(RutaParametrosTest::class));
+TestCase::correrSiEsScript(RutaParametrosTest::class);

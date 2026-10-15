@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class PuntosFavorTest extends TestCase
+class PuntosFavorTest extends TestCase
 {
     private TorneoService  $torneos;
     private TorneoModel    $torneoModel;
@@ -254,4 +254,4 @@ final class PuntosFavorTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(PuntosFavorTest::class));
+TestCase::correrSiEsScript(PuntosFavorTest::class);

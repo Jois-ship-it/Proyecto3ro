@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuración de PHPUnit 11 para la batería de FlexArena.
+
+  No se corre «a pelo» (php tools/phpunit/phpunit-11.phar): cada archivo de tests/ necesita su propio proceso (así ninguno hereda la
+  sesión, los singletons ni los datos del anterior) y PHPUnit exige que el archivo se llame como su clase, cosa que estos no hacen
+  (paginador_test.php / PaginadorTest). Lo resuelve «php tests/run.php» con la opción phpunit, que arma un puente por clase y llama
+  a PHPUnit con esta configuración. Ver README → Tests.
+  (Un comentario XML no admite dos guiones seguidos: por eso la opción no se escribe con sus guiones acá.)
+
+  Es estricta a propósito: un caso sin aserciones (riesgoso), una advertencia o un aviso de PHP hacen fallar la corrida.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+         colors="false"
+         cacheResult="false"
+         executionOrder="default"
+         failOnRisky="true"
+         failOnWarning="true"
+         failOnNotice="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="false"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         beStrictAboutOutputDuringTests="false"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerNotices="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerErrors="true"
+         displayDetailsOnIncompleteTests="true"
+         displayDetailsOnSkippedTests="true">
+</phpunit>

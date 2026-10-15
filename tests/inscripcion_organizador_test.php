@@ -55,7 +55,7 @@ if (($argv[1] ?? '') === '--inscribir') {
     exit;
 }
 
-final class InscripcionOrganizadorTest extends TestCase
+class InscripcionOrganizadorTest extends TestCase
 {
     private int $torneoId = 0;
     /** @var int[] */
@@ -187,4 +187,4 @@ final class InscripcionOrganizadorTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(InscripcionOrganizadorTest::class));
+TestCase::correrSiEsScript(InscripcionOrganizadorTest::class);

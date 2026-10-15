@@ -45,7 +45,7 @@ final class TorneoControllerObservable extends TorneoController
     }
 }
 
-final class TorneoOwnershipTest extends TestCase
+class TorneoOwnershipTest extends TestCase
 {
     private int $torneoDeCarlos = 0;
     private int $torneoDeLaura  = 0;
@@ -275,4 +275,4 @@ final class TorneoOwnershipTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(TorneoOwnershipTest::class));
+TestCase::correrSiEsScript(TorneoOwnershipTest::class);

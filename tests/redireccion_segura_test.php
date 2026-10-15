@@ -22,7 +22,7 @@ require __DIR__ . '/bootstrap.php';
 
 if (!defined('APP_URL')) define('APP_URL', 'https://flexarena.local');
 
-final class RedireccionSeguraTest extends TestCase
+class RedireccionSeguraTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -191,4 +191,4 @@ final class RedireccionSeguraTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(RedireccionSeguraTest::class));
+TestCase::correrSiEsScript(RedireccionSeguraTest::class);

@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class ModulosToggleTest extends TestCase
+class ModulosToggleTest extends TestCase
 {
     /** slug del módulo => [clase del servicio, método que genera la estructura] */
     private const FORMATOS = [
@@ -82,6 +82,9 @@ final class ModulosToggleTest extends TestCase
     {
         $organizadores     = [['id' => 2, 'nombre' => 'Organizador', 'rol_nombre' => 'organizador']];
         $organizadorActual = $torneo['organizador_id'] ?? null;
+        // Lo que TorneoController::formulario() le pasa a la vista (sin esto la vista avisa «Undefined variable»).
+        $clavesConfig  = ConfiguracionTorneoService::CLAVES;
+        $configuracion = [];
 
         ob_start();
         include __DIR__ . '/../app/views/admin/torneo_form.php';
@@ -254,4 +257,4 @@ final class ModulosToggleTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(ModulosToggleTest::class));
+TestCase::correrSiEsScript(ModulosToggleTest::class);

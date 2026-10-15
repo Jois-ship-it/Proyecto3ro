@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class ConfiguracionTorneoTest extends TestCase
+class ConfiguracionTorneoTest extends TestCase
 {
     private ConfiguracionTorneoService $servicio;
     private ConfiguracionTorneoModel   $modelo;
@@ -366,4 +366,4 @@ final class ConfiguracionTorneoTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(ConfiguracionTorneoTest::class));
+TestCase::correrSiEsScript(ConfiguracionTorneoTest::class);

@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class BracketIntegridadTest extends TestCase
+class BracketIntegridadTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -218,4 +218,4 @@ final class BracketIntegridadTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(BracketIntegridadTest::class));
+TestCase::correrSiEsScript(BracketIntegridadTest::class);

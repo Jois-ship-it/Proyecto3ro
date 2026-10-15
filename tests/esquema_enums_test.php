@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class EsquemaEnumsTest extends TestCase
+class EsquemaEnumsTest extends TestCase
 {
     /**
      * Todos los ENUM del esquema, con los valores que el sistema sabe producir.
@@ -43,7 +43,17 @@ final class EsquemaEnumsTest extends TestCase
         'enfrentamientos.estado'        => ['pendiente', 'en_curso', 'finalizado', 'bye', 'cancelado'],
         'resultados.estado'             => ['cargado', 'corregido'],
         'solicitudes_correccion.estado' => ['pendiente', 'aprobada', 'rechazada'],
+        'historial_bd.operacion'        => ['INSERT', 'UPDATE', 'DELETE'],
     ];
+
+    /**
+     * ENUM cuyos valores no escribe PHP sino la base: los triggers del historial. El test de
+     * «cada valor aparece en el código» no aplica, porque el código que los produce está en
+     * database/schema.sql (generado por database/generar_historial.php).
+     *
+     * @var string[]
+     */
+    private const PRODUCIDOS_POR_LA_BASE = ['historial_bd.operacion'];
 
     /** Los valores que la base declara hoy para una columna. @return string[] */
     private function valoresEnLaBase(string $tabla, string $columna): array
@@ -113,6 +123,7 @@ final class EsquemaEnumsTest extends TestCase
 
         $huerfanos = [];
         foreach (self::CATALOGO as $ruta => $valores) {
+            if (in_array($ruta, self::PRODUCIDOS_POR_LA_BASE, true)) continue;
             foreach ($valores as $v) {
                 if (!str_contains($fuente, "'{$v}'") && !str_contains($fuente, "\"{$v}\"")) {
                     $huerfanos[] = "{$ruta} = '{$v}'";
@@ -154,4 +165,4 @@ final class EsquemaEnumsTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(EsquemaEnumsTest::class));
+TestCase::correrSiEsScript(EsquemaEnumsTest::class);

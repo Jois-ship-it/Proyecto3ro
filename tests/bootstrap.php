@@ -119,9 +119,15 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 // ya se enviaron" y el regenerado emite un warning. Es un artefacto del entorno,
 // no del código bajo prueba: se silencia SOLO ese caso y todo lo demás sigue
 // llegando a la salida.
-set_error_handler(static function (int $nivel, string $mensaje): bool {
-    return str_contains($mensaje, 'session_regenerate_id');
-});
+//
+// Solo con el runner propio. PHPUnit NO instala su manejador de errores si ya hay uno registrado (asume que es a propósito), y con el
+// nuestro puesto no vería ningún aviso, advertencia ni obsolescencia que ocurra dentro de un test: pasarían en silencio (así pasó
+// durante un tiempo un «Undefined variable» en un mensaje de rondas_estado_test.php). Con PHPUnit esos avisos se cuentan y hacen fallar.
+if (!class_exists(\PHPUnit\Framework\TestCase::class)) {
+    set_error_handler(static function (int $nivel, string $mensaje): bool {
+        return str_contains($mensaje, 'session_regenerate_id');
+    });
+}
 if (!isset($_SESSION)) {
     $_SESSION = [];
 }

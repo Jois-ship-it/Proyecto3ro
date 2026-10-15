@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class SeedBaseTest extends TestCase
+class SeedBaseTest extends TestCase
 {
     private static bool $cargado = false;
 
@@ -167,4 +167,4 @@ final class SeedBaseTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(SeedBaseTest::class));
+TestCase::correrSiEsScript(SeedBaseTest::class);

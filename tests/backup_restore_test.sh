@@ -34,6 +34,10 @@ afirmar_contiene() { # <aguja> <texto> <descripcion>
     if printf '%s' "$2" | grep -qF -- "$1"; then ok "$3"; else falla "$3" "no aparece '$1' en la salida"; fi
 }
 
+afirmar_no_contiene() { # <aguja> <texto> <descripcion>
+    if printf '%s' "$2" | grep -qF -- "$1"; then falla "$3" "aparece '$1' y no deberia"; else ok "$3"; fi
+}
+
 # ── Proyecto de prueba ──────────────────────────────────────────────────────
 PROY="$TMP/proyecto"
 mkdir -p "$PROY/scripts" "$TMP/bin"
@@ -93,6 +97,7 @@ cat > "$TMP/bin/docker" <<'EOF'
 #!/bin/bash
 # Simula `docker compose exec -T db mysqldump ...` y `... db mysql ...`
 if printf '%s ' "$@" | grep -q mysqldump; then
+    printf '%s\n' "$*" >> "${FAKE_DOCKER_LOG:-/dev/null}"    # para comprobar COMO se lo llamo
     case "${FAKE_DOCKER_MODO:-ok}" in
         fallar)   echo "docker: simulacion de fallo" >&2; exit 1 ;;
         vacio)    exit 0 ;;
@@ -102,13 +107,16 @@ if printf '%s ' "$@" | grep -q mysqldump; then
     esac
     exit 0
 fi
-# Rama `mysql`: consume el SQL de la restauracion y lo deja anotado.
+# Rama `mysql`: anota como la llamaron y consume el SQL de la restauracion.
+printf '%s\n' "$*" >> "${FAKE_DOCKER_LOG:-/dev/null}"
 cat > "${FAKE_RESTORE_LOG:-/dev/null}"
 EOF
 chmod +x "$TMP/bin/docker"
 
 export PATH="$TMP/bin:$PATH"
 export FAKE_DUMP_OK="$DUMP_OK" FAKE_DUMP_TRUNCADO="$DUMP_TRUNCADO" FAKE_DUMP_AJENO="$DUMP_AJENO"
+DOCKER_LOG="$TMP/docker_llamadas.log"
+export FAKE_DOCKER_LOG="$DOCKER_LOG"
 
 # Dejan la salida en $SALIDA y el codigo de salida en $CODIGO. No se puede usar
 # SALIDA=$(correr_backup ...) porque la sustitucion abre una subshell y el
@@ -140,6 +148,31 @@ afirmar_igual "1" "$(archivos_en_backups)" "deja exactamente un archivo en backu
 afirmar_contiene "Verificado:" "$SALIDA" "informa que verifico del volcado"
 afirmar_igual "0" "$(find "$PROY/backups" -name '*.parcial' 2>/dev/null | wc -l | tr -d '[:space:]')" \
     "no queda ningun archivo .parcial"
+
+# ── Como se llama a mysqldump ───────────────────────────────────────────────
+# La cuenta de la aplicacion tiene el minimo privilegio (sin SHOW VIEW ni TRIGGER):
+# con ella el respaldo saldria sin las vistas ni el historial. Tiene que volcar como
+# root, con los triggers, y tomando la clave del contenedor, no del host.
+limpiar_backups
+: > "$DOCKER_LOG"
+correr_backup ok
+LLAMADA="$(cat "$DOCKER_LOG")"
+afirmar_contiene "--user=root" "$LLAMADA" "vuelca como root (la cuenta de la app no ve vistas ni triggers)"
+afirmar_contiene "--triggers" "$LLAMADA" "pide los triggers: sin ellos el historial se restauraria sin sus reglas"
+afirmar_contiene "--single-transaction" "$LLAMADA" "saca una foto consistente sin bloquear a la aplicacion"
+afirmar_contiene 'MYSQL_ROOT_PASSWORD' "$LLAMADA" "la clave de root la toma del contenedor"
+afirmar_no_contiene "flexarena_user" "$LLAMADA" "no usa la cuenta de la aplicacion"
+afirmar_no_contiene "clave-de-prueba" "$LLAMADA" "no pasa ninguna clave del host por la linea de comandos"
+afirmar_no_contiene "clave-root-de-prueba" "$LLAMADA" "ni siquiera la de root: viaja dentro del contenedor"
+
+# Y el host no necesita ninguna clave: un .env sin DB_PASS ni DB_ROOT_PASS alcanza.
+mv "$PROY/.env" "$PROY/.env.completo"
+printf 'DB_NAME=flexarena\n' > "$PROY/.env"
+limpiar_backups
+correr_backup ok
+afirmar_igual "0" "$CODIGO" "backup.sh anda sin DB_PASS ni DB_ROOT_PASS en el host"
+afirmar_igual "1" "$(archivos_en_backups)" "y deja su respaldo"
+mv "$PROY/.env.completo" "$PROY/.env"
 
 limpiar_backups
 correr_backup fallar
@@ -207,6 +240,21 @@ if [ "$(bytes_restaurados)" -gt 100 ]; then
 else
     falla "le paso el SQL a mysql" "el log de restauracion quedo vacio"
 fi
+
+# 5b) Como se llama a mysql: root, con la clave del contenedor, sin claves del host.
+: > "$DOCKER_LOG"
+correr_restore "$BUENO_GZ" s
+LLAMADA="$(cat "$DOCKER_LOG")"
+afirmar_contiene "--user=root" "$LLAMADA" "restaura como root (la cuenta de la app no puede crear tablas ni triggers)"
+afirmar_contiene "MYSQL_ROOT_PASSWORD" "$LLAMADA" "la clave de root la toma del contenedor"
+afirmar_no_contiene "clave-root-de-prueba" "$LLAMADA" "no pasa ninguna clave del host por la linea de comandos"
+afirmar_no_contiene "clave-de-prueba" "$LLAMADA" "ni la de la cuenta de la aplicacion"
+
+mv "$PROY/.env" "$PROY/.env.completo"
+printf 'DB_NAME=flexarena\n' > "$PROY/.env"
+correr_restore "$BUENO_GZ" s
+afirmar_igual "0" "$CODIGO" "restore.sh anda sin DB_ROOT_PASS ni DB_PASS en el host"
+mv "$PROY/.env.completo" "$PROY/.env"
 
 # 6) Respaldo bueno pero cancelando en la confirmacion.
 correr_restore "$BUENO_GZ" n

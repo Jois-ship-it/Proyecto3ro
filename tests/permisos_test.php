@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class PermisosTest extends TestCase
+class PermisosTest extends TestCase
 {
     private const ROL_ADMIN        = 1;
     private const ROL_ORGANIZADOR  = 2;
@@ -368,7 +368,9 @@ final class PermisosTest extends TestCase
             'TorneoController::desinscribir'              => "requirePermiso('torneos', 'editar'",
             'ResultadoController::cargar'                 => "requirePermiso('resultados', 'crear'",
             'ResultadoController::programar'              => "requirePermiso('resultados', 'editar'",
-            'ResultadoController::corregir'               => "requirePermiso('resultados', 'editar'",
+            // Aplicar una corrección directamente es del administrador (su compuerta es el rol, no una
+            // casilla de la matriz): el organizador PIDE la corrección y el administrador la aprueba.
+            'ResultadoController::corregir'               => 'requireAdmin()',
             'CorreccionController::solicitar'             => "requirePermiso('resultados', 'editar'",
             // Letra §5.3, participante
             'ParticipanteController::dashboard'           => "requirePermiso('consulta_publica', 'ver')",
@@ -425,4 +427,4 @@ final class PermisosTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(PermisosTest::class));
+TestCase::correrSiEsScript(PermisosTest::class);

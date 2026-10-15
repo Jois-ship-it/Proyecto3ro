@@ -24,17 +24,21 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class BracketApiladoTest extends TestCase
+class BracketApiladoTest extends TestCase
 {
     private string $css = '';
 
     protected function setUp(): void
     {
         if ($this->css !== '') return;
-        $ruta = dirname(__DIR__) . '/public/assets/css/styles.css';
-        $contenido = file_get_contents($ruta);
-        if ($contenido === false) $this->fallar("No se pudo leer {$ruta}.");
-        $this->css = $contenido;
+        // Las hojas se cargan en este orden (View::HOJAS); lo que importa para el apilado es lo que declaran juntas.
+        foreach (View::HOJAS as $hoja) {
+            $ruta = dirname(__DIR__) . "/public/assets/css/{$hoja}.css";
+            $contenido = file_get_contents($ruta);
+            if ($contenido === false) $this->fallar("No se pudo leer {$ruta}.");
+            $this->css .= $contenido . "
+";
+        }
     }
 
     /** El cuerpo de la primera regla cuyo selector coincide exactamente. */
@@ -99,12 +103,12 @@ final class BracketApiladoTest extends TestCase
         // el menú taparía el diálogo que él mismo abrió.
         $abierta = $this->zIndex('.bk-card[aria-expanded="true"]');
 
-        // Los modales declaran su z-index inline en las vistas de gestión.
+        // Los diálogos (.modal-fondo) declaran su z-index en la hoja de componentes; antes lo llevaban escrito en la vista.
+        $zModales = [$this->zIndex('.modal-fondo'), $this->zIndex('.modal-fondo--flex')];
         $vista = (string) file_get_contents(dirname(__DIR__) . '/app/views/admin/torneo_gestion.php');
-        preg_match_all('/z-index:\s*(\d+)/', $vista, $m);
-        $this->assertGreaterThan(0, count($m[1]), 'no se encontró ningún modal con z-index en la vista');
+        $this->assertStringContainsString('class="modal-fondo"', $vista, 'los diálogos de la gestión usan .modal-fondo');
 
-        foreach (array_map('intval', $m[1]) as $zModal) {
+        foreach ($zModales as $zModal) {
             $this->assertGreaterThan($abierta, $zModal,
                 'un modal quedaría por debajo de la tarjeta con el menú abierto');
         }
@@ -117,11 +121,11 @@ final class BracketApiladoTest extends TestCase
         // La regla CSS depende de aria-expanded. Si el script dejara de
         // mantenerlo, el arreglo se apagaría en silencio: el menú volvería a
         // quedar tapado y el CSS seguiría ahí, aparentemente correcto.
-        $js = (string) file_get_contents(dirname(__DIR__) . '/app/views/partials/eliminacion_bracket.php');
+        $js = (string) file_get_contents(dirname(__DIR__) . '/public/assets/js/bracket.js');
 
-        $this->assertStringContainsString("aria-expanded','true'", $js,
+        $this->assertStringContainsString("setAttribute('aria-expanded', 'true')", $js,
             'al abrir el menú hay que marcar la tarjeta');
-        $this->assertStringContainsString("aria-expanded','false'", $js,
+        $this->assertStringContainsString("setAttribute('aria-expanded', 'false')", $js,
             'al cerrarlo hay que desmarcarla, o la tarjeta queda levantada para siempre');
     }
 
@@ -161,4 +165,4 @@ final class BracketApiladoTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(BracketApiladoTest::class));
+TestCase::correrSiEsScript(BracketApiladoTest::class);

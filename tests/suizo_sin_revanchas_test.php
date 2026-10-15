@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class SuizoTest extends TestCase
+class SuizoTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -225,4 +225,4 @@ final class SuizoTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(SuizoTest::class));
+TestCase::correrSiEsScript(SuizoTest::class);

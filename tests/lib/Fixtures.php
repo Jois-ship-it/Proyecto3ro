@@ -25,9 +25,10 @@ class Fixtures
      * Estado de partida conocido: sin datos dinámicos, sin usuarios de test y
      * con todos los módulos habilitados.
      *
-     * Se trunca en vez de envolver todo en una transacción porque varios
-     * servicios (ResultadoService::corregir, por ejemplo) abren su propia
-     * transacción, y PDO/MySQL no anidan: un BEGIN externo se cerraría solo.
+     * Se borra en vez de envolver cada test en una transacción que después se
+     * deshace: los servicios abren la suya (Database::transaccion) y hay tests
+     * —los de transacciones_test.php— que necesitan ver el COMMIT y el ROLLBACK
+     * reales, no los de una transacción que los contiene.
      */
     public static function reset(PDO $db): void
     {
@@ -39,7 +40,8 @@ class Fixtures
         foreach ([
             'solicitudes_correccion', 'tabla_posiciones', 'resultados', 'enfrentamientos', 'rondas',
             'inscripciones', 'torneo_organizadores', 'configuraciones_torneo', 'torneos',
-            'equipo_participantes', 'equipos', 'participantes', 'auditoria',
+            'equipo_participantes', 'equipos', 'participantes', 'auditoria', 'intentos_login',
+            'historial_bd',
         ] as $tabla) {
             $db->exec("DELETE FROM $tabla");
         }
@@ -52,8 +54,16 @@ class Fixtures
         $db->exec("UPDATE modulos SET estado = 'activo'");
 
         // Los tests de bloqueo tocan los usuarios del seed: devolverlos a su estado.
-        $db->exec("UPDATE usuarios SET failed_attempts = 0 WHERE id IN (1,2,3,4,5,6)");
+        $db->exec("UPDATE usuarios SET failed_attempts = 0, bloqueada_hasta = NULL WHERE id IN (1,2,3,4,5,6)");
+        // También el rol: un test que ascienda o degrade una cuenta del seed no puede dejar a los
+        // siguientes sin administrador (cuentas_iniciales_test y permisos_test lo buscan por rol).
+        $db->exec("UPDATE usuarios SET rol_id = CASE WHEN id = 1 THEN 1 WHEN id IN (2,3) THEN 2 ELSE 3 END WHERE id IN (1,2,3,4,5,6)");
         $db->exec("UPDATE usuarios SET estado = 'activo' WHERE id IN (1,2,3,4,5,6)");
+
+        // Todo lo anterior dispara los triggers del historial: lo que quedó es ruido de
+        // la limpieza, no historia de lo que el test va a hacer.
+        $db->exec('DELETE FROM historial_bd');
+        Database::fijarUsuarioApp(null);
     }
 
     /** @return int[] ids de los participantes creados */
@@ -228,10 +238,14 @@ class Fixtures
         $_SESSION['user_email']  = $u['email'];
         $_SESSION['user_rol']    = $u['rol_nombre'] ?? null;
         $_SESSION['user_rol_id'] = (int)$u['rol_id'];
+        Database::fijarUsuarioApp((int)$u['id']);
+        Auth::olvidarRevalidacion();    // cada «pedido» de un test vuelve a consultar la cuenta
     }
 
     public static function cerrarSesion(): void
     {
         $_SESSION = [];
+        Auth::olvidarRevalidacion();
+        Database::fijarUsuarioApp(null);
     }
 }

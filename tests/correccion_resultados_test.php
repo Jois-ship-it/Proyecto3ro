@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class CorreccionResultadosTest extends TestCase
+class CorreccionResultadosTest extends TestCase
 {
     private const MOTIVO = 'El acta del partido tenía el marcador invertido';
 
@@ -81,6 +81,23 @@ final class CorreccionResultadosTest extends TestCase
         $this->assertCount(0, $this->solicitudes());
     }
 
+    public function test_la_correccion_directa_exige_el_mismo_motivo_que_la_solicitud(): void
+    {
+        // El formulario del administrador pide 10 caracteres (minlength), pero el servidor solo miraba que no estuviera vacío:
+        // quien se salteara el navegador (o un campo que Cypress no marca como editado) corregía con «x». Lo encontró el recorrido e2e.
+        $this->cargarPartido();
+        $svc = new ResultadoService();
+
+        foreach (['', '   ', 'x', 'corto', '   corto    ', 'nueve car'] as $motivo) {
+            $this->assertThrows(fn() => $svc->corregir($this->partidoId, 0.0, 3.0, $motivo, Fixtures::ADMIN), 'mínimo 10 caracteres', 'motivo «' . $motivo . '»');
+        }
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM resultados WHERE corregido = 1')->fetchColumn(), 'ninguna quedó corregida');
+
+        $svc->corregir($this->partidoId, 0.0, 3.0, 'diez carac', Fixtures::ADMIN);     // exactamente 10: alcanza
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM resultados WHERE corregido = 1')->fetchColumn());
+        $this->assertSame(ResultadoService::MOTIVO_CORRECCION_MINIMO, 10);
+    }
+
     public function test_no_se_admiten_puntos_negativos(): void
     {
         $this->cargarPartido();
@@ -112,7 +129,7 @@ final class CorreccionResultadosTest extends TestCase
         $svc->solicitar($this->partidoId, 1.0, 3.0, self::MOTIVO, Fixtures::ADMIN);
 
         $this->assertThrows(
-            fn() => $svc->solicitar($this->partidoId, 2.0, 2.0, self::MOTIVO, Fixtures::ADMIN),
+            fn() => $svc->solicitar($this->partidoId, 2.0, 3.0, self::MOTIVO, Fixtures::ADMIN),
             'Ya existe una solicitud'
         );
         $this->assertCount(1, $this->solicitudes());
@@ -369,4 +386,4 @@ final class CorreccionResultadosTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(CorreccionResultadosTest::class));
+TestCase::correrSiEsScript(CorreccionResultadosTest::class);

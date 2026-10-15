@@ -17,7 +17,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class LockoutEstadoTest extends TestCase
+class LockoutEstadoTest extends TestCase
 {
     private const EMAIL    = 'bloqueo' . Fixtures::DOMINIO_TEST;
     private const PASSWORD = 'Flex-Test2026!';
@@ -251,4 +251,4 @@ final class LockoutEstadoTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(LockoutEstadoTest::class));
+TestCase::correrSiEsScript(LockoutEstadoTest::class);

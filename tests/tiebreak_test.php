@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class DesempateTest extends TestCase
+class DesempateTest extends TestCase
 {
     private int $torneoId = 0;
     /** @var int[] */
@@ -195,4 +195,4 @@ final class DesempateTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(DesempateTest::class));
+TestCase::correrSiEsScript(DesempateTest::class);

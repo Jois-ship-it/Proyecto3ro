@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Test de que la documentación no cite código que no existe.
  *
- * `docs/restricciones_no_estructurales.md` documenta 115 reglas de negocio y
+ * `docs/restricciones_no_estructurales.md` documenta 213 reglas de negocio y
  * cada una indica dónde vive. Hasta septiembre de 2026 las citaba por número de
  * línea, y las referencias se habían podrido: apuntaban a constructores, a
  * métodos que no eran la regla, o a líneas en blanco. Un número de línea
@@ -24,12 +24,13 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class DocsReferenciasTest extends TestCase
+class DocsReferenciasTest extends TestCase
 {
     /** Documentos que citan código y tienen que estar al día. */
     private const DOCUMENTOS = [
         'docs/restricciones_no_estructurales.md',
         'docs/documentacion_tecnica.md',
+        'docs/api.md',
         'docs/INSTALACION.md',
         'database/migrations/README.md',
     ];
@@ -156,4 +157,4 @@ final class DocsReferenciasTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(DocsReferenciasTest::class));
+TestCase::correrSiEsScript(DocsReferenciasTest::class);

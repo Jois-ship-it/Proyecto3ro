@@ -13,6 +13,13 @@ declare(strict_types=1);
  * Inventarles 50 entradas sería ruido, no datos de prueba. Para que la excepción
  * no se convierta en un agujero, se comprueba que esas tablas tengan la cantidad
  * esperada: si alguien agrega un formato o un módulo, este test avisa.
+ * `configuracion_sistema` es de la misma clase: una fila por ajuste de la
+ * plataforma (7), no una por cada cosa que pasa.
+ *
+ * Las tablas OPERATIVAS son la otra excepción: registran lo que ocurre mientras
+ * el sistema se usa (hoy, los inicios de sesión fallidos) y se purgan solas.
+ * Nacen vacías y llenarlas con tráfico inventado sería falsear el dato, no
+ * probarlo. También se declaran, para que sean una lista corta y a la vista.
  *
  * Además de contar, verifica que los datos sean coherentes: torneos en todos los
  * estados, solicitudes de corrección en los tres estados, configuración para
@@ -24,7 +31,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class DatosMinimosTest extends TestCase
+class DatosMinimosTest extends TestCase
 {
     private const MINIMO = 50;
 
@@ -34,6 +41,16 @@ final class DatosMinimosTest extends TestCase
         'tipos_torneo' => 3,   // liga, eliminación directa, suizo
         'modulos'      => 9,
         'permisos'     => 9,
+        'configuracion_sistema' => 7,   // un ajuste por clave (ver seed.sql)
+    ];
+
+    /**
+     * Tablas operativas: se llenan con el uso real y empiezan vacías.
+     *
+     * @var array<string, string> tabla => por qué no lleva datos de prueba
+     */
+    private const OPERATIVAS = [
+        'intentos_login' => 'registra los inicios de sesión fallidos de las últimas horas y se purga sola',
     ];
 
     private static bool $sembrado = false;
@@ -58,12 +75,18 @@ final class DatosMinimosTest extends TestCase
         return (int) $this->db->query("SELECT COUNT(*) FROM `{$tabla}`")->fetchColumn();
     }
 
-    /** @return string[] */
+    /**
+     * Las tablas de datos. Las vistas no cuentan: no guardan nada, muestran lo que
+     * hay en las tablas (v_estadisticas_sistema, por ejemplo, es siempre UNA fila).
+     *
+     * @return string[]
+     */
     private function tablas(): array
     {
         return $this->db->query(
             "SELECT table_name FROM information_schema.tables
-             WHERE table_schema = DATABASE() ORDER BY table_name"
+             WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'
+             ORDER BY table_name"
         )->fetchAll(PDO::FETCH_COLUMN);
     }
 
@@ -73,7 +96,7 @@ final class DatosMinimosTest extends TestCase
     {
         $bajas = [];
         foreach ($this->tablas() as $tabla) {
-            if (isset(self::CATALOGOS[$tabla])) continue;
+            if (isset(self::CATALOGOS[$tabla]) || isset(self::OPERATIVAS[$tabla])) continue;
             $n = $this->contar($tabla);
             if ($n < self::MINIMO) $bajas[] = "{$tabla} ({$n})";
         }
@@ -90,6 +113,20 @@ final class DatosMinimosTest extends TestCase
         }
     }
 
+    public function test_las_tablas_operativas_existen_y_empiezan_vacias(): void
+    {
+        // La excepción se comprueba: una tabla que desapareció del esquema no
+        // puede seguir figurando como exceptuada, y una que ya trae filas de
+        // demostración dejó de ser operativa y tiene que contar como las demás.
+        $existentes = $this->tablas();
+        foreach (self::OPERATIVAS as $tabla => $motivo) {
+            $this->assertTrue(in_array($tabla, $existentes, true),
+                "«{$tabla}» figura como operativa pero no existe en el esquema");
+            $this->assertSame(0, $this->contar($tabla),
+                "«{$tabla}» {$motivo}: la siembra no debería dejarle filas");
+        }
+    }
+
     public function test_las_tablas_centrales_del_dominio_tienen_volumen_suficiente(): void
     {
         // Explícito y legible, para que quede claro en la defensa qué se cubre.
@@ -97,7 +134,7 @@ final class DatosMinimosTest extends TestCase
             'usuarios', 'participantes', 'equipos', 'equipo_participantes',
             'torneos', 'torneo_organizadores', 'inscripciones', 'rondas',
             'enfrentamientos', 'resultados', 'tabla_posiciones',
-            'configuraciones_torneo', 'solicitudes_correccion', 'auditoria',
+            'configuraciones_torneo', 'solicitudes_correccion', 'auditoria', 'historial_bd',
         ] as $tabla) {
             $n = $this->contar($tabla);
             $this->assertTrue($n >= self::MINIMO, "{$tabla} tiene {$n}, se esperaban al menos " . self::MINIMO);
@@ -294,4 +331,4 @@ final class DatosMinimosTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(DatosMinimosTest::class));
+TestCase::correrSiEsScript(DatosMinimosTest::class);

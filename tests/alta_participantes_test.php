@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class AltaParticipantesTest extends TestCase
+class AltaParticipantesTest extends TestCase
 {
     /** @return string[] "GET admin/... → Controlador::accion" de cada ruta registrada */
     private function rutasRegistradas(): array
@@ -137,4 +137,4 @@ final class AltaParticipantesTest extends TestCase
     }
 }
 
-exit(TestCase::ejecutar(AltaParticipantesTest::class));
+TestCase::correrSiEsScript(AltaParticipantesTest::class);

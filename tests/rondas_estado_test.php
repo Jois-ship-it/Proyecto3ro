@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-final class RondasEstadoTest extends TestCase
+class RondasEstadoTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -294,9 +294,9 @@ final class RondasEstadoTest extends TestCase
                    AND usuario_id = " . Fixtures::ADMIN . "
                    AND JSON_UNQUOTE(JSON_EXTRACT(valor_nuevo, '$.estado')) = '$estadoNuevo'"
             )->fetchColumn();
-            $this->assertSame(1, $filas, "quedó registrado «$accion»");
+            $this->assertSame(1, $filas, "quedó registrado «{$accion}»");
         }
     }
 }
 
-exit(TestCase::ejecutar(RondasEstadoTest::class));
+TestCase::correrSiEsScript(RondasEstadoTest::class);
