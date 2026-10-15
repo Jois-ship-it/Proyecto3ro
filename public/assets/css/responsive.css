@@ -1,0 +1,48 @@
+/* FlexArena — responsive.css
+Va después de componentes y páginas, para que lo que agrega a medida que hay más ancho gane sobre lo base. */
+
+/* ─── RESPONSIVE (Mobile First) ──────────────────────────────────────────────
+   Todo lo de arriba es el diseño para pantalla chica. Estos bloques solo AGREGAN
+   lo que hace falta a medida que hay más ancho disponible; no hay ningún
+   max-width. Los dos cortes son:
+
+     721px  — entra la navegación horizontal y los formularios a dos columnas.
+              Antes eran dos cortes distintos (720 y 719) que se diferenciaban
+              en un único píxel; quedaron unificados en este.
+     981px  — entra la grilla de varias columnas y la barra lateral fija.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 721px) {
+  .public-nav { align-items: center; }
+  .nav-toggle { display: none; }
+  .nav-links  {
+    display: flex; width: auto;
+    flex-direction: row; align-items: center;
+    padding-top: 0;
+  }
+  .nav-link   { border-radius: 999px; }
+  .form-grid  { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .topbar     { flex-direction: row; align-items: center; }
+  /* Calendario público: cada día muestra sus torneos como tarjetas (los puntos y la lista del mes eran para el celular). */
+  .cal-dia    { min-height: 80px; padding: 8px; }
+  .cal-puntos { display: none; }
+  .cal-lista  { display: flex; }
+  .cal-agenda { display: none; }
+}
+
+@media (min-width: 981px) {
+  .hero      { grid-template-columns: minmax(0,1.15fr) minmax(280px,.85fr); }
+  .grid.cols-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .grid.cols-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+  .kpi-row   { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .app-shell { grid-template-columns: var(--sidebar) 1fr; }
+  /* La barra lateral deja de ser un cajón y pasa a ocupar su columna. */
+  .sidebar {
+    position: sticky; inset: auto; top: 0;
+    height: 100vh; width: auto;
+    transform: none; transition: none; z-index: auto;
+  }
+  .mobile-menu-btn { display: none; }
+  .page-header { flex-direction: row; }
+}

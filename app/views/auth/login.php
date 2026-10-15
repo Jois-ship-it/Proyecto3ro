@@ -3,39 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar sesión · <?= APP_NAME ?></title>
+  <title>Iniciar sesión · <?= View::e($_sitio['nombre']) ?></title>
   <link rel="icon" type="image/svg+xml" href="/assets/img/flexarena-logo.svg">
-  <link rel="stylesheet" href="/assets/css/styles.css">
+<?php include APP_PATH . '/views/partials/estilos.php'; ?>
 </head>
 <body>
-<div class="auth-layout">
+<main class="auth-layout" id="contenido">
   <div class="auth-card">
-    <a class="brand" href="/" style="margin-bottom:1.4rem;display:inline-flex">
-      <img src="/assets/img/flexarena-logo.svg" alt="FlexArena" style="height:52px;width:auto">
+    <a class="brand mb-14 d-inline-flex" href="/">
+      <img class="logo-52" src="/assets/img/flexarena-logo.svg" alt="FlexArena">
     </a>
 
-    <h2 style="margin-bottom:.25rem">Iniciar sesión</h2>
-    <p class="muted" style="margin-bottom:1.2rem">Accedé al panel de gestión de torneos.</p>
+    <h1 class="como-h2 mb-025">Iniciar sesión</h1>
+    <p class="muted mb-12">Accedé al panel de gestión de torneos.</p>
 
     <?php if (($_GET['msg'] ?? '') === 'datos_eliminados'): ?>
-      <div class="chip success" style="margin-bottom:1rem;display:block;padding:.65rem;border-radius:12px;white-space:normal">
+      <div class="chip success aviso-auth">
         Tus datos personales fueron eliminados correctamente (ley 18331 — Habeas Data). Tu sesión fue cerrada.
       </div>
     <?php endif; ?>
+    <?php if ($msg = ($_flash['warning'] ?? null)): ?>
+      <?php /* El motivo por el que se cerró la sesión (inactividad, cuenta bloqueada…) */ ?>
+      <div class="chip warning aviso-auth">
+        <?= View::e($msg) ?>
+      </div>
+    <?php endif; ?>
     <?php if ($msg = ($_flash['error'] ?? null)): ?>
-      <div class="chip danger" style="margin-bottom:1rem;display:block;padding:.65rem;border-radius:12px;white-space:normal">
+      <div class="chip danger aviso-auth">
         <?= View::e($msg) ?>
       </div>
     <?php endif; ?>
     <?php if ($msg = ($_flash['success'] ?? null)): ?>
-      <div class="chip success" style="margin-bottom:1rem;display:block;padding:.65rem;border-radius:12px;white-space:normal">
+      <div class="chip success aviso-auth">
         <?= View::e($msg) ?>
       </div>
     <?php endif; ?>
 
     <form method="POST" action="/login" autocomplete="on">
       <?= Csrf::field() ?>
-      <div class="form-grid" style="grid-template-columns:1fr;gap:.85rem">
+      <div class="form-grid auth-grid">
         <div class="field">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" required autocomplete="email"
@@ -48,16 +54,16 @@
                  placeholder="••••••••">
         </div>
       </div>
-      <div class="form-actions" style="margin-top:1.2rem">
+      <div class="form-actions mt-12">
         <a class="btn ghost" href="/">Volver</a>
         <button type="submit" class="btn primary">Ingresar</button>
       </div>
     </form>
-    <p class="muted" style="text-align:center;margin-top:1rem;font-size:.9rem">
-      ¿No tenés cuenta? <a href="/registro" style="color:var(--primary-strong);font-weight:700">Registrate como participante</a>
+    <p class="muted text-center mt-1 fs-90">
+      ¿No tenés cuenta? <a class="color-primario bold" href="/registro">Registrate como participante</a>
     </p>
   </div>
-</div>
-<script src="/assets/js/app.js"></script>
+</main>
+<script src="<?= View::e(View::asset('/assets/js/app.js')) ?>"></script>
 </body>
 </html>

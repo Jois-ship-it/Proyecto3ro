@@ -11,34 +11,34 @@
   <?= Csrf::field() ?>
   <div class="form-grid">
     <div class="field">
-      <label>Nombre completo *</label>
-      <input type="text" name="nombre" required value="<?= View::e($participante['nombre'] ?? '') ?>">
+      <label for="participante-form-nombre">Nombre completo *</label>
+      <input id="participante-form-nombre" type="text" name="nombre" required value="<?= View::e($participante['nombre'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Nick / Alias</label>
-      <input type="text" name="nick" value="<?= View::e($participante['nick'] ?? '') ?>">
+      <label for="participante-form-nick">Nick / Alias</label>
+      <input id="participante-form-nick" type="text" name="nick" value="<?= View::e($participante['nick'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Documento (DNI / ID)</label>
-      <input type="text" name="documento" value="<?= View::e($participante['documento'] ?? '') ?>">
+      <label for="participante-form-documento">Documento (DNI / ID)</label>
+      <input id="participante-form-documento" type="text" name="documento" value="<?= View::e($participante['documento'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Email</label>
-      <input type="email" name="email" value="<?= View::e($participante['email'] ?? '') ?>">
+      <label for="participante-form-email">Email</label>
+      <input id="participante-form-email" type="email" autocomplete="off" name="email" value="<?= View::e($participante['email'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Teléfono</label>
-      <input type="text" name="telefono" value="<?= View::e($participante['telefono'] ?? '') ?>">
+      <label for="participante-form-telefono">Teléfono</label>
+      <input id="participante-form-telefono" type="text" name="telefono" value="<?= View::e($participante['telefono'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Estado</label>
+      <label for="participante-form-estado">Estado</label>
       <?php if (!empty($participante) && ($participante['estado'] ?? '') === 'suspendido'): ?>
-        <select disabled>
+        <select id="participante-form-estado" disabled>
           <option selected>Suspendido</option>
         </select>
         <input type="hidden" name="estado" value="suspendido">
       <?php else: ?>
-        <select name="estado">
+        <select id="participante-form-estado" name="estado">
           <option value="activo" <?= ($participante['estado'] ?? 'activo') === 'activo' ? 'selected' : '' ?>>Activo</option>
           <option value="inactivo" <?= ($participante['estado'] ?? '') === 'inactivo' ? 'selected' : '' ?>>Inactivo</option>
           <option value="suspendido" <?= ($participante['estado'] ?? '') === 'suspendido' ? 'selected' : '' ?>>Suspendido</option>

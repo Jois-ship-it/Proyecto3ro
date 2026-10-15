@@ -1,49 +1,56 @@
+<?php
+/** Formulario de una cuenta de UN rol. Variables: $ctx (singular, ruta, rolEtiqueta, aviso), $usuario (o null). */
+$estadoActual = $usuario['estado'] ?? 'activo';
+?>
 <section class="page-header">
   <div class="page-title">
-    <div class="eyebrow">Organizador</div>
-    <h1><?= $usuario ? 'Editar organizador' : 'Nuevo organizador' ?></h1>
-    <p class="muted">Las cuentas creadas aquí tienen rol <strong>Organizador</strong>.</p>
+    <div class="eyebrow"><?= View::e(ucfirst($ctx['singular'])) ?></div>
+    <h1><?= $usuario ? 'Editar ' : 'Nuevo ' ?><?= View::e($ctx['singular']) ?></h1>
+    <p class="muted"><?= $ctx['aviso'] ?></p>
   </div>
-  <a class="btn" href="/admin/organizadores">← Volver</a>
+  <a class="btn" href="<?= $ctx['ruta'] ?>">← Volver</a>
 </section>
 
-<form method="POST" action="/admin/organizadores/<?= $usuario ? 'editar/' . (int)$usuario['id'] : 'crear' ?>" class="form-card">
+<form method="POST" action="<?= $ctx['ruta'] ?>/<?= $usuario ? 'editar/' . (int)$usuario['id'] : 'crear' ?>" class="form-card">
   <?= Csrf::field() ?>
   <div class="form-grid">
     <div class="field">
-      <label>Nombre *</label>
-      <input type="text" name="nombre" required value="<?= View::e($usuario['nombre'] ?? '') ?>">
+      <label for="usuario-form-nombre">Nombre *</label>
+      <input id="usuario-form-nombre" type="text" name="nombre" required value="<?= View::e($usuario['nombre'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Email *</label>
-      <input type="email" name="email" required value="<?= View::e($usuario['email'] ?? '') ?>">
+      <label for="usuario-form-email">Email *</label>
+      <input id="usuario-form-email" type="email" autocomplete="off" name="email" required value="<?= View::e($usuario['email'] ?? '') ?>">
     </div>
     <div class="field">
-      <label>Rol</label>
-      <input type="text" value="Organizador" disabled>
+      <label for="usuario-form-rol">Rol</label>
+      <input id="usuario-form-rol" type="text" value="<?= View::e($ctx['rolEtiqueta']) ?>" disabled>
     </div>
     <div class="field">
-      <label>Estado</label>
-      <?php if (!empty($usuario) && ($usuario['estado'] ?? '') === 'bloqueada'): ?>
-        <select disabled>
+      <label for="usuario-form-estado">Estado</label>
+      <?php if ($estadoActual === 'bloqueada'): ?>
+        <select id="usuario-form-estado" disabled>
           <option selected>Bloqueada</option>
         </select>
         <input type="hidden" name="estado" value="bloqueada">
       <?php else: ?>
-        <select name="estado">
-          <option value="activo" <?= ($usuario['estado'] ?? 'activo') === 'activo' ? 'selected' : '' ?>>Activo</option>
-          <option value="inactivo" <?= ($usuario['estado'] ?? '') === 'inactivo' ? 'selected' : '' ?>>Inactivo</option>
-          <option value="suspendido" <?= ($usuario['estado'] ?? '') === 'suspendido' ? 'selected' : '' ?>>Suspendido</option>
+        <select id="usuario-form-estado" name="estado">
+          <option value="activo" <?= $estadoActual === 'activo' ? 'selected' : '' ?>>Activo</option>
+          <option value="inactivo" <?= $estadoActual === 'inactivo' ? 'selected' : '' ?>>Inactivo</option>
+          <?php if (!in_array($estadoActual, ['activo', 'inactivo'], true)): /* otro estado que ya tenía la cuenta: se conserva */ ?>
+            <option value="<?= View::e($estadoActual) ?>" selected><?= View::e(ucfirst($estadoActual)) ?></option>
+          <?php endif; ?>
         </select>
       <?php endif; ?>
     </div>
     <div class="field">
-      <label>Contraseña <?= $usuario ? '(dejar en blanco para no cambiar)' : '(obligatoria)' ?></label>
-      <input type="password" name="password" <?= $usuario ? '' : 'required' ?> autocomplete="new-password" minlength="8">
+      <label for="usuario-form-password">Contraseña <?= $usuario ? '(dejar en blanco para no cambiar)' : '(obligatoria)' ?></label>
+      <input id="usuario-form-password" type="password" name="password" <?= $usuario ? '' : 'required' ?> autocomplete="new-password" minlength="8">
+      <small class="muted">Al menos 8 caracteres, con mayúscula, minúscula, número y símbolo.</small>
     </div>
   </div>
   <div class="form-actions">
-    <a class="btn" href="/admin/organizadores">Cancelar</a>
-    <button type="submit" class="btn primary"><?= $usuario ? 'Guardar cambios' : 'Crear organizador' ?></button>
+    <a class="btn" href="<?= $ctx['ruta'] ?>">Cancelar</a>
+    <button type="submit" class="btn primary"><?= $usuario ? 'Guardar cambios' : 'Crear ' . View::e($ctx['singular']) ?></button>
   </div>
 </form>

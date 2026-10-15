@@ -1,3 +1,17 @@
+<?php
+/**
+ * Lista de participantes del panel.
+ * Variables: $participantes (la página actual), $filtros, $pag (Paginador), $estados [valor => texto].
+ */
+$barra = [
+    'accion' => '/admin/participantes',
+    'campos' => [
+        ['nombre' => 'q',      'tipo' => 'buscar', 'etiqueta' => 'Buscar', 'placeholder' => 'Nombre, apodo, documento o correo'],
+        ['nombre' => 'estado', 'tipo' => 'opcion', 'etiqueta' => 'Estado', 'opciones' => $estados],
+    ],
+];
+$hayFiltros = array_filter($filtros, fn($v) => $v !== '' && $v !== null) !== [];
+?>
 <section class="page-header">
   <div class="page-title">
     <div class="eyebrow">Gestión</div>
@@ -8,14 +22,15 @@
 </section>
 
 <div class="table-wrap">
+  <div class="table-header"><?php include APP_PATH . '/views/partials/filtros.php'; ?></div>
   <div class="table-scroll">
-    <table>
+    <table aria-label="Participantes">
       <thead>
-        <tr><th>Nombre</th><th>Nick / Doc</th><th>Contacto</th><th>Equipos</th><th>Estado</th><th>Acciones</th></tr>
+        <tr><th scope="col">Nombre</th><th scope="col">Nick / Doc</th><th scope="col">Contacto</th><th scope="col">Equipos</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr>
       </thead>
       <tbody>
         <?php if (empty($participantes)): ?>
-          <tr><td colspan="6" class="muted">Sin participantes registrados.</td></tr>
+          <tr><td colspan="6" class="muted"><?= $hayFiltros ? 'Ningún participante coincide con la búsqueda.' : 'Sin participantes registrados.' ?></td></tr>
         <?php else: ?>
           <?php foreach ($participantes as $p): ?>
           <tr>
@@ -27,20 +42,20 @@
             <td>
               <a class="btn small" href="/admin/participantes/editar/<?= (int)$p['id'] ?>">Editar</a>
               <?php $activo = $p['estado'] === 'activo'; ?>
-              <form method="POST" action="/admin/participantes/eliminar/<?= (int)$p['id'] ?>" style="display:inline"
-                    onsubmit="return confirm('<?= $activo ? '¿Desactivar' : '¿Reactivar' ?> este participante?')">
+              <form class="d-inline" method="POST" action="/admin/participantes/eliminar/<?= (int)$p['id'] ?>"
+                    data-confirmar="<?= $activo ? '¿Desactivar' : '¿Reactivar' ?> este participante?">
                 <?= Csrf::field() ?>
                 <button class="btn small <?= $activo ? 'danger' : 'primary' ?>"><?= $activo ? 'Desactivar' : 'Activar' ?></button>
               </form>
               <?php if (!empty($p['usuario_id'])): ?>
                 <?php if (($p['estado'] ?? '') === 'suspendido'): ?>
-                  <form method="POST" action="/admin/participantes/desbloquear/<?= (int)$p['usuario_id'] ?>" style="display:inline">
+                  <form class="d-inline" method="POST" action="/admin/participantes/desbloquear/<?= (int)$p['usuario_id'] ?>">
                     <?= Csrf::field() ?>
                     <input type="hidden" name="return" value="/admin/participantes">
                     <button class="btn small primary">Desbloquear cuenta</button>
                   </form>
                 <?php else: ?>
-                  <form method="POST" action="/admin/participantes/bloquear/<?= (int)$p['usuario_id'] ?>" style="display:inline" onsubmit="return confirm('¿Bloquear la cuenta vinculada a este participante?')">
+                  <form class="d-inline" method="POST" action="/admin/participantes/bloquear/<?= (int)$p['usuario_id'] ?>" data-confirmar="¿Bloquear la cuenta vinculada a este participante?">
                     <?= Csrf::field() ?>
                     <input type="hidden" name="return" value="/admin/participantes">
                     <button class="btn small danger">Bloquear cuenta</button>
@@ -54,4 +69,5 @@
       </tbody>
     </table>
   </div>
+  <?php $base = '/admin/participantes'; $unidad = 'participantes'; include APP_PATH . '/views/partials/paginacion.php'; ?>
 </div>

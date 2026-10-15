@@ -1,0 +1,27 @@
+/* FlexArena — impresion.css
+Se carga con media="print": es lo último que se aplica al imprimir. */
+
+/* ─── IMPRESIÓN ──────────────────────────────────────────────────────────────
+   «Imprimir / PDF» de los reportes usa el diálogo del navegador (que también
+   guarda en PDF): sin barras ni botones, fondo blanco y tinta oscura. */
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  .sidebar, .topbar, .no-print, .flash-msg, .filtros, .paginacion, .btn { display: none !important; }
+  .solo-impresion { display: block; }
+  .app-shell { display: block; }
+  .page { padding: 0; }
+  .hero-card, .panel, .card, .stat-card, .table-wrap {
+    background: #fff !important; box-shadow: none !important; border: 1px solid #bbb !important;
+  }
+  h1, h2, h3, strong, td { color: #000 !important; }
+  p, .muted, th, .resumen, .stat-card span { color: #444 !important; }
+  .eyebrow { color: #1876b5 !important; }
+  .chip { background: #fff !important; color: #111 !important; border: 1px solid #888 !important; }
+  .barra { background: #ddd; }
+  .barra > span { background: #1876b5; }
+  table { min-width: 0; }
+  td, th { border-bottom: 1px solid #ddd !important; padding: .45rem .6rem; }
+  tr, .stat-card, .card { break-inside: avoid; }
+  thead { display: table-header-group; }
+  h1 { font-size: 1.8rem; }
+}

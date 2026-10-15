@@ -1,3 +1,17 @@
+<?php
+/**
+ * Los torneos en los que está inscrito el participante.
+ * Variables: $torneos (la página actual), $filtros, $pag (Paginador), $estados [valor => texto].
+ */
+$barra = [
+    'accion' => '/participante/torneos',
+    'campos' => [
+        ['nombre' => 'q',      'tipo' => 'buscar', 'etiqueta' => 'Buscar', 'placeholder' => 'Nombre del torneo'],
+        ['nombre' => 'estado', 'tipo' => 'opcion', 'etiqueta' => 'Estado del torneo', 'opciones' => $estados],
+    ],
+];
+$hayFiltros = array_filter($filtros, fn($v) => $v !== '' && $v !== null) !== [];
+?>
 <section class="page-header">
   <div class="page-title">
     <div class="eyebrow">Participante</div>
@@ -6,14 +20,15 @@
 </section>
 
 <div class="table-wrap">
+  <div class="table-header"><?php include APP_PATH . '/views/partials/filtros.php'; ?></div>
   <div class="table-scroll">
-    <table>
+    <table aria-label="Mis torneos">
       <thead>
-        <tr><th>Torneo</th><th>Formato</th><th>Estado</th><th>Inscripción</th><th>Ver</th></tr>
+        <tr><th scope="col">Torneo</th><th scope="col">Formato</th><th scope="col">Estado</th><th scope="col">Inscripción</th><th scope="col">Ver</th></tr>
       </thead>
       <tbody>
         <?php if (empty($torneos)): ?>
-          <tr><td colspan="5" class="muted">No estás inscrito en ningún torneo.</td></tr>
+          <tr><td colspan="5" class="muted"><?= $hayFiltros ? 'Ningún torneo coincide con la búsqueda.' : 'No estás inscrito en ningún torneo.' ?></td></tr>
         <?php else: ?>
           <?php foreach ($torneos as $t): ?>
           <tr>
@@ -28,4 +43,5 @@
       </tbody>
     </table>
   </div>
+  <?php $base = '/participante/torneos'; $unidad = 'torneos'; include APP_PATH . '/views/partials/paginacion.php'; ?>
 </div>

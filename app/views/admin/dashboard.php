@@ -2,7 +2,7 @@
   <div class="page-title">
     <div class="eyebrow">Administración</div>
     <h1>Panel general</h1>
-    <p>Resumen operativo del sistema <?= APP_NAME ?>.</p>
+    <p>Resumen operativo del sistema <?= View::e($_sitio['nombre']) ?>.</p>
   </div>
 </section>
 
@@ -15,7 +15,7 @@
 
 <div class="grid cols-2">
   <article class="card">
-    <h3>Actividad reciente</h3>
+    <h2 class="como-h3">Actividad reciente</h2>
     <div class="timeline">
       <?php if (empty($actividad)): ?>
         <p class="muted">Sin actividad registrada.</p>
@@ -24,9 +24,9 @@
           <div class="timeline-item">
             <strong><?= View::e($log['accion']) ?></strong>
             <?php if ($log['descripcion']): ?>
-              <div class="muted"><?= View::e($log['descripcion']) ?></div>
+              <div class="muted rompe-texto"><?= View::e($log['descripcion']) ?></div>
             <?php endif; ?>
-            <div class="muted" style="font-size:.8rem"><?= View::e($log['created_at']) ?></div>
+            <div class="muted fs-80"><?= View::e($log['created_at']) ?></div>
           </div>
         <?php endforeach; ?>
       <?php endif; ?>
@@ -34,8 +34,8 @@
   </article>
 
   <article class="card">
-    <h3>Accesos rápidos</h3>
-    <div class="actions" style="flex-direction:column;align-items:stretch">
+    <h2 class="como-h3">Accesos rápidos</h2>
+    <div class="actions flex-col items-stretch">
       <a class="btn" href="/admin/registros">Registros de participantes</a>
       <a class="btn" href="/admin/equipos/crear">+ Nuevo equipo</a>
       <a class="btn primary" href="/admin/torneos/crear">+ Nuevo torneo</a>

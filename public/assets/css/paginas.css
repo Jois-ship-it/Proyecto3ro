@@ -1,0 +1,192 @@
+/* FlexArena — paginas.css
+Lo que es de una pantalla en particular: el acceso, el bracket (la llave de un torneo con su menú de acciones) y el
+calendario del torneo. */
+
+/* ─── AUTH ───────────────────────────────────── */
+.auth-layout { min-height: 100vh; display: grid; place-items: center; padding: 1.2rem; }
+.auth-card   { width: min(100%,460px); padding: 1.4rem; }
+.auth-card .brand { margin-bottom: 1.2rem; }
+
+/* ─── BRACKET clásico (legacy, lista simple) ─── */
+.bracket { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1rem; overflow-x: auto; padding-bottom: .35rem; }
+.round   { min-width: 220px; }
+.match   { border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.05); margin-bottom: .8rem; overflow: hidden; }
+.match-title { padding: .55rem .75rem; color: #bad3ed; background: rgba(255,255,255,.05); font-size: .82rem; }
+.team-row    { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem .75rem; border-top: 1px solid rgba(255,255,255,.07); }
+.team-row.winner { color: #dfffea; background: rgba(37,194,129,.12); }
+
+/* ─── BRACKET estilo Challonge (posicionamiento computado, rem) ─── */
+.bk-scroll { overflow-x: auto; overflow-y: hidden; padding: .25rem 0 .6rem; }
+.bk { position: relative; }
+.bk-col-label {
+  position: absolute; text-align: center;
+  color: #bed5ee; font-size: .72rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.bk-card {
+  position: absolute;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  overflow: visible;
+  display: flex; flex-direction: column;
+  z-index: 2;
+}
+
+/* La tarjeta con el menú de acciones abierto se levanta por encima del resto.
+ *
+ * Hace falta porque `position: absolute` + `z-index` convierten a .bk-card en un
+ * CONTEXTO DE APILADO: el z-index del menú que lleva adentro solo ordena contra
+ * sus hermanos dentro de esa tarjeta, no contra el resto de la página. Con todas
+ * las tarjetas en z-index 2, las que vienen después en el DOM se dibujaban
+ * ENCIMA del menú abierto, y el contenido de esas tarjetas se veía atravesando
+ * el panel — parece transparencia, pero el panel es opaco: es apilado.
+ *
+ * Subir el z-index del menú no arregla nada; el que tiene que subir es el
+ * contexto que lo contiene, o sea la tarjeta.
+ *
+ * El 60 no es arbitrario: por encima de .topbar (45) y .public-nav (50), para
+ * que el menú no quede debajo de la barra fija al abrirse hacia arriba, y por
+ * debajo de los modales (100), para que el menú no tape el diálogo que él mismo
+ * abre.
+ *
+ * El atributo ya lo maneja el JS del bracket (eliminacion_bracket.php): pone
+ * aria-expanded="true" al abrir y "false" al cerrar. Por eso esto se resuelve
+ * entero en CSS, sin tocar el script. */
+.bk-card[aria-expanded="true"] { z-index: 60; }
+.bk-card.clickable { cursor: pointer; }
+.bk-card.clickable:hover { border-color: rgba(107,197,255,.6); background: rgba(52,152,219,.12); }
+.bk-row {
+  flex: 1; display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; padding: 0 .7rem; font-size: .86rem; color: var(--text);
+  min-width: 0;
+}
+.bk-row + .bk-row { border-top: 1px solid var(--line); }
+.bk-row.win { background: rgba(37,194,129,.16); color: #dfffea; font-weight: 700; }
+.bk-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-row .sc { font-weight: 800; min-width: 1.3rem; text-align: center; opacity: .95; }
+.bk-row.placeholder { color: var(--muted); font-style: italic; }
+.bk-row.bye { color: var(--warning); }
+.bk-card.champion { border-color: rgba(37,194,129,.45); background: rgba(37,194,129,.1); }
+.bk-line { position: absolute; background: var(--line); z-index: 1; }
+
+/* Calendar: highlight today's cell inside tournament calendar */
+#calendarMatches .card.today {
+  border-color: rgba(255,213,79,0.18);
+  box-shadow: 0 12px 30px rgba(255,213,79,0.06);
+  background: linear-gradient(90deg, rgba(255,245,157,0.06), rgba(255,245,157,0.03));
+}
+
+/* Acción rápida en bracket: menú emergente dentro de la tarjeta */
+.bk-action-menu {
+  /* hidden by default; JS toggles via style.display (inline style) */
+  display: none;
+  position: absolute;
+  right: .5rem;
+  top: calc(100% + .25rem); /* place below the card to avoid covering names */
+  /* Ordena contra los hermanos DENTRO de la tarjeta (las .bk-row). No alcanza
+     para quedar sobre las otras tarjetas: .bk-card es un contexto de apilado y
+     atrapa este valor. De eso se encarga .bk-card[aria-expanded="true"]. */
+  z-index: 3;
+
+  box-sizing: border-box;
+  padding: .4rem;
+
+  /* Solid, opaque panel as requested */
+  background: #1b1f24;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+
+  min-width: 10rem;
+  /* Ancho de móvil; a partir de 721px se achica a 11rem (ver RESPONSIVE).
+     El bloque max-width:719 que había antes solo aportaba esto: su
+     flex-direction no tenía efecto (el contenedor flex es .bk-action-inner)
+     y el width:100% de los botones ya está unas líneas más abajo. */
+  max-width: 14.5rem;
+}
+
+/* El ancho de móvil se achica apenas hay lugar. Este bloque tiene que ir
+   DESPUÉS de la regla base de .bk-action-menu: con la misma especificidad,
+   entre dos reglas que aplican gana la última del archivo. */
+@media (min-width: 721px) {
+  .bk-action-menu { max-width: 11rem; }
+}
+
+/* Inner wrapper that provides the flex layout when the menu is shown via inline display:block */
+.bk-action-inner {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  align-items: stretch;
+}
+
+.bk-action-menu .btn.small {
+  width: 100%;
+  min-height: 34px;
+  padding: .45rem .65rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #252b32;
+  color: var(--text);
+  white-space: nowrap;
+  text-align: left;
+  font-size: .9rem;
+}
+
+.bk-action-menu .btn.small[data-action="cargar"],
+.bk-action-menu .btn.small[data-action="programar"] {
+  background: #252b32;
+  border-color: #30363d;
+  color: var(--text);
+}
+
+.bk-action-menu .btn.small:hover {
+  background: #303841;
+  border-color: #3b444d;
+}
+
+.bk-action-menu .btn.small:focus-visible{
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Con ancho de sobra, los botones del menú van en fila. */
+@media (min-width: 920px) {
+  .bk-action-menu { min-width: 12rem; max-width: 22rem; }
+  .bk-action-inner { flex-direction: row; }
+  .bk-action-inner .btn.small { flex: 1 1 auto; width: auto; }
+}
+
+/* Próximos partidos de la ficha de un torneo (proximos-partidos.js). */
+.proximos-lista { display: flex; flex-direction: column; gap: .75rem; }
+.proximo        { padding: 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.proximo-equipos  { font-weight: 700; line-height: 1.3; }
+.proximo-detalle  { font-size: .85rem; }
+.proximo-vacio    { padding: 1rem; }
+
+/* ─── CALENDARIO PÚBLICO DE TORNEOS (calendar.js) ───────────────────────────────────────────────
+   Mobile First: cuadritos con un punto por torneo y, debajo, la lista del mes. A partir de 721 px
+   (responsive.css) cada día muestra sus torneos como tarjetas y la lista se oculta. */
+.cal-cabecera   { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+/* minmax(0, 1fr) y no 1fr: con 1fr una columna no baja del ancho de su contenido, y un título largo sin cortes ensanchaba
+   la grilla más allá de la pantalla (a 1280 px llegaba a 1612 px y en el celular se rompía la página). */
+.cal-grilla     { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dia-semana { font-size: .8rem; text-align: center; color: var(--muted); }
+.cal-dia {
+  min-height: 56px; min-width: 0; padding: 6px; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 6px;
+  border-radius: 6px; background: transparent; border: 1px solid rgba(0,0,0,.04);
+}
+.cal-dia.hoy    { background: linear-gradient(90deg, rgba(255,245,157,.12), rgba(255,245,157,.06)); border: 1px solid rgba(255,213,79,.25); }
+.cal-numero     { font-size: .85rem; margin-bottom: 2px; color: var(--text); }
+.cal-puntos     { display: flex; flex-wrap: wrap; gap: 3px; }
+.cal-punto      { width: 7px; height: 7px; border-radius: 50%; background: var(--primary-strong); }
+.cal-lista      { display: none; width: 100%; flex-direction: column; gap: 6px; }
+.cal-enlace     { display: block; width: 100%; box-sizing: border-box; text-decoration: none; color: inherit; }
+.cal-torneo     { display: flex; flex-direction: column; gap: 4px; overflow: hidden; padding: .4rem .5rem; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.03); }
+.cal-titulo     { font-size: .9rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-rango      { font-size: .8rem; color: var(--muted); }
+.cal-agenda     { margin-top: 1rem; }

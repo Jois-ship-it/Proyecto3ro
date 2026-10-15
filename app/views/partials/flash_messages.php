@@ -5,7 +5,7 @@ foreach ($_tipos as $key => $clase):
     $msg = $_flash[$key] ?? null;
     if (!$msg) continue;
 ?>
-<div class="flash-msg chip <?= $clase ?>" style="margin-bottom:.75rem;padding:.7rem 1rem;border-radius:14px;display:block;max-width:100%;white-space:normal;">
+<div class="flash-msg chip <?= $clase ?> flash-chip" role="<?= $key === 'error' ? 'alert' : 'status' ?>">
   <?= View::e($msg) ?>
 </div>
 <?php endforeach; ?>

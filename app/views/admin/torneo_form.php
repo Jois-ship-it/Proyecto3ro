@@ -9,7 +9,7 @@
 
 <?php $bloqueadoEstructural = ($torneo['estado'] ?? '') === 'en_curso'; ?>
 <?php if ($bloqueadoEstructural): ?>
-<div class="card" style="background:rgba(52,152,219,.08);border-color:rgba(52,152,219,.3);margin-bottom:1rem;padding:.9rem 1.1rem">
+<div class="card aviso-info">
   <strong>Torneo en curso.</strong> El formato, la modalidad y la estructura quedan bloqueados. Podés ajustar nombre, descripción, fechas, puntuación, unidad de puntos y empates — los cambios se aplican de inmediato.
 </div>
 <?php endif; ?>
@@ -19,12 +19,12 @@
   <div class="form-grid">
 
     <div class="field">
-      <label>Nombre *</label>
-      <input type="text" name="nombre" required value="<?= View::e($torneo['nombre'] ?? '') ?>">
+      <label for="torneo-form-nombre">Nombre *</label>
+      <input id="torneo-form-nombre" type="text" name="nombre" required value="<?= View::e($torneo['nombre'] ?? '') ?>">
     </div>
 
     <div class="field">
-      <label>Formato *</label>
+      <label for="tipoTorneo">Formato *</label>
       <select name="tipo_torneo_id" id="tipoTorneo" required <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
         <option value="">Seleccionar formato…</option>
         <?php foreach ($tipos as $tipo): ?>
@@ -38,7 +38,7 @@
     </div>
 
     <div class="field">
-      <label>Modalidad</label>
+      <label for="modalidad">Modalidad</label>
       <select name="modalidad" id="modalidad" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
         <option value="individual" <?= ($torneo['modalidad'] ?? 'individual') === 'individual' ? 'selected' : '' ?>>Individual (participantes)</option>
         <option value="equipos"    <?= ($torneo['modalidad'] ?? '') === 'equipos' ? 'selected' : '' ?>>Por equipos</option>
@@ -47,16 +47,16 @@
 
     <!-- Solo modalidad equipos -->
     <div class="field" id="campoMinEquipo">
-      <label>Mínimo de integrantes por equipo *</label>
-      <input type="number" name="min_integrantes_equipo" min="1" max="50"
+      <label for="torneo-form-min_integrantes_equipo">Mínimo de integrantes por equipo *</label>
+      <input id="torneo-form-min_integrantes_equipo" type="number" name="min_integrantes_equipo" min="1" max="50"
              value="<?= (int)($torneo['min_integrantes_equipo'] ?? 0) ?: '' ?>"
              placeholder="Ej: 11" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
-      <span class="muted" style="font-size:.8rem">Los equipos con menos integrantes no podrán inscribirse.</span>
+      <span class="muted fs-80">Los equipos con menos integrantes no podrán inscribirse.</span>
     </div>
 
     <div class="field">
-      <label>Organizador asignado *</label>
-      <select name="organizador_id" required <?= Auth::isAdmin() ? '' : 'disabled' ?>>
+      <label for="torneo-form-organizador_id">Organizador asignado *</label>
+      <select id="torneo-form-organizador_id" name="organizador_id" required <?= Auth::isAdmin() ? '' : 'disabled' ?>>
         <option value="">Seleccionar organizador…</option>
         <?php foreach ($organizadores as $org): ?>
           <option value="<?= (int)$org['id'] ?>" <?= ((string)($organizadorActual ?? '') === (string)$org['id']) ? 'selected' : '' ?>>
@@ -65,15 +65,15 @@
         <?php endforeach; ?>
       </select>
       <?php if (!Auth::isAdmin()): ?>
-        <span class="muted" style="font-size:.8rem">Solo un administrador puede reasignar el torneo a otro organizador.</span>
+        <span class="muted fs-80">Solo un administrador puede reasignar el torneo a otro organizador.</span>
       <?php elseif (empty($organizadores)): ?>
-        <span class="muted" style="font-size:.8rem;color:var(--warning)">No hay organizadores. Creá uno en “Organizadores” antes de crear un torneo.</span>
+        <span class="muted fs-80 color-aviso">No hay organizadores. Creá uno en “Organizadores” antes de crear un torneo.</span>
       <?php endif; ?>
     </div>
 
     <div class="field">
-      <label>Estado inicial</label>
-      <select name="estado">
+      <label for="torneo-form-estado">Estado inicial</label>
+      <select id="torneo-form-estado" name="estado">
         <option value="borrador"     <?= ($torneo['estado'] ?? 'borrador') === 'borrador' ? 'selected' : '' ?>>Borrador</option>
         <option value="inscripcion"  <?= ($torneo['estado'] ?? '') === 'inscripcion' ? 'selected' : '' ?>>Inscripción abierta</option>
       </select>
@@ -87,18 +87,18 @@
     </div>
 
     <div class="field">
-      <label>Fecha inicio *</label>
-      <input type="date" name="fecha_inicio" required value="<?= View::e($torneo['fecha_inicio'] ?? '') ?>">
+      <label for="torneo-form-fecha_inicio">Fecha inicio *</label>
+      <input id="torneo-form-fecha_inicio" type="date" name="fecha_inicio" required value="<?= View::e($torneo['fecha_inicio'] ?? '') ?>">
     </div>
 
     <div class="field">
-      <label>Fecha fin *</label>
-      <input type="date" name="fecha_fin" required value="<?= View::e($torneo['fecha_fin'] ?? '') ?>">
+      <label for="torneo-form-fecha_fin">Fecha fin *</label>
+      <input id="torneo-form-fecha_fin" type="date" name="fecha_fin" required value="<?= View::e($torneo['fecha_fin'] ?? '') ?>">
     </div>
 
     <div class="field">
-      <label>Nombre de la unidad de puntos</label>
-      <select name="nombre_puntos">
+      <label for="torneo-form-nombre_puntos">Nombre de la unidad de puntos</label>
+      <select id="torneo-form-nombre_puntos" name="nombre_puntos">
         <?php foreach (['puntos','goles','mapas','rondas','sets'] as $np): ?>
           <option value="<?= $np ?>" <?= ($torneo['nombre_puntos'] ?? 'puntos') === $np ? 'selected' : '' ?>><?= ucfirst($np) ?></option>
         <?php endforeach; ?>
@@ -106,11 +106,11 @@
     </div>
 
     <div class="field" id="campoPuntuacion">
-      <label>Puntuación (victoria / empate / derrota)</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
-        <input type="number" name="puntos_victoria" value="<?= (int)($torneo['puntos_victoria'] ?? 3) ?>" min="0" placeholder="V">
-        <input type="number" name="puntos_empate"   value="<?= (int)($torneo['puntos_empate']   ?? 1) ?>" min="0" placeholder="E">
-        <input type="number" name="puntos_derrota"  value="<?= (int)($torneo['puntos_derrota']  ?? 0) ?>" min="0" placeholder="D">
+      <label for="torneo-form-puntos_victoria">Puntuación (victoria / empate / derrota)</label>
+      <div class="grilla-puntos">
+        <input id="torneo-form-puntos_victoria" type="number" aria-label="Puntos por victoria" name="puntos_victoria" value="<?= (int)($torneo['puntos_victoria'] ?? 3) ?>" min="0" placeholder="V">
+        <input type="number" aria-label="Puntos por empate" name="puntos_empate"   value="<?= (int)($torneo['puntos_empate']   ?? 1) ?>" min="0" placeholder="E">
+        <input type="number" aria-label="Puntos por derrota" name="puntos_derrota"  value="<?= (int)($torneo['puntos_derrota']  ?? 0) ?>" min="0" placeholder="D">
       </div>
     </div>
 
@@ -150,12 +150,12 @@
 
     <!-- Solo Suizo -->
     <div class="field" id="campoRondasSuizo">
-      <label>Cantidad de rondas (Suizo) *</label>
-      <input type="number" name="rondas_suizo" min="2" max="20" value="<?= (int)($torneo['rondas_suizo'] ?? 5) ?>" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
+      <label for="torneo-form-rondas_suizo">Cantidad de rondas (Suizo) *</label>
+      <input id="torneo-form-rondas_suizo" type="number" name="rondas_suizo" min="2" max="20" value="<?= (int)($torneo['rondas_suizo'] ?? 5) ?>" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
     </div>
 
     <div class="field" id="campoByeSuizo">
-      <label>Puntuación por bye (Suizo)</label>
+      <label for="byeSuizo">Puntuación por bye (Suizo)</label>
       <select name="bye_suizo" id="byeSuizo" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
         <option value="sin_puntos"    <?= ($torneo['bye_suizo'] ?? 'sin_puntos') === 'sin_puntos' ? 'selected' : '' ?>>Sin puntos</option>
         <option value="victoria"      <?= ($torneo['bye_suizo'] ?? '') === 'victoria' ? 'selected' : '' ?>>Equivalente a victoria</option>
@@ -163,14 +163,14 @@
       </select>
     </div>
 
-    <div class="field" id="campoPuntsBye" style="display:none">
-      <label>Puntos por bye (personalizado)</label>
-      <input type="number" name="puntos_bye_suizo" min="0" step="0.5" value="<?= (float)($torneo['puntos_bye_suizo'] ?? 0) ?>" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
+    <div class="field" id="campoPuntsBye" hidden>
+      <label for="torneo-form-puntos_bye_suizo">Puntos por bye (personalizado)</label>
+      <input id="torneo-form-puntos_bye_suizo" type="number" name="puntos_bye_suizo" min="0" step="0.5" value="<?= (float)($torneo['puntos_bye_suizo'] ?? 0) ?>" <?= $bloqueadoEstructural ? 'disabled' : '' ?>>
     </div>
 
-    <div class="field" style="grid-column:1/-1">
-      <label>Descripción</label>
-      <textarea name="descripcion"><?= View::e($torneo['descripcion'] ?? '') ?></textarea>
+    <div class="field span-all">
+      <label for="torneo-form-descripcion">Descripción</label>
+      <textarea id="torneo-form-descripcion" name="descripcion"><?= View::e($torneo['descripcion'] ?? '') ?></textarea>
     </div>
 
     <?php
@@ -180,23 +180,23 @@
        * así que agregar una clave nueva no requiere tocar esta vista.
        */
     ?>
-    <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:1rem;margin-top:.5rem">
+    <div class="separador-seccion">
       <div class="eyebrow">Datos del evento</div>
-      <p class="muted" style="margin:.25rem 0 0;font-size:.85rem">
+      <p class="muted ayuda-seccion">
         Opcionales. Se muestran en la ficha pública del torneo.
       </p>
     </div>
 
     <?php foreach ($clavesConfig as $clave => $def): ?>
       <?php $valor = $configuracion[$clave] ?? ''; ?>
-      <div class="field"<?= $def['tipo'] === 'texto_largo' ? ' style="grid-column:1/-1"' : '' ?>>
+      <div class="field<?= $def['tipo'] === 'texto_largo' ? ' span-all' : '' ?>">
         <label for="config_<?= View::e($clave) ?>"><?= View::e($def['etiqueta']) ?></label>
         <?php if ($def['tipo'] === 'texto_largo'): ?>
           <textarea id="config_<?= View::e($clave) ?>"
                     name="config[<?= View::e($clave) ?>]"
                     maxlength="<?= (int)$def['max'] ?>"><?= View::e($valor) ?></textarea>
         <?php else: ?>
-          <input id="config_<?= View::e($clave) ?>"
+          <input id="config_<?= View::e($clave) ?>" autocomplete="off"
                  name="config[<?= View::e($clave) ?>]"
                  type="<?= $def['tipo'] === 'fecha' ? 'date' : ($def['tipo'] === 'email' ? 'email' : 'text') ?>"
                  maxlength="<?= (int)$def['max'] ?>"

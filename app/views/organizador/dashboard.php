@@ -12,8 +12,8 @@
   <div class="grid cols-3">
     <?php foreach ($torneos as $t): ?>
     <article class="card">
-      <div style="display:flex;justify-content:space-between;align-items:start;gap:.5rem">
-        <h3 style="margin:0"><?= View::e($t['nombre']) ?></h3>
+      <div class="flex justify-between items-start gap-05">
+        <h2 class="como-h3 m-0 rompe-texto"><?= View::e($t['nombre']) ?></h2>
         <?= View::estadoChip($t['estado']) ?>
       </div>
       <p class="muted"><?= View::e($t['tipo_nombre']) ?> · <?= View::e(ucfirst($t['modalidad'])) ?></p>

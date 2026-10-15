@@ -48,7 +48,7 @@
 
   function mostrar(el, visible) {
     if (!el) return;
-    el.style.display = visible ? '' : 'none';
+    el.hidden = !visible;
   }
 
   tipoSelect.addEventListener('change', actualizarCampos);

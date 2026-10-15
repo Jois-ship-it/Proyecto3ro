@@ -9,14 +9,14 @@
     <?php endif; ?>
   </div>
   <div class="table-scroll">
-    <table>
+    <table aria-label="Ranking del torneo">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Participante / Equipo</th>
-          <th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
-          <th>PF</th><th>PC</th><th>Dif</th>
-          <th>Pts</th><th>Byes</th><th>Buchholz</th>
+          <th scope="col">#</th>
+          <th scope="col">Participante / Equipo</th>
+          <th scope="col">PJ</th><th scope="col">PG</th><th scope="col">PE</th><th scope="col">PP</th>
+          <th scope="col">PF</th><th scope="col">PC</th><th scope="col">Dif</th>
+          <th scope="col">Pts</th><th scope="col">Byes</th><th scope="col">Buchholz</th>
         </tr>
       </thead>
       <tbody>
@@ -24,7 +24,7 @@
           <tr><td colspan="12" class="muted">Aún no hay datos.</td></tr>
         <?php else: ?>
           <?php foreach ($tabla as $fila): ?>
-          <tr <?= ($torneo['estado'] === 'finalizado' && $fila['posicion'] == 1) ? 'style="background:rgba(37,194,129,.1)"' : '' ?>>
+          <tr <?= ($torneo['estado'] === 'finalizado' && $fila['posicion'] == 1) ? 'class="fila-campeon"' : '' ?>>
             <td><strong><?= (int)$fila['posicion'] ?></strong>
               <?php if ($torneo['estado'] === 'finalizado' && $fila['posicion'] == 1): ?><span class="chip success">🏆</span><?php endif; ?>
             </td>

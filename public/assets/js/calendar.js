@@ -1,105 +1,131 @@
- (function(){
-  const target = document.getElementById('calendar');
-  if (!target) return;
-  const torneos = window.TORNEOS_CAL || [];
+/* FlexArena — calendar.js
+ *
+ * El calendario público de torneos (/torneos/calendario): un mes por vez, con cada torneo en el día en que empieza.
+ * Los torneos viajan en un bloque JSON (`#torneos-cal`, que el navegador no ejecuta) y se dibujan en `#calendar`.
+ *
+ * Las fechas se escriben con formato.js (FlexFormato), que va antes que este script en la lista `extraJs` del controlador.
+ *
+ * Responsive (Mobile First; el CSS decide qué se ve, ver paginas.css y responsive.css):
+ *   - En pantalla chica los días son cuadritos con un punto por torneo que empieza ese día, y debajo del calendario va la
+ *     lista del mes (nombre, fechas y enlace): en un cuadrito de 45 px no entra un título.
+ *   - Desde 721 px cada día muestra sus torneos como tarjetas con enlace, y la lista se oculta.
+ */
+'use strict';
 
-  // Formats YYYY-MM-DD -> DD/MM without creating Date objects (avoids TZ shifts)
-  function fmtDM(dstr){
-    if (!dstr) return '';
-    const parts = String(dstr).split('-');
-    if (parts.length < 3) return dstr;
-    const [y,m,d] = parts;
-    return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
+(() => {
+  const destino = document.getElementById('calendar');
+  if (!destino) return;
+
+  const datos = document.getElementById('torneos-cal');
+  let torneos = [];
+  try { torneos = datos ? JSON.parse(datos.textContent || '[]') : []; } catch (e) { torneos = []; }
+  torneos = torneos.filter((t) => t && typeof t.inicio === 'string');
+
+  const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const { dos, diaMes, rango } = FlexFormato;                           // formato.js: va antes que este script
+
+  function el(etiqueta, clase, texto) {
+    const e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
   }
-  function formatRange(inicio, fin){
-    if (!inicio) return '';
-    if (!fin || fin === '') return fmtDM(inicio);
-    if (inicio === fin) return fmtDM(inicio);
-    return `${fmtDM(inicio)} – ${fmtDM(fin)}`;
-  }
 
-  let cur = new Date(); cur.setDate(1);
+  let actual = new Date();
+  actual.setDate(1);
 
-  function render(){
-    target.innerHTML = '';
-    const header = document.createElement('div');
-    header.style.display = 'flex'; header.style.justifyContent = 'space-between'; header.style.alignItems = 'center'; header.style.marginBottom = '.6rem';
+  function dibujar() {
+    destino.innerHTML = '';
 
-    const prev = document.createElement('button'); prev.className = 'btn'; prev.textContent = '<'; prev.onclick = () => { cur.setMonth(cur.getMonth()-1); render(); };
-    const next = document.createElement('button'); next.className = 'btn'; next.textContent = '>'; next.onclick = () => { cur.setMonth(cur.getMonth()+1); render(); };
-    const title = document.createElement('div'); title.innerHTML = '<strong>' + cur.toLocaleString(undefined, { month: 'long', year: 'numeric' }) + '</strong>';
-    header.appendChild(prev); header.appendChild(title); header.appendChild(next);
-    target.appendChild(header);
+    const anio = actual.getFullYear();
+    const mes = actual.getMonth();
+    const prefijoMes = `${anio}-${dos(mes + 1)}-`;
 
-    const grid = document.createElement('div'); grid.style.display = 'grid'; grid.style.gridTemplateColumns = 'repeat(7,1fr)'; grid.style.gap = '4px';
-    ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(d=>{ const h = document.createElement('div'); h.style.fontSize = '.8rem'; h.style.textAlign = 'center'; h.style.color = 'var(--muted)'; h.textContent = d; grid.appendChild(h); });
+    // ── cabecera: mes anterior · mes y año · mes siguiente ──
+    const cabecera = el('div', 'cal-cabecera');
+    const anterior = el('button', 'btn', '<');
+    anterior.type = 'button';
+    anterior.setAttribute('aria-label', 'Mes anterior');
+    anterior.onclick = () => { actual.setMonth(actual.getMonth() - 1); dibujar(); };
+    const siguiente = el('button', 'btn', '>');
+    siguiente.type = 'button';
+    siguiente.setAttribute('aria-label', 'Mes siguiente');
+    siguiente.onclick = () => { actual.setMonth(actual.getMonth() + 1); dibujar(); };
+    const titulo = el('div', 'cal-mes');
+    titulo.setAttribute('aria-live', 'polite');
+    titulo.appendChild(el('strong', '', actual.toLocaleString('es', { month: 'long', year: 'numeric' })));
+    cabecera.appendChild(anterior);
+    cabecera.appendChild(titulo);
+    cabecera.appendChild(siguiente);
+    destino.appendChild(cabecera);
 
-    const firstWeekday = (cur.getDay()+6) % 7; // Monday = 0
-    const daysInMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
+    // ── la grilla: los días de la semana y, debajo, los del mes ──
+    const grilla = el('div', 'cal-grilla');
+    DIAS.forEach((d) => grilla.appendChild(el('div', 'cal-dia-semana', d)));
 
-    for (let i = 0; i < firstWeekday; i++) { grid.appendChild(document.createElement('div')); }
+    const primerDia = (actual.getDay() + 6) % 7;                       // el lunes es 0
+    const diasDelMes = new Date(anio, mes + 1, 0).getDate();
+    for (let i = 0; i < primerDia; i++) grilla.appendChild(document.createElement('div'));
 
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const hoy = new Date();
+    const hoyTexto = `${hoy.getFullYear()}-${dos(hoy.getMonth() + 1)}-${dos(hoy.getDate())}`;
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const cell = document.createElement('div');
-      cell.style.minHeight = '80px';
-      cell.style.padding = '8px';
-      cell.style.borderRadius = '6px';
-      cell.style.background = 'transparent';
-      cell.style.border = '1px solid rgba(0,0,0,0.04)';
-      cell.style.display = 'flex';
-      cell.style.flexDirection = 'column';
-      cell.style.gap = '6px';
-      cell.style.boxSizing = 'border-box';
+    for (let d = 1; d <= diasDelMes; d++) {
+      const fecha = prefijoMes + dos(d);
+      const celda = el('div', fecha === hoyTexto ? 'cal-dia hoy' : 'cal-dia');
+      celda.appendChild(el('div', 'cal-numero', String(d)));
 
-      const dateStr = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dayTitle = document.createElement('div'); dayTitle.style.fontSize = '.85rem'; dayTitle.style.marginBottom = '2px'; dayTitle.style.color = 'var(--text)'; dayTitle.textContent = d; cell.appendChild(dayTitle);
+      // Solo los torneos que EMPIEZAN ese día.
+      const delDia = torneos.filter((t) => t.inicio === fecha);
+      if (delDia.length) {
+        // Pantalla chica: un punto por torneo (hasta 3).
+        const puntos = el('div', 'cal-puntos');
+        puntos.setAttribute('aria-hidden', 'true');
+        delDia.slice(0, 3).forEach(() => puntos.appendChild(el('span', 'cal-punto')));
+        celda.appendChild(puntos);
 
-      if (dateStr === todayStr) {
-        cell.style.background = 'linear-gradient(90deg, rgba(255,245,157,0.12), rgba(255,245,157,0.06))';
-        cell.style.border = '1px solid rgba(255,213,79,0.25)';
-      }
-
-      // Show ONLY tournaments whose inicio exactly matches this date
-      const matches = torneos.filter(t => t && typeof t.inicio === 'string' && t.inicio === dateStr);
-
-      if (matches.length) {
-        const list = document.createElement('div'); list.style.display = 'flex'; list.style.flexDirection = 'column'; list.style.gap = '6px'; list.style.width = '100%';
-
-        matches.forEach(m => {
-          const a = document.createElement('a');
-          a.href = `/torneo/${m.id}`;
-          a.style.display = 'block'; a.style.textDecoration = 'none'; a.style.color = 'inherit'; a.style.width = '100%'; a.style.boxSizing = 'border-box';
-
-          const card = document.createElement('div');
-          card.style.padding = '.4rem .5rem';
-          card.style.borderRadius = '8px';
-          card.style.background = 'rgba(255,255,255,0.03)';
-          card.style.border = '1px solid rgba(255,255,255,0.03)';
-          card.style.display = 'flex'; card.style.flexDirection = 'column'; card.style.gap = '4px'; card.style.overflow = 'hidden';
-
-          const title = document.createElement('div');
-          title.style.fontSize = '0.9rem'; title.style.fontWeight = '700'; title.style.color = 'var(--text)'; title.style.whiteSpace = 'nowrap'; title.style.overflow = 'hidden'; title.style.textOverflow = 'ellipsis';
-          title.textContent = m.nombre || '';
-
-          const range = document.createElement('div'); range.className = 'muted'; range.style.fontSize = '.8rem'; range.style.color = 'var(--muted)';
-          range.textContent = formatRange(m.inicio, m.fin);
-
-          card.appendChild(title); card.appendChild(range);
-          a.appendChild(card);
-          list.appendChild(a);
+        // Pantalla ancha: una tarjeta con enlace por torneo.
+        const lista = el('div', 'cal-lista');
+        delDia.forEach((t) => {
+          const enlace = el('a', 'cal-enlace');
+          enlace.href = `/torneo/${t.id}`;
+          enlace.title = t.nombre || '';            // el título se corta con puntos suspensivos: el nombre entero, al pasar el mouse
+          const tarjeta = el('div', 'cal-torneo');
+          tarjeta.appendChild(el('div', 'cal-titulo', t.nombre || ''));
+          tarjeta.appendChild(el('div', 'cal-rango', rango(t.inicio, t.fin)));
+          enlace.appendChild(tarjeta);
+          lista.appendChild(enlace);
         });
-
-        cell.appendChild(list);
+        celda.appendChild(lista);
       }
-
-      grid.appendChild(cell);
+      grilla.appendChild(celda);
     }
+    destino.appendChild(grilla);
 
-    target.appendChild(grid);
+    // ── la lista del mes (solo se ve en pantalla chica) ──
+    const delMes = torneos.filter((t) => t.inicio.startsWith(prefijoMes)).sort((a, b) => a.inicio.localeCompare(b.inicio) || String(a.nombre).localeCompare(String(b.nombre)));
+    const agenda = el('div', 'cal-agenda');
+    agenda.appendChild(el('h2', 'como-h3', 'Torneos que empiezan este mes'));
+    if (delMes.length === 0) {
+      agenda.appendChild(el('p', 'muted', 'No hay torneos que empiecen este mes.'));
+    } else {
+      const ul = el('ul', 'lista-filas');
+      delMes.forEach((t) => {
+        const li = document.createElement('li');
+        const enlace = el('a');
+        enlace.href = `/torneo/${t.id}`;
+        const detalle = el('span', 'detalle');
+        detalle.appendChild(el('strong', '', t.nombre || ''));
+        detalle.appendChild(el('small', '', rango(t.inicio, t.fin)));
+        enlace.appendChild(detalle);
+        enlace.appendChild(el('span', 'chip', diaMes(t.inicio)));
+        li.appendChild(enlace);
+        ul.appendChild(li);
+      });
+      agenda.appendChild(ul);
+    }
+    destino.appendChild(agenda);
   }
 
-  render();
+  dibujar();
 })();

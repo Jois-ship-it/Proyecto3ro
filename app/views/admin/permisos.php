@@ -37,23 +37,23 @@ $etiquetas = [
 
   <?php foreach ($roles as $rol): ?>
     <?php $rolId = (int) $rol['id']; ?>
-    <article class="card" style="margin-bottom:1.25rem">
-      <h2 style="margin:0 0 .35rem"><?= View::e(ucfirst((string) $rol['nombre'])) ?></h2>
+    <article class="card mb-125">
+      <h2 class="m-0-0-035"><?= View::e(ucfirst((string) $rol['nombre'])) ?></h2>
 
       <?php if ($rolId === $rolAdminId): ?>
-        <p class="muted" style="margin:0">
+        <p class="muted m-0">
           Control completo sobre el sistema. No se le asignan permisos por módulo
           y no se puede recortar desde acá: es lo que evita que el administrador
           se deje afuera por accidente.
         </p>
       <?php else: ?>
         <div class="table-scroll">
-          <table>
+          <table aria-label="Permisos del rol <?= View::e(ucfirst((string) $rol['nombre'])) ?>">
             <thead>
               <tr>
-                <th>Módulo</th>
+                <th scope="col">Módulo</th>
                 <?php foreach ($acciones as $accion): ?>
-                  <th style="text-align:center"><?= View::e($etiquetas[$accion] ?? $accion) ?></th>
+                  <th scope="col" class="text-center"><?= View::e($etiquetas[$accion] ?? $accion) ?></th>
                 <?php endforeach; ?>
               </tr>
             </thead>
@@ -68,12 +68,13 @@ $etiquetas = [
                   <td>
                     <?= View::e((string) $modulo['nombre']) ?>
                     <?php if ($apagado): ?>
-                      <span class="chip warning" style="padding:.1rem .45rem;font-size:.7rem">módulo desactivado</span>
+                      <span class="chip warning chip-mini">módulo desactivado</span>
                     <?php endif; ?>
                   </td>
                   <?php foreach ($acciones as $accion): ?>
-                    <td style="text-align:center">
+                    <td class="text-center">
                       <input type="checkbox"
+                             aria-label="<?= View::e(($etiquetas[$accion] ?? $accion) . ' en ' . (string) $modulo['nombre'] . ' — ' . ucfirst((string) $rol['nombre'])) ?>"
                              name="permisos[<?= $rolId ?>][<?= View::e($slug) ?>][<?= View::e($accion) ?>]"
                              value="1"
                              <?= ($fila && (int) $fila['puede_' . $accion] === 1) ? 'checked' : '' ?>>

@@ -1,0 +1,261 @@
+/* FlexArena — componentes.css
+Las piezas que se repiten en todo el sitio: botones, chips, tarjetas, tablas, formularios, diálogos, listas con
+búsqueda y paginación, el desplegable de búsqueda y las filas del panel del participante. */
+
+/* ─── BOTONES ────────────────────────────────── */
+.btn {
+  border: 1px solid rgba(255,255,255,.14);
+  padding: .78rem 1rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 42px;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  font-size: .95rem;
+}
+.btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.11); }
+.btn:active { transform: translateY(0); }
+/* El degradé empieza en #1f7ab8 y no en --primary (#3498db): con texto blanco, el extremo claro daba 3,15:1 de contraste, bajo
+   el 4,5:1 que pide WCAG AA. Así el texto cumple en todo el botón (4,63:1 en el extremo claro, 4,89:1 en el oscuro). */
+.btn.primary { background: linear-gradient(135deg, #1f7ab8, var(--primary-dark)); border-color: rgba(107,197,255,.55); }
+.btn.ghost   { background: transparent; }
+.btn.danger  { background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.35); color: #ffdede; }
+.btn.small   { padding: .5rem .7rem; min-height: 34px; font-size: .88rem; }
+
+/* ─── CHIPS / BADGES ─────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border-radius: 999px;
+  padding: .38rem .65rem;
+  color: #d8ecff;
+  border: 1px solid rgba(52,152,219,.25);
+  background: rgba(52,152,219,.11);
+  font-size: .82rem;
+  white-space: nowrap;
+}
+.chip.success { background: rgba(37,194,129,.13);  border-color: rgba(37,194,129,.3);  color: #d9fff0; }
+.chip.warning { background: rgba(255,204,102,.13); border-color: rgba(255,204,102,.35);color: #fff3d1; }
+.chip.danger  { background: rgba(255,107,107,.13); border-color: rgba(255,107,107,.35);color: #ffe1e1; }
+
+/* ─── TARJETAS ───────────────────────────────── */
+.hero-card, .panel, .card, .stat-card, .table-wrap, .form-card, .auth-card {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.035));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card, .stat-card, .panel, .form-card { padding: 1.15rem; }
+
+/* Para un texto que ESCRIBE una persona (el nombre de un torneo, una descripción) dentro de una tarjeta: si no tiene espacios (una dirección
+   pegada, una palabra enorme) no se puede partir en renglones y ensanchaba la tarjeta y con ella la página entera; en el celular, una sola
+   palabra de 80 letras sacaba todo de pantalla. Con esto se parte donde haga falta. Va SOLO donde se muestra texto de una persona: puesta
+   en general (probado) parte también palabras normales de elementos angostos («Semifinale/s», «Garcí/a»). */
+.rompe-texto { min-width: 0; overflow-wrap: anywhere; }
+.stat-card strong { display: block; font-size: 2rem; letter-spacing: -.04em; }
+.stat-card span   { color: var(--muted); }
+
+/* ─── TABLAS ─────────────────────────────────── */
+.table-wrap   { overflow: hidden; }
+.table-header { padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 1px solid var(--line); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 520px; }
+th, td { text-align: left; padding: .9rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: middle; }
+th { color: #bed5ee; font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; }
+td { color: #edf6ff; }
+tr:hover td { background: rgba(255,255,255,.035); }
+
+/* ─── FORMULARIOS ────────────────────────────── */
+.form-grid    { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.field        { display: grid; gap: .45rem; }
+label         { color: #d7eaff; font-weight: 700; font-size: .9rem; }
+
+/* Text-like form controls: keep full-width styling */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  width: 100%; border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px; padding: .78rem .85rem;
+  color: var(--text); background: rgba(0,0,0,.18); outline: none;
+}
+
+/* Checkbox / radio should keep their native size and not inherit padding/width */
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--primary);
+}
+
+/* Align label and checkbox nicely in form contexts without affecting all labels globally */
+.form-card .field label,
+.form-grid .field label {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem; /* small space between checkbox and text */
+  cursor: pointer;
+}
+
+/* Ensure checkbox inside label doesn't get extra margin; gap handles spacing */
+.form-card .field label > input[type="checkbox"],
+.form-card .field label > input[type="radio"],
+.form-grid .field label > input[type="checkbox"],
+.form-grid .field label > input[type="radio"] {
+  margin: 0;
+}
+/* Lista desplegable del <select> en tonos oscuros acordes a la estética */
+select { color-scheme: dark; }
+select option,
+select optgroup {
+  background-color: #0d1b2e;
+  color: var(--text);
+}
+select option:checked,
+select option:hover {
+  background-color: #14304f;
+}
+select option:disabled { color: var(--muted); }
+textarea { resize: vertical; min-height: 110px; }
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(107,197,255,.7);
+  box-shadow: 0 0 0 4px rgba(52,152,219,.14);
+}
+.form-actions { margin-top: 1rem; display: flex; gap: .75rem; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ─── MODALES (panel sólido, no transparente) ─── */
+.modal-card {
+  background: linear-gradient(150deg, #16324d, #0e2135) !important;
+  border: 1px solid rgba(107,197,255,.25) !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55) !important;
+}
+
+/* ─── TIMELINE ───────────────────────────────── */
+.timeline { display: grid; gap: .75rem; }
+.timeline-item { padding: .8rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.045); }
+
+/* ─── DIÁLOGOS (se abren con modales.js: clase .abierto) ─── */
+.modal-fondo {
+  display: none; position: fixed; inset: 0;
+  background: rgba(3,8,16,.78); z-index: 100; place-items: center;
+}
+.modal-fondo.abierto { display: grid; }
+.modal-fondo--flex { background: rgba(0,0,0,.7); z-index: 1000; justify-content: center; }
+.modal-fondo--flex.abierto { display: flex; }
+
+/* El motivo de un rechazo dentro de un diálogo (se muestra al quitarle el atributo hidden). */
+.alerta-form { display: block; margin-bottom: .75rem; white-space: normal; }
+
+/* Botón que no se puede usar todavía (el formulario de registro, hasta cumplir las reglas). */
+.btn.apagado { opacity: .6; }
+
+/* Reglas de la contraseña: se marcan solas mientras se escribe (registro.js). */
+.pw-reglas li        { color: var(--muted); }
+.pw-reglas li.cumple { color: var(--success); }
+
+/* Combobox styles (appended) */
+.combobox{position:relative}
+.combobox input[type="text"]{width:100%;padding:.6rem .75rem;border-radius:10px;border:1px solid var(--line);background:#1b1f24}
+.combobox-list{display:none;position:absolute;left:0;right:0;z-index:80;margin-top:.35rem;padding:0;list-style:none;border-radius:10px;overflow:hidden;background:#1b1f24;border:1px solid var(--line);max-height:240px;overflow-y:auto}
+.combobox-list li{list-style:none;margin:0;padding:.55rem .75rem;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;color:var(--text)}
+.combobox-list li:hover,.combobox-list li.active{background:#252b32}
+.combobox-list li:last-child{border-bottom:none}
+
+/* ─── ACCESIBILIDAD ──────────────────────────── */
+:focus-visible { outline: 2px solid var(--primary-strong); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ─── BÚSQUEDA, FILTROS Y PAGINACIÓN ─────────────────────────────────────────
+   Las usa toda lista larga: la barra de filtros es un formulario GET (la URL
+   queda copiable) y el pie lleva el resumen «Mostrando X–Y de N» con los botones
+   de página. Dentro de una .table-wrap la barra reemplaza al .table-header. */
+.filtros {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: flex-start;
+  gap: .75rem;
+}
+.filtros .field         { min-width: 9.5rem; }
+.filtros .field.buscar  { flex: 1 1 15rem; }
+.filtros input, .filtros select { height: 3.1rem; }
+.filtros .actions       { gap: .5rem; }
+.card.filtros           { margin-bottom: 1rem; }
+
+.listado-pie {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .75rem; padding: .85rem 1rem;
+}
+.table-wrap > .listado-pie { border-top: 1px solid var(--line); }
+.resumen { margin: 0; font-size: .9rem; color: var(--muted); }
+
+.paginacion { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.paginacion .disabled { opacity: .4; pointer-events: none; }
+.paginacion-gap { color: var(--muted); padding: 0 .2rem; }
+
+.sin-resultados { text-align: center; padding: 2rem 1rem; }
+
+/* Búsqueda en vivo (torneos-en-vivo.js): mientras llega la respuesta la lista se atenúa; si falla, el motivo va arriba de la lista. */
+.cargando     { opacity: .55; }
+.alerta-lista { margin-bottom: .8rem; }
+
+/* ─── REPORTES ───────────────────────────────────────────────────────────── */
+.dato {
+  display: flex; justify-content: space-between; gap: 1rem;
+  padding: .5rem 0; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.dato:last-child { border-bottom: 0; }
+.dato strong     { font-variant-numeric: tabular-nums; }
+.num             { text-align: right; font-variant-numeric: tabular-nums; }
+.barra           { height: .6rem; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+.barra > span    { display: block; height: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-strong)); }
+.solo-impresion  { display: none; }
+
+/* La barra de filtros ocupa todo el ancho del encabezado de la tabla. */
+.table-header > .filtros { flex: 1 1 auto; }
+
+/* ─── PANEL DEL PARTICIPANTE Y CONFIGURACIÓN ─────────────────── */
+/* Lista de filas con un detalle a la izquierda y una marca a la derecha (partidos, posiciones). */
+.lista-filas              { list-style: none; margin: .6rem 0 0; padding: 0; }
+.lista-filas li           { border-bottom: 1px solid var(--line); }
+.lista-filas li:last-child { border-bottom: 0; }
+.lista-filas a            { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem 0; color: inherit; text-decoration: none; }
+.lista-filas a:hover strong { color: var(--primary-strong); }
+.lista-filas .detalle     { min-width: 0; }
+.lista-filas .detalle strong { overflow-wrap: anywhere; }
+.lista-filas small        { display: block; margin-top: .1rem; color: var(--muted); font-size: .85rem; }
+.lista-filas .chip        { flex: none; text-align: center; }
+
+/* Secciones dentro de un formulario largo (Configuración): se separan con una línea entre una y otra. */
+.form-seccion                  { margin: 0 0 1rem; }
+.form-grid + .form-seccion     { border-top: 1px solid var(--line); padding-top: 1rem; margin-top: 1.5rem; }
+.form-seccion p                { margin: .25rem 0 0; font-size: .9rem; }
+.form-grid .field-ancho        { grid-column: 1 / -1; }
+/* Sin esto, el campo más corto de una fila se estira hasta igualar al más alto y su caja queda más grande. */
+.form-config .field            { align-content: start; }
+
+/* ─── AVATARES (el tamaño va en una clase dinámica: View::avatar()) ─── */
+.avatar-img { border-radius: 50%; object-fit: cover; border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+.avatar-ini {
+  border-radius: 50%; display: inline-grid; place-items: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff; font-weight: 800; border: 1px solid var(--line);
+}
+
+/* ─── RENDIMIENTO DE UN COMPETIDOR (perfil) ─── */
+.forma-casilla {
+  width: 22px; height: 22px; border-radius: 6px;
+  display: inline-grid; place-items: center;
+  font-size: .7rem; font-weight: 800; color: #04121f;
+}
+.forma-g { background: var(--success); }
+.forma-e { background: var(--warning); }
+.forma-p { background: var(--danger); }
+.forma-n { background: var(--muted); }
+.fila-campeon { background: rgba(37,194,129,.1); }

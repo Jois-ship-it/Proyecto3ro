@@ -2,7 +2,7 @@
 <header class="topbar">
   <button class="btn ghost mobile-menu-btn" data-sidebar-toggle aria-label="Menú">☰ Menú</button>
   <div>
-    <strong><?= APP_NAME ?></strong>
+    <strong><?= View::e($_sitio['nombre']) ?></strong>
     <div class="muted">
       <?php if (Auth::isAdmin()): ?>Panel de administración
       <?php elseif (Auth::isOrganizador()): ?>Panel del organizador

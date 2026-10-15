@@ -3,7 +3,7 @@
     <span class="logo-mark">
       <img src="/assets/img/flexarena-logo.svg" alt="FlexArena">
     </span>
-    <span><?= APP_NAME ?></span>
+    <span><?= View::e($_sitio['nombre']) ?></span>
   </a>
   <button class="btn ghost nav-toggle" data-nav-toggle aria-label="Menú">Menú</button>
   <nav class="nav-links">

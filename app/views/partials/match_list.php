@@ -5,16 +5,16 @@
 $rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
 ?>
 <div class="table-scroll">
-  <table>
+  <table aria-label="Partidos de la ronda">
     <thead>
       <tr>
-        <th>#</th>
-        <th>Local</th>
-        <th>Resultado</th>
-        <th>Visitante</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-        <?php if ($puedeEditar ?? false): ?><th>Acciones</th><?php endif; ?>
+        <th scope="col">#</th>
+        <th scope="col">Local</th>
+        <th scope="col">Resultado</th>
+        <th scope="col">Visitante</th>
+        <th scope="col">Fecha</th>
+        <th scope="col">Estado</th>
+        <?php if ($puedeEditar ?? false): ?><th scope="col">Acciones</th><?php endif; ?>
       </tr>
     </thead>
     <tbody>
@@ -22,7 +22,7 @@ $rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
         <?php
           $nombreA = $p['participante_a_nombre'] ?? $p['equipo_a_nombre'] ?? '—';
           $nombreB = $p['participante_b_nombre'] ?? $p['equipo_b_nombre'] ?? '—';
-          $res     = (new ResultadoModel())->getByEnfrentamiento((int)$p['id']);
+          $res     = View::resultadoDe($p);
           $fpInput = !empty($p['fecha_programada']) ? date('Y-m-d\TH:i', strtotime((string)$p['fecha_programada'])) : '';
           $esFinal = $p['estado'] === 'finalizado';
         ?>
@@ -32,12 +32,12 @@ $rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
             <strong><?= View::e($nombreA) ?></strong>
             <?php if (!empty($p['nick_a'])): ?><br><span class="muted"><?= View::e($p['nick_a']) ?></span><?php endif; ?>
           </td>
-          <td style="text-align:center">
+          <td class="text-center">
             <?php if ($p['es_bye']): ?>
               <span class="chip warning">Bye</span>
             <?php elseif ($res): ?>
               <strong><?= number_format((float)$res['puntos_a'],0) ?> — <?= number_format((float)$res['puntos_b'],0) ?></strong>
-              <?php if ($res['corregido']): ?><br><span class="chip warning" style="font-size:.75rem">Corregido</span><?php endif; ?>
+              <?php if ($res['corregido']): ?><br><span class="chip warning fs-75">Corregido</span><?php endif; ?>
             <?php else: ?>
               <span class="muted">vs</span>
             <?php endif; ?>
@@ -50,7 +50,7 @@ $rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
               <?php if (!empty($p['nick_b'])): ?><br><span class="muted"><?= View::e($p['nick_b']) ?></span><?php endif; ?>
             <?php endif; ?>
           </td>
-          <td style="font-size:.85rem;white-space:nowrap">
+          <td class="fs-85 nowrap">
             <?php if (!empty($p['fecha_programada'])): ?>
               <div title="Fecha programada">📅 <?= View::fechaHora($p['fecha_programada']) ?></div>
             <?php endif; ?>
@@ -67,7 +67,7 @@ $rondaCerrada = ($ronda['estado'] ?? '') === 'cerrada';
           <?php if ($puedeEditar ?? false): ?>
           <td>
             <?php if ($rondaCerrada && in_array($p['estado'], ['pendiente', 'en_curso']) && !$p['es_bye']): ?>
-              <span class="muted" style="font-size:.85rem">Ronda cerrada</span>
+              <span class="muted fs-85">Ronda cerrada</span>
             <?php elseif (in_array($p['estado'], ['pendiente', 'en_curso']) && !$p['es_bye']): ?>
               <button class="btn small primary"
                 data-modal-cargar

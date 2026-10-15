@@ -7,14 +7,14 @@
     <span class="muted"><?= View::e($torneo['nombre_puntos'] ?? 'puntos') ?> por victoria: <?= (int)$torneo['puntos_victoria'] ?> | empate: <?= (int)$torneo['puntos_empate'] ?> | derrota: <?= (int)$torneo['puntos_derrota'] ?></span>
   </div>
   <div class="table-scroll">
-    <table>
+    <table aria-label="Tabla de posiciones">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Participante / Equipo</th>
-          <th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
-          <th>PF</th><th>PC</th><th>Dif</th>
-          <th><?= View::e(ucfirst($torneo['nombre_puntos'] ?? 'Pts')) ?></th>
+          <th scope="col">#</th>
+          <th scope="col">Participante / Equipo</th>
+          <th scope="col">PJ</th><th scope="col">PG</th><th scope="col">PE</th><th scope="col">PP</th>
+          <th scope="col">PF</th><th scope="col">PC</th><th scope="col">Dif</th>
+          <th scope="col"><?= View::e(ucfirst($torneo['nombre_puntos'] ?? 'Pts')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -22,7 +22,7 @@
           <tr><td colspan="10" class="muted">Aún no hay datos en la tabla.</td></tr>
         <?php else: ?>
           <?php foreach ($tabla as $fila): ?>
-          <tr <?= $torneo['estado'] === 'finalizado' && $fila['posicion'] == 1 ? 'style="background:rgba(37,194,129,.1)"' : '' ?>>
+          <tr <?= $torneo['estado'] === 'finalizado' && $fila['posicion'] == 1 ? 'class="fila-campeon"' : '' ?>>
             <td><strong><?= (int)$fila['posicion'] ?></strong>
               <?php if ($torneo['estado'] === 'finalizado' && $fila['posicion'] == 1): ?>
                 <span class="chip success">🏆</span>

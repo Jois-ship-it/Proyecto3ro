@@ -1,0 +1,27 @@
+/* FlexArena — tokens.css
+Las variables del diseño: paleta, radio, sombra y ancho de la barra lateral. Es lo único que hay que tocar para
+reteñir el sitio. Los demás archivos las usan con var(--nombre). */
+
+:root {
+  --bg: #07111f;
+  --bg-soft: #0d1b2e;
+  --surface: #10243b;
+  --surface-2: #14304f;
+  --card: rgba(255,255,255,.055);
+  --card-strong: rgba(255,255,255,.09);
+  --line: rgba(255,255,255,.12);
+  --text: #eaf4ff;
+  --muted: #a8b8cc;
+  --primary: #3498db;
+  --primary-strong: #6bc5ff;
+  --primary-dark: #1876b5;
+  --success: #25c281;
+  --warning: #ffcc66;
+  --danger: #ff6b6b;
+  --dark-extra: #050910;
+  --blue-deep: #0b5f8f;
+  --radius: 18px;
+  --shadow: 0 22px 70px rgba(0,0,0,.28);
+  --sidebar: 280px;
+  color-scheme: dark;
+}

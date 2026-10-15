@@ -8,10 +8,10 @@ $puedeEditar = false; // Vista pública: sin edición
 <section class="section">
   <div class="page-header">
     <div class="page-title">
-      <a class="muted" href="/torneos" style="font-size:.9rem">← Torneos</a>
-      <div class="eyebrow" style="margin-top:.5rem"><?= View::e($tipo['nombre']) ?></div>
-      <h1><?= View::e($torneo['nombre']) ?></h1>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <a class="muted fs-90" href="/torneos">← Torneos</a>
+      <div class="eyebrow mt-05"><?= View::e($tipo['nombre']) ?></div>
+      <h1 class="rompe-texto"><?= View::e($torneo['nombre']) ?></h1>
+      <div class="flex gap-05 flex-wrap">
         <?= View::estadoChip($torneo['estado']) ?>
         <span class="chip"><?= View::e(ucfirst($torneo['modalidad'])) ?></span>
         <?php if ($esSuizo && $torneo['rondas_suizo']): ?>
@@ -23,14 +23,14 @@ $puedeEditar = false; // Vista pública: sin edición
 
   <!-- Campeón -->
   <?php if ($torneo['estado'] === 'finalizado'): ?>
-  <div class="card" style="background:rgba(37,194,129,.1);border-color:rgba(37,194,129,.3);text-align:center;padding:1.5rem;margin-bottom:1.5rem">
-    <div class="eyebrow" style="color:var(--success)">Campeón del torneo</div>
+  <div class="card banner-campeon-ancho">
+    <div class="eyebrow color-ok">Campeón del torneo</div>
     <h2>🏆 <?= View::e($torneo['campeon_participante_nombre'] ?? $torneo['campeon_equipo_nombre'] ?? '—') ?></h2>
   </div>
   <?php endif; ?>
 
   <!-- KPIs -->
-  <div class="grid cols-3" style="margin-bottom:1.5rem">
+  <div class="grid cols-3 mb-15">
     <div class="stat-card"><strong><?= count($inscritos) ?></strong><span>Participantes</span></div>
     <div class="stat-card"><strong><?= count($rondasConPartidos) ?></strong><span>Rondas</span></div>
     <?php if ($torneo['descripcion']): ?>
@@ -46,22 +46,22 @@ $puedeEditar = false; // Vista pública: sin edición
     $datosEvento = array_filter($configuracion, fn(string $v) => $v !== '');
   ?>
   <?php if ($datosEvento !== []): ?>
-  <div class="card" style="margin-bottom:1.5rem">
+  <div class="card mb-15">
     <div class="eyebrow">Datos del evento</div>
-    <div class="grid cols-2" style="margin-top:.75rem">
+    <div class="grid cols-2 mt-075">
       <?php foreach ($datosEvento as $clave => $valor): ?>
         <?php
           $def   = $clavesConfig[$clave];
-          $ancho = $def['tipo'] === 'texto_largo' ? ' style="grid-column:1/-1"' : '';
+          $ancho = $def['tipo'] === 'texto_largo' ? ' class="span-all"' : '';
         ?>
         <div<?= $ancho ?>>
-          <div class="muted" style="font-size:.8rem"><?= View::e($def['etiqueta']) ?></div>
+          <div class="muted fs-80"><?= View::e($def['etiqueta']) ?></div>
           <?php if ($clave === 'contacto'): ?>
             <a href="mailto:<?= View::e($valor) ?>"><?= View::e($valor) ?></a>
           <?php elseif ($clave === 'cierre_inscripcion'): ?>
             <strong><?= View::e(date('d/m/Y', strtotime($valor))) ?></strong>
             <?php if ($torneo['estado'] === 'inscripcion' && date('Y-m-d') > $valor): ?>
-              <span class="chip warning" style="padding:.1rem .45rem;font-size:.7rem">plazo cerrado</span>
+              <span class="chip warning chip-mini">plazo cerrado</span>
             <?php endif; ?>
           <?php else: ?>
             <strong><?= View::e($valor) ?></strong>
@@ -97,141 +97,19 @@ $puedeEditar = false; // Vista pública: sin edición
   ?>
 
   <?php if (isset($torneo['estado']) && ($torneo['estado'] === 'en_curso' || $torneo['estado'] === 'finalizado')): ?>
-  <div style="margin-bottom:1.5rem">
-    <h3>Próximos partidos</h3>
+  <div class="mb-15">
+    <h2 class="como-h3">Próximos partidos</h2>
     <p class="muted">Partidos con fecha igual o posterior a hoy.</p>
-    <div style="margin-top:.75rem">
-      <div id="calendarMatches" style="display:flex;flex-direction:column;gap:.75rem"></div>
+    <div class="mt-075">
+      <div class="flex flex-col gap-075" id="calendarMatches"></div>
     </div>
   </div>
 
-  <script>
-    const MATCHES = <?= json_encode($matchesForCalendar, JSON_UNESCAPED_UNICODE) ?>;
-
-    (function () {
-      const cont = document.getElementById('calendarMatches');
-      if (!cont) return;
-
-      function escapeHtml(value) {
-        return String(value ?? '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/\"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
-
-      function parseDateParts(input) {
-        if (input === null || input === undefined) return null;
-        const raw = String(input).trim();
-        if (!raw) return null;
-
-        const datePart = raw.includes('T') ? raw.split('T')[0] : raw.split(' ')[0];
-        const [year, month, day] = datePart.split('-').map(Number);
-        if (!year || !month || !day) return null;
-
-        const timeRaw = raw.includes('T') ? (raw.split('T')[1] || '00:00:00') : (raw.includes(' ') ? (raw.split(' ')[1] || '00:00:00') : '00:00:00');
-        const [hour = '00', minute = '00', second = '00'] = (timeRaw || '00:00:00').split(':').map(String);
-
-        return { year, month, day, hour: Number(hour), minute: Number(minute), second: Number(second) };
-      }
-
-      function sameOrAfterToday(dateValue) {
-        const parts = parseDateParts(dateValue);
-        if (!parts) return false;
-
-        const today = new Date();
-        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const matchDate = new Date(parts.year, parts.month - 1, parts.day);
-        return matchDate.getTime() >= todayDate.getTime();
-      }
-
-      function sortMatches(list) {
-        return [...list].sort((a, b) => {
-          const left = parseDateParts(a.fecha);
-          const right = parseDateParts(b.fecha);
-          if (!left || !right) return 0;
-
-          const leftKey = Date.UTC(left.year, left.month - 1, left.day, left.hour, left.minute, left.second);
-          const rightKey = Date.UTC(right.year, right.month - 1, right.day, right.hour, right.minute, right.second);
-          return leftKey - rightKey;
-        });
-      }
-
-      function formatDateLabel(dateValue) {
-        const parts = parseDateParts(dateValue);
-        if (!parts) return 'Sin fecha';
-
-        const weekdays = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-        const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-        const date = new Date(parts.year, parts.month - 1, parts.day);
-        const weekday = weekdays[date.getDay()];
-        const month = months[date.getMonth()];
-        const base = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${date.getDate()} de ${month}`;
-
-        const hasTime = parts.hour !== 0 || parts.minute !== 0 || parts.second !== 0;
-        return hasTime ? `${base} · ${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}` : base;
-      }
-
-      function renderEmpty(message) {
-        cont.innerHTML = '<div class="card" style="padding:1rem;"><div class="muted">' + escapeHtml(message) + '</div></div>';
-      }
-
-      const upcomingMatches = sortMatches(MATCHES.filter(match => sameOrAfterToday(match.fecha)));
-
-      if (!MATCHES.length) {
-        renderEmpty('No hay partidos programados.');
-        return;
-      }
-
-      if (!upcomingMatches.length) {
-        renderEmpty('No hay próximos partidos programados.');
-        return;
-      }
-
-      const list = document.createElement('div');
-      list.style.display = 'flex';
-      list.style.flexDirection = 'column';
-      list.style.gap = '.75rem';
-
-      upcomingMatches.forEach((match) => {
-        const item = document.createElement('div');
-        item.className = 'card';
-        item.style.padding = '1rem';
-        item.style.display = 'flex';
-        item.style.flexDirection = 'column';
-        item.style.gap = '.35rem';
-
-        const teams = document.createElement('div');
-        teams.style.fontWeight = '700';
-        teams.style.lineHeight = '1.3';
-        teams.innerHTML = escapeHtml(match.a) + ' <span class="muted">vs</span> ' + escapeHtml(match.b);
-
-        const meta = document.createElement('div');
-        const rondaText = (match.ronda || match.ronda === 0) ? 'Ronda ' + escapeHtml(String(match.ronda)) : 'Ronda';
-        const ordenText = (match.orden || match.orden === 0) ? ' · Orden ' + escapeHtml(String(match.orden)) : '';
-        meta.className = 'muted';
-        meta.style.fontSize = '.85rem';
-        meta.innerHTML = rondaText + ordenText;
-
-        const fechaText = document.createElement('div');
-        fechaText.className = 'muted';
-        fechaText.style.fontSize = '.85rem';
-        fechaText.textContent = formatDateLabel(match.fecha);
-
-        item.appendChild(teams);
-        item.appendChild(meta);
-        item.appendChild(fechaText);
-        list.appendChild(item);
-      });
-
-      cont.innerHTML = '';
-      cont.appendChild(list);
-    })();
-  </script>
+  <?php // Los partidos viajan en un bloque JSON, que el navegador no ejecuta: proximos-partidos.js lo lee de acá. ?>
+  <script type="application/json" id="partidos-calendario"><?= json_encode($matchesForCalendar, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
   <?php endif; ?>  <!-- Tabla / Ranking -->
   <?php if (!empty($tabla)): ?>
-    <div style="margin-bottom:1.5rem">
+    <div class="mb-15">
       <?php if ($esSuizo): ?>
         <?php include APP_PATH . '/views/partials/suizo_ranking.php'; ?>
       <?php else: ?>
@@ -253,16 +131,18 @@ $puedeEditar = false; // Vista pública: sin edición
 
   <!-- Inscritos -->
   <?php if (!empty($inscritos)): ?>
-  <div style="margin-top:1.5rem">
-    <h3>Participantes</h3>
+  <div class="mt-15">
+    <h2 class="como-h3">Participantes</h2>
     <div class="grid cols-4">
       <?php foreach ($inscritos as $ins): ?>
         <?php
-          $perfilUrl = !empty($ins['participante_id']) ? '/jugador/' . (int)$ins['participante_id']
-                     : (!empty($ins['equipo_id']) ? '/equipo/' . (int)$ins['equipo_id'] : null);
+          // Con los perfiles cerrados, quien no inició sesión ve el nombre sin enlace.
+          $perfilUrl = !($perfilesVisibles ?? true) ? null
+                     : (!empty($ins['participante_id']) ? '/jugador/' . (int)$ins['participante_id']
+                     : (!empty($ins['equipo_id']) ? '/equipo/' . (int)$ins['equipo_id'] : null));
           $nombre = $ins['participante_nombre'] ?? $ins['equipo_nombre'] ?? '—';
         ?>
-        <?php if ($perfilUrl): ?><a class="card" href="<?= $perfilUrl ?>" style="padding:.75rem;display:block"><?php else: ?><div class="card" style="padding:.75rem"><?php endif; ?>
+        <?php if ($perfilUrl): ?><a class="card tarjeta-enlace" href="<?= $perfilUrl ?>"><?php else: ?><div class="card p-075"><?php endif; ?>
           <strong><?= View::e($nombre) ?></strong>
           <?php if (!empty($ins['nick'])): ?><div class="muted"><?= View::e($ins['nick']) ?></div><?php endif; ?>
         <?php if ($perfilUrl): ?></a><?php else: ?></div><?php endif; ?>

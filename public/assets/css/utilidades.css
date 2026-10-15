@@ -1,0 +1,241 @@
+/* FlexArena — utilidades.css
+Lo que antes eran atributos style="…" escritos en las vistas. Se carga al final: una clase de acá gana sobre las demás,
+como ganaba el estilo en línea. Las utilidades (una declaración cada una) llevan !important por eso mismo; las clases con
+nombre agrupan los ajustes de una pieza concreta. No lleva estilo de ninguna pantalla nueva: esos van en componentes.css */
+
+/* ─── Utilidades ─── */
+.mb-1 { margin-bottom: 1rem !important; }
+.mb-15 { margin-bottom: 1.5rem !important; }
+.mb-025 { margin-bottom: .25rem !important; }
+.mb-075 { margin-bottom: .75rem !important; }
+.mb-12 { margin-bottom: 1.2rem !important; }
+.mb-14 { margin-bottom: 1.4rem !important; }
+.mb-125 { margin-bottom: 1.25rem !important; }
+.mb-05 { margin-bottom: .5rem !important; }
+.mb-06 { margin-bottom: .6rem !important; }
+.mt-1 { margin-top: 1rem !important; }
+.mt-075 { margin-top: .75rem !important; }
+.mt-15 { margin-top: 1.5rem !important; }
+.mt-05 { margin-top: .5rem !important; }
+.mt-12 { margin-top: 1.2rem !important; }
+.mt-04 { margin-top: .4rem !important; }
+.mt-03 { margin-top: .3rem !important; }
+.mt-035 { margin-top: .35rem !important; }
+.mt-auto { margin-top: auto !important; }
+.mt-025 { margin-top: .25rem !important; }
+.mt-neg025 { margin-top: -.25rem !important; }
+.mt-02 { margin-top: .2rem !important; }
+.mt-08 { margin-top: .8rem !important; }
+.ml-04 { margin-left: .4rem !important; }
+.ml-05 { margin-left: .5rem !important; }
+.m-0 { margin: 0 !important; }
+.d-inline { display: inline !important; }
+.d-block { display: block !important; }
+.d-inline-flex { display: inline-flex !important; }
+.flex { display: flex !important; }
+.d-grid { display: grid !important; }
+.flex-col { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.items-end { align-items: flex-end !important; }
+.items-start { align-items: start !important; }
+.items-stretch { align-items: stretch !important; }
+.justify-between { justify-content: space-between !important; }
+.justify-center { justify-content: center !important; }
+.justify-end { justify-content: flex-end !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.gap-05 { gap: .5rem !important; }
+.gap-075 { gap: .75rem !important; }
+.gap-1 { gap: 1rem !important; }
+.gap-125 { gap: 1.25rem !important; }
+.gap-06 { gap: .6rem !important; }
+.flex-1 { flex: 1 !important; }
+.min-w-0 { min-width: 0 !important; }
+.fs-70 { font-size: .7rem !important; }
+.fs-72 { font-size: .72rem !important; }
+.fs-75 { font-size: .75rem !important; }
+.fs-80 { font-size: .8rem !important; }
+.fs-82 { font-size: .82rem !important; }
+.fs-85 { font-size: .85rem !important; }
+.fs-90 { font-size: .9rem !important; }
+.fs-95 { font-size: .95rem !important; }
+.fs-135 { font-size: 1.35rem !important; }
+.p-1 { padding: 1rem !important; }
+.p-075 { padding: .75rem !important; }
+.nowrap { white-space: nowrap !important; }
+.ws-normal { white-space: normal !important; }
+.text-center { text-align: center !important; }
+.color-ok { color: var(--success) !important; }
+.color-aviso { color: var(--warning) !important; }
+.color-peligro { color: var(--danger) !important; }
+.color-texto { color: var(--text) !important; }
+.color-primario { color: var(--primary-strong) !important; }
+.bold { font-weight: 700 !important; }
+.span-all { grid-column: 1/-1 !important; }
+
+/* ─── Ajustes con nombre ─── */
+.alinear-abajo { align-items:end; }
+.auth-520 { width:min(100%,520px); }
+.auth-grid { grid-template-columns:1fr; gap:.85rem; }
+.aviso-advertencia { background:rgba(241,196,15,.1); border-color:rgba(241,196,15,.35); margin-bottom:1rem; padding:1rem 1.25rem; }
+.aviso-auth { margin-bottom:1rem; display:block; padding:.65rem; border-radius:12px; white-space:normal; }
+.aviso-info { background:rgba(52,152,219,.08); border-color:rgba(52,152,219,.3); margin-bottom:1rem; padding:.9rem 1.1rem; }
+.ayuda-seccion { margin:.25rem 0 0; font-size:.85rem; }
+.banner-campeon { background:rgba(37,194,129,.1); border-color:rgba(37,194,129,.3); margin-bottom:1rem; text-align:center; padding:1.5rem; }
+.banner-campeon-ancho { background:rgba(37,194,129,.1); border-color:rgba(37,194,129,.3); text-align:center; padding:1.5rem; margin-bottom:1.5rem; }
+.barra-resultados { display:flex; height:14px; border-radius:999px; overflow:hidden; margin-top:.75rem; border:1px solid var(--line); }
+.btn-peligro-solido { background:#c0392b; border-color:#c0392b; }
+.calendario-caja { background:var(--surface); border-radius:6px; padding:1rem; }
+.campo-flexible { flex:1; min-width:200px; }
+.celda-motivo { max-width:240px; }
+.chip-menu { padding:.15rem .5rem; font-size:.72rem; }
+.chip-mini { padding:.1rem .45rem; font-size:.7rem; }
+.error-detalle { text-align:left; max-width:min(90vw,960px); margin:1.5rem auto 0; overflow:auto; white-space:pre-wrap; }
+.fila-integrante { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid var(--line); }
+.fila-ronda { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.35rem 0; }
+.fila-torneo { padding:.45rem 0; border-bottom:1px solid var(--line); }
+.flash-chip { margin-bottom:.75rem; padding:.7rem 1rem; border-radius:14px; display:block; max-width:100%; white-space:normal; }
+.forma-reciente { display:flex; gap:.28rem; flex-wrap:wrap; margin-top:.8rem; }
+.grilla-120 { grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); }
+.grilla-130 { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+.grilla-puntos { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; }
+.lista-peligro { margin:0 0 1rem 1.25rem; line-height:1.8; }
+.logo-48 { height:48px; width:auto; }
+.logo-52 { height:52px; width:auto; }
+.m-0-0-025 { margin:0 0 .25rem; }
+.m-0-0-035 { margin:0 0 .35rem; }
+.m-0-0-05 { margin:0 0 .5rem; }
+.m-0-0-075 { margin:0 0 .75rem; }
+.m-03-0-0 { margin:.3rem 0 0; }
+.m-05-0-075 { margin:.5rem 0 .75rem; }
+.modal-460 { width:min(100%,460px); }
+.modal-500 { width:min(100%,500px); }
+.modal-habeas-tarjeta { max-width:420px; width:90%; padding:1.5rem; }
+.my-03 { margin:.3rem 0; }
+.my-1 { margin:1rem 0; }
+.pagina-error { min-height:70vh; display:grid; place-items:center; text-align:center; }
+.panel-bracket { padding:1rem 1rem .6rem; }
+.panel-info { margin-bottom:1rem; border-color:rgba(52,152,219,.3); }
+.panel-peligro { margin-top:1rem; border-left:3px solid #c0392b; }
+.perfil-intro { margin:.75rem 0 1rem; }
+.perfil-nombre { margin:.1rem 0 .4rem; font-size:clamp(1.6rem,4vw,2.6rem); }
+.pw-reglas { list-style:none; padding:0; margin:.6rem 0 0; font-size:.82rem; display:grid; gap:.2rem; }
+.resumen-desplegable { cursor:pointer; font-weight:800; color:#d7eaff; list-style:none; }
+.resumen-peligro { cursor:pointer; font-weight:800; color:#ffb3b3; list-style:none; }
+.separador-seccion { grid-column:1/-1; border-top:1px solid var(--line); padding-top:1rem; margin-top:.5rem; }
+.sparkline { width:100%; height:120px; display:block; }
+.tarjeta-enlace { padding:.75rem; display:block; }
+.tarjeta-integrante { padding:.75rem; display:flex; gap:.6rem; align-items:center; }
+.texto-modal { margin:0 0 1rem; font-size:.95rem; }
+.titulo-peligro { margin:0 0 .75rem; color:#ffb3b3; }
+.truncar { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ─── Fondos de color de las barras de resultados ─── */
+.bg-ok { background: var(--success); }
+.bg-aviso { background: var(--warning); }
+.bg-peligro { background: var(--danger); }
+
+/* ─── Porcentajes (anchos de las barras: .pct-0 … .pct-100) ─── */
+.pct-0 { width: 0%; }
+.pct-1 { width: 1%; }
+.pct-2 { width: 2%; }
+.pct-3 { width: 3%; }
+.pct-4 { width: 4%; }
+.pct-5 { width: 5%; }
+.pct-6 { width: 6%; }
+.pct-7 { width: 7%; }
+.pct-8 { width: 8%; }
+.pct-9 { width: 9%; }
+.pct-10 { width: 10%; }
+.pct-11 { width: 11%; }
+.pct-12 { width: 12%; }
+.pct-13 { width: 13%; }
+.pct-14 { width: 14%; }
+.pct-15 { width: 15%; }
+.pct-16 { width: 16%; }
+.pct-17 { width: 17%; }
+.pct-18 { width: 18%; }
+.pct-19 { width: 19%; }
+.pct-20 { width: 20%; }
+.pct-21 { width: 21%; }
+.pct-22 { width: 22%; }
+.pct-23 { width: 23%; }
+.pct-24 { width: 24%; }
+.pct-25 { width: 25%; }
+.pct-26 { width: 26%; }
+.pct-27 { width: 27%; }
+.pct-28 { width: 28%; }
+.pct-29 { width: 29%; }
+.pct-30 { width: 30%; }
+.pct-31 { width: 31%; }
+.pct-32 { width: 32%; }
+.pct-33 { width: 33%; }
+.pct-34 { width: 34%; }
+.pct-35 { width: 35%; }
+.pct-36 { width: 36%; }
+.pct-37 { width: 37%; }
+.pct-38 { width: 38%; }
+.pct-39 { width: 39%; }
+.pct-40 { width: 40%; }
+.pct-41 { width: 41%; }
+.pct-42 { width: 42%; }
+.pct-43 { width: 43%; }
+.pct-44 { width: 44%; }
+.pct-45 { width: 45%; }
+.pct-46 { width: 46%; }
+.pct-47 { width: 47%; }
+.pct-48 { width: 48%; }
+.pct-49 { width: 49%; }
+.pct-50 { width: 50%; }
+.pct-51 { width: 51%; }
+.pct-52 { width: 52%; }
+.pct-53 { width: 53%; }
+.pct-54 { width: 54%; }
+.pct-55 { width: 55%; }
+.pct-56 { width: 56%; }
+.pct-57 { width: 57%; }
+.pct-58 { width: 58%; }
+.pct-59 { width: 59%; }
+.pct-60 { width: 60%; }
+.pct-61 { width: 61%; }
+.pct-62 { width: 62%; }
+.pct-63 { width: 63%; }
+.pct-64 { width: 64%; }
+.pct-65 { width: 65%; }
+.pct-66 { width: 66%; }
+.pct-67 { width: 67%; }
+.pct-68 { width: 68%; }
+.pct-69 { width: 69%; }
+.pct-70 { width: 70%; }
+.pct-71 { width: 71%; }
+.pct-72 { width: 72%; }
+.pct-73 { width: 73%; }
+.pct-74 { width: 74%; }
+.pct-75 { width: 75%; }
+.pct-76 { width: 76%; }
+.pct-77 { width: 77%; }
+.pct-78 { width: 78%; }
+.pct-79 { width: 79%; }
+.pct-80 { width: 80%; }
+.pct-81 { width: 81%; }
+.pct-82 { width: 82%; }
+.pct-83 { width: 83%; }
+.pct-84 { width: 84%; }
+.pct-85 { width: 85%; }
+.pct-86 { width: 86%; }
+.pct-87 { width: 87%; }
+.pct-88 { width: 88%; }
+.pct-89 { width: 89%; }
+.pct-90 { width: 90%; }
+.pct-91 { width: 91%; }
+.pct-92 { width: 92%; }
+.pct-93 { width: 93%; }
+.pct-94 { width: 94%; }
+.pct-95 { width: 95%; }
+.pct-96 { width: 96%; }
+.pct-97 { width: 97%; }
+.pct-98 { width: 98%; }
+.pct-99 { width: 99%; }
+.pct-100 { width: 100%; }
+
+/* Texto que solo oyen los lectores de pantalla (la región role="status" de la lista de torneos). */
+.solo-lectores { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

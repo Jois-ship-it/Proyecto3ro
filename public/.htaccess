@@ -17,7 +17,8 @@ RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    # La política de seguridad de contenido (CSP) la manda PHP en cada respuesta (core/Csp.php): lleva un
+    # nonce distinto por pedido, y Apache no puede ponerlo. Los archivos estáticos no la necesitan.
     Header unset X-Powered-By
     # El puerto 80 solo redirige a HTTPS (nunca sirve contenido), así que
     # este header nunca sale por una respuesta HTTP real.
@@ -36,4 +37,15 @@ RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
     ExpiresByType application/javascript "access plus 7 days"
     ExpiresByType image/svg+xml        "access plus 30 days"
     ExpiresByType image/png            "access plus 30 days"
+</IfModule>
+
+# Las hojas y los scripts se piden con ?v=<fecha de modificación> (View::asset): cuando el archivo cambia, su dirección
+# cambia, así que una copia con versión no se vuelve vieja nunca y el navegador puede guardarla un año sin volver a
+# preguntar. Sin versión (o con otra consulta) vale el plazo de arriba.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js)$">
+        <If "%{QUERY_STRING} =~ /^v=[0-9]+$/">
+            Header set Cache-Control "public, max-age=31536000, immutable"
+        </If>
+    </FilesMatch>
 </IfModule>

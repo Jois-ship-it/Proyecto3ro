@@ -1,0 +1,154 @@
+/* FlexArena — base.css
+Lo que vale para todas las páginas: reinicio, tipografía, navegación pública, hero, secciones, el armazón del panel
+(barra lateral y superior), el pie y los avisos. Mobile First: está pensado para pantalla chica; responsive.css
+agrega lo que hace falta a medida que hay más ancho. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(52,152,219,.24), transparent 38rem),
+    radial-gradient(circle at bottom right, rgba(11,95,143,.22), transparent 32rem),
+    linear-gradient(135deg, var(--bg), #050910 70%);
+}
+
+a { color: inherit; text-decoration: none; }
+img, svg { max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+
+/* ─── TIPOGRAFÍA ─────────────────────────────── */
+h1, h2, h3, h4, p { margin-top: 0; }
+h1 { font-size: clamp(2.3rem,7vw,5.4rem); line-height: .95; letter-spacing: -.07em; margin-bottom: 1rem; }
+h2 { font-size: clamp(1.7rem,4vw,2.6rem); letter-spacing: -.045em; margin-bottom: .75rem; }
+h3 { font-size: 1.15rem; margin-bottom: .45rem; }
+p  { color: var(--muted); line-height: 1.65; }
+.eyebrow { color: var(--primary-strong); text-transform: uppercase; letter-spacing: .16em; font-size: .78rem; font-weight: 800; }
+.muted   { color: var(--muted); }
+
+/* Enlace «Saltar al contenido»: fuera de la pantalla hasta que recibe el foco con el teclado (primer Tab). */
+.saltar {
+  position: absolute; left: -9999px; top: 0; z-index: 1000;
+  padding: .7rem 1rem; border-radius: 12px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--primary-strong);
+}
+.saltar:focus { left: 1rem; top: 1rem; }
+/* El destino del enlace recibe el foco por código: no hace falta marcarlo. */
+#contenido:focus { outline: none; }
+
+/* Un título con el aspecto de otro nivel: el nivel lo da la estructura de la página (sin saltear), el tamaño, el diseño. */
+.como-h2 { font-size: clamp(1.7rem,4vw,2.6rem); line-height: normal; letter-spacing: -.045em; margin-bottom: .75rem; }
+.como-h3 { font-size: 1.15rem; letter-spacing: normal; margin-bottom: .45rem; }
+
+/* Un elemento con el atributo hidden no se ve, aunque su clase le dé un display. */
+[hidden] { display: none !important; }
+
+/* ─── NAVEGACIÓN PÚBLICA ─────────────────────── */
+.public-shell { min-height: 100vh; }
+.public-nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem clamp(1rem,4vw,4rem);
+  background: rgba(7,17,31,.78);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: .8rem;
+  font-weight: 800; letter-spacing: -.03em;
+}
+.logo-mark {
+  width: 42px; height: 42px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: rgba(7, 17, 31, .55);
+  border: 1px solid rgba(52,152,219,.35);
+  box-shadow: 0 12px 30px rgba(52,152,219,.12);
+}
+.logo-mark img { width: 30px; height: 30px; object-fit: contain; }
+/* En móvil los enlaces viven detrás del botón de menú: ocultos y apilados. */
+.nav-links {
+  display: none; width: 100%;
+  flex-direction: column; align-items: stretch;
+  gap: .4rem; flex-wrap: wrap; padding-top: .75rem;
+}
+.public-nav.open { flex-wrap: wrap; }
+.public-nav.open .nav-links { display: flex; }
+.nav-link  {
+  padding: .65rem .85rem; border-radius: 14px;
+  color: var(--muted); font-size: .94rem;
+  transition: color .18s, background .18s;
+}
+.nav-link:hover, .nav-link.active { color: #fff; background: rgba(255,255,255,.08); }
+.nav-toggle { display: inline-flex; }
+
+/* ─── HERO ───────────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem; align-items: center;
+  padding: clamp(2.5rem,6vw,6rem) clamp(1rem,4vw,4rem);
+}
+.hero-actions, .actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+
+/* ─── SECCIÓN / GRID ─────────────────────────── */
+.section { padding: 2rem clamp(1rem,4vw,4rem); }
+.grid { display: grid; gap: 1rem; }
+.grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; }
+
+/* ─── APP SHELL (PANEL INTERNO) ──────────────── */
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
+
+/* En móvil la barra lateral es un cajón que entra desde la izquierda; el botón
+   de menú de la topbar le pone la clase .open. */
+.sidebar {
+  position: fixed; inset: 0 auto 0 0;
+  width: min(86vw,310px);
+  transform: translateX(-105%);
+  transition: transform .22s ease;
+  z-index: 80;
+  padding: 1rem; border-right: 1px solid var(--line);
+  background: rgba(7,17,31,.76); backdrop-filter: blur(18px);
+  overflow-y: auto;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar .brand { padding: .45rem .35rem 1rem; }
+.side-section-title {
+  margin: 1rem .65rem .35rem;
+  color: #7790aa; font-size: .73rem;
+  text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
+}
+.side-link {
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  padding: .74rem .8rem; color: var(--muted);
+  border-radius: 14px; margin-bottom: .18rem;
+  transition: color .18s, background .18s;
+}
+.side-link:hover, .side-link.active { color: #fff; background: rgba(255,255,255,.08); }
+
+.app-main { min-width: 0; }
+.topbar {
+  position: sticky; top: 0; z-index: 45;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 1rem;
+  padding: 1rem clamp(1rem,3vw,2rem);
+  border-bottom: 1px solid var(--line);
+  background: rgba(7,17,31,.7); backdrop-filter: blur(16px);
+}
+.mobile-menu-btn { display: inline-flex; }
+.page            { padding: clamp(1rem,3vw,2rem); }
+.page-header     { display: flex; flex-direction: column; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+.page-title h1   { font-size: clamp(1.8rem,4vw,3.1rem); margin: .1rem 0 .45rem; }
+.kpi-row         { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+/* ─── FOOTER ─────────────────────────────────── */
+.footer { padding: 2rem clamp(1rem,4vw,4rem); color: var(--muted); border-top: 1px solid var(--line); font-size: .9rem; }
+
+/* ─── FLASH MESSAGES ─────────────────────────── */
+.flash-msg { margin-bottom: .75rem; }
+
+/* Enlace del pie de página (correo de contacto). */
+.footer a                      { color: var(--primary-strong); }

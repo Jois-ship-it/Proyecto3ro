@@ -13,14 +13,14 @@ $ra_id   = (int) $ronda['id'];
 $ra_base = rtrim($panelBase ?? '/admin', '/');
 ?>
 <?php if ($ronda['estado'] === 'cerrada'): ?>
-  <form method="POST" action="<?= $ra_base ?>/rondas/<?= $ra_id ?>/reabrir" style="display:inline"
-        onsubmit="return confirm('¿Reabrir esta ronda? Va a volver a admitir carga de resultados.')">
+  <form class="d-inline" method="POST" action="<?= $ra_base ?>/rondas/<?= $ra_id ?>/reabrir"
+        data-confirmar="¿Reabrir esta ronda? Va a volver a admitir carga de resultados.">
     <?= Csrf::field() ?>
     <button type="submit" class="btn small">Reabrir ronda</button>
   </form>
 <?php else: ?>
-  <form method="POST" action="<?= $ra_base ?>/rondas/<?= $ra_id ?>/cerrar" style="display:inline"
-        onsubmit="return confirm('¿Cerrar esta ronda? No se van a poder cargar resultados hasta que la reabras.')">
+  <form class="d-inline" method="POST" action="<?= $ra_base ?>/rondas/<?= $ra_id ?>/cerrar"
+        data-confirmar="¿Cerrar esta ronda? No se van a poder cargar resultados hasta que la reabras.">
     <?= Csrf::field() ?>
     <button type="submit" class="btn small danger">Cerrar ronda</button>
   </form>
