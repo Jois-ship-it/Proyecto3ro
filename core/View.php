@@ -3,6 +3,20 @@ declare(strict_types=1);
 
 class View
 {
+    /** Las hojas de estilo del sitio, en el orden en que se cargan (cada una es un archivo de public/assets/css/). */
+    public const HOJAS = ['tokens', 'base', 'componentes', 'paginas', 'responsive', 'utilidades'];
+
+    /**
+     * La dirección de un archivo de public/ con la fecha de su última modificación (`?v=`): cuando el
+     * archivo cambia, la dirección cambia y el navegador no sigue usando la copia vieja. Mientras no
+     * cambie, se puede guardar por mucho tiempo (ver el caché de public/.htaccess).
+     */
+    public static function asset(string $ruta): string
+    {
+        $archivo = BASE_PATH . '/public' . $ruta;
+        return is_file($archivo) ? $ruta . '?v=' . filemtime($archivo) : $ruta;
+    }
+
     /**
      * Renderiza una vista dentro de un layout.
      *
@@ -12,6 +26,13 @@ class View
      */
     public static function render(string $view, array $data = [], string $layout = 'public'): void
     {
+        // Las páginas que no pasan por un controlador (el 404 del router, las de error) no traen la
+        // configuración del sitio: sin ella, el nombre sale del .env y no se muestra contacto.
+        $data += ['_sitio' => [
+            'nombre'            => defined('APP_NAME') ? APP_NAME : 'FlexArena',
+            'contacto'          => '',
+            'perfiles_publicos' => true,
+        ]];
         extract($data, EXTR_SKIP);
 
         // Capturar la vista
@@ -47,21 +68,57 @@ class View
         return '/' . ltrim($path, '/');
     }
 
-    /** Avatar: imagen si hay URL, si no un círculo con iniciales. */
+    /** @var array<string,string> clase => declaraciones, de lo que pidió la página en este pedido */
+    private static array $estilosDinamicos = [];
+
+    /**
+     * Una clase para un estilo que se calcula al dibujar la página (la posición de una tarjeta del bracket, el
+     * ancho de una barra, el tamaño de un avatar). Como el CSP no admite `style="…"`, el estilo va a un
+     * bloque `<style nonce>` que imprime el layout (ver estilosDinamicos()) y el elemento lleva la clase.
+     *
+     * Solo se aceptan propiedades con valores NUMÉRICOS (con rem, px o %): lo que arma el código, nunca
+     * texto de una persona. Así lo que se imprime no puede cerrar la regla ni la etiqueta.
+     *
+     * @throws LogicException si algo no es numérico
+     */
+    public static function claseDinamica(string $declaraciones): string
+    {
+        if (!preg_match('/^(?:[a-z-]+:-?(?:\d+\.?\d*|\.\d+)(?:rem|px|%)?;?)+\z/', $declaraciones)) {
+            throw new LogicException('Estilo dinámico no permitido: ' . $declaraciones);
+        }
+        $clase = 'd' . substr(md5($declaraciones), 0, 10);
+        self::$estilosDinamicos[$clase] = rtrim($declaraciones, ';');
+        return $clase;
+    }
+
+    /** El CSS de las clases dinámicas que pidió la página: lo imprime el layout dentro de un `<style nonce>`. */
+    public static function estilosDinamicos(): string
+    {
+        $css = '';
+        foreach (self::$estilosDinamicos as $clase => $declaraciones) {
+            $css .= '.' . $clase . '{' . $declaraciones . "}\n";
+        }
+        return $css;
+    }
+
+    /** Descarta los estilos dinámicos pedidos (para los tests, que simulan varios pedidos en un proceso). */
+    public static function olvidarEstilosDinamicos(): void
+    {
+        self::$estilosDinamicos = [];
+    }
+
+    /** Avatar: imagen si hay URL, si no un círculo con iniciales. El tamaño va en una clase dinámica. */
     public static function avatar(string $nombre, ?string $url, int $size = 64): string
     {
-        $s = (int)$size;
+        $s = max(1, (int) $size);
         if ($url) {
             return '<img src="' . self::e($url) . '" alt="' . self::e($nombre) . '"'
-                 . ' style="width:' . $s . 'px;height:' . $s . 'px;border-radius:50%;object-fit:cover;'
-                 . 'border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.2)">';
+                 . ' class="avatar avatar-img ' . self::claseDinamica("width:{$s}px;height:{$s}px") . '">';
         }
         $parts = preg_split('/\s+/', trim($nombre)) ?: [''];
         $ini = mb_strtoupper(mb_substr($parts[0] ?? '?', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
-        return '<span style="width:' . $s . 'px;height:' . $s . 'px;border-radius:50%;display:inline-grid;'
-             . 'place-items:center;background:linear-gradient(135deg,var(--primary),var(--primary-dark));'
-             . 'color:#fff;font-weight:800;font-size:' . round($s * 0.38, 1) . 'px;border:1px solid var(--line)">'
-             . self::e($ini ?: '?') . '</span>';
+        $clase = self::claseDinamica("width:{$s}px;height:{$s}px;font-size:" . round($s * 0.38, 1) . 'px');
+        return '<span class="avatar avatar-ini ' . $clase . '">' . self::e($ini ?: '?') . '</span>';
     }
 
     /** Formatea una fecha+hora a "dd/mm/aaaa HH:MM" (zona horaria de la app). */
@@ -78,6 +135,30 @@ class View
         if (empty($dt) || str_starts_with((string)$dt, '0000-00-00')) return $placeholder;
         $ts = strtotime((string)$dt);
         return $ts === false ? $placeholder : date('d/m/Y', $ts);
+    }
+
+    /** Formatea un puntaje: sin decimales si es entero («3»), con coma si no («2,5»). */
+    public static function numero(mixed $valor): string
+    {
+        return rtrim(rtrim(number_format((float) $valor, 2, ',', ''), '0'), ',');
+    }
+
+    /**
+     * El resultado de un partido que viene de EnfrentamientoModel::getByRonda(), o null si todavía no
+     * tiene. Las vistas lo usan en lugar de pedirlo a la base: antes cada partido dibujado hacía su
+     * propia consulta desde la vista.
+     *
+     * @param array<string,mixed> $partido
+     * @return array{puntos_a:mixed,puntos_b:mixed,corregido:bool}|null
+     */
+    public static function resultadoDe(array $partido): ?array
+    {
+        if (($partido['puntos_a'] ?? null) === null) return null;
+        return [
+            'puntos_a'  => $partido['puntos_a'],
+            'puntos_b'  => $partido['puntos_b'] ?? 0,
+            'corregido' => (bool) ($partido['resultado_corregido'] ?? false),
+        ];
     }
 
     /** Genera un chip/badge de estado con la clase CSS correspondiente */

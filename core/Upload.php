@@ -7,7 +7,9 @@ declare(strict_types=1);
  * Seguridad:
  *  - Valida que el archivo sea realmente una imagen (getimagesize), no por extensión.
  *  - Whitelist de MIME → extensión.
- *  - Tamaño máximo.
+ *  - Tamaño máximo del archivo y de la imagen (píxeles): ver Imagen::PIXELES_MAXIMOS.
+ *  - La imagen se decodifica, se achica y se vuelve a codificar (ver Imagen): lo guardado es solo
+ *    la imagen, sin metadatos ni nada pegado al final del archivo.
  *  - Nombre aleatorio (no se usa el nombre original).
  *  - La carpeta /uploads tiene .htaccess que desactiva la ejecución de scripts.
  */
@@ -40,35 +42,68 @@ class Upload
         if ($err === UPLOAD_ERR_NO_FILE) {
             return null; // El campo es opcional: no se subió imagen.
         }
+        if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+            // El servidor rechazó el archivo por pesado antes de que llegara acá (upload_max_filesize): mismo motivo que abajo.
+            throw new ErrorNegocio('La imagen supera el máximo de 2 MB.');
+        }
         if ($err !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Error al subir la imagen (código ' . $err . ').');
+            throw new ErrorNegocio('Error al subir la imagen (código ' . $err . ').');
         }
         if (($file['size'] ?? 0) > self::MAX_BYTES) {
-            throw new RuntimeException('La imagen supera el máximo de 2 MB.');
+            throw new ErrorNegocio('La imagen supera el máximo de 2 MB.');
         }
         if (!is_uploaded_file($file['tmp_name'] ?? '')) {
-            throw new RuntimeException('Subida inválida.');
+            throw new ErrorNegocio('Subida inválida.');
         }
 
+        return self::guardar((string) $file['tmp_name'], self::dir($subdir));
+    }
+
+    /**
+     * Valida el contenido de un archivo ya subido, lo reduce y lo guarda en `$dir`.
+     *
+     * Es el paso de `image()` que no depende de que el archivo venga de un pedido HTTP, por eso los
+     * tests lo llaman directo.
+     *
+     * Si esta instalación de GD no sabe tratar el formato (ver Imagen::soporta()), guarda el
+     * archivo original: ya pasó las validaciones de arriba, y perder la reducción es mejor que
+     * rechazar una imagen buena.
+     *
+     * @return string el nombre del archivo guardado
+     * @throws ErrorNegocio si no es una imagen válida, es de un formato no permitido o es demasiado grande
+     */
+    public static function guardar(string $rutaTemporal, string $dir): string
+    {
         // Validación real del contenido (no por extensión ni header del cliente)
-        $info = @getimagesize($file['tmp_name']);
+        $info = @getimagesize($rutaTemporal);
         if ($info === false) {
-            throw new RuntimeException('El archivo no es una imagen válida.');
+            throw new ErrorNegocio('El archivo no es una imagen válida.');
         }
         $mime = $info['mime'] ?? '';
         if (!isset(self::ALLOWED[$mime])) {
-            throw new RuntimeException('Formato no permitido. Usá JPG, PNG, WEBP o GIF.');
+            throw new ErrorNegocio('Formato no permitido. Usá JPG, PNG, WEBP o GIF.');
+        }
+        if (!Imagen::cabeEnMemoria((int) $info[0], (int) $info[1])) {
+            throw new ErrorNegocio(sprintf(
+                'La imagen es demasiado grande (%d × %d). Usá una de hasta %d megapíxeles.',
+                $info[0], $info[1], intdiv(Imagen::PIXELES_MAXIMOS, 1_000_000)
+            ));
         }
 
-        $ext  = self::ALLOWED[$mime];
-        $name = bin2hex(random_bytes(8)) . '_' . time() . '.' . $ext;
-        $dir  = self::dir($subdir);
+        $reducida = Imagen::reducir($rutaTemporal, $mime);
+        $ext      = $reducida['ext'] ?? self::ALLOWED[$mime];
+        $datos    = $reducida['datos'] ?? file_get_contents($rutaTemporal);
+        if ($datos === false) {
+            throw new RuntimeException('No se pudo leer la imagen subida.');
+        }
+
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new RuntimeException('No se pudo preparar el destino de la imagen.');
         }
 
+        $name = bin2hex(random_bytes(8)) . '_' . time() . '.' . $ext;
         $dest = $dir . DIRECTORY_SEPARATOR . $name;
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+        if (file_put_contents($dest, $datos) === false) {
             throw new RuntimeException('No se pudo guardar la imagen.');
         }
         @chmod($dest, 0644);

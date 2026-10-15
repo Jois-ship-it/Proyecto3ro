@@ -82,12 +82,32 @@ class Router
         return $m[1];
     }
 
+    /**
+     * Los únicos verbos por los que un POST puede hacerse pasar (campo `_method`).
+     *
+     * Antes se aceptaba cualquier valor: un POST con `_method=GET` se despachaba como GET, o
+     * sea por rutas que no piden token CSRF, y un `_method[]=x` terminaba en un error de
+     * tipos. Un formulario HTML solo sabe enviar GET y POST; `_method` existe para PUT, PATCH
+     * y DELETE, y nada más. Cualquier otro valor se ignora y el pedido sigue siendo un POST.
+     */
+    public const METODOS_SOBRESCRIBIBLES = ['PUT', 'PATCH', 'DELETE'];
+
+    /** @param array $post el cuerpo del pedido ($_POST) */
+    public static function metodoEfectivo(string $metodo, array $post): string
+    {
+        $metodo = strtoupper($metodo);
+        if ($metodo !== 'POST') return $metodo;
+
+        $pedido = $post['_method'] ?? null;
+        if (!is_string($pedido)) return $metodo;
+
+        $pedido = strtoupper(trim($pedido));
+        return in_array($pedido, self::METODOS_SOBRESCRIBIBLES, true) ? $pedido : $metodo;
+    }
+
     public function dispatch(string $url, string $method): void
     {
-        // Normalizar el método (puede llegar POST disfrazado via _method)
-        if ($method === 'POST' && isset($_POST['_method'])) {
-            $method = strtoupper($_POST['_method']);
-        }
+        $method = self::metodoEfectivo($method, $_POST);
 
         foreach ($this->routes as $route) {
             if ($route['method'] !== strtoupper($method)) continue;
@@ -129,21 +149,50 @@ class Router
             }
         }
 
-        // Ninguna ruta coincide
-        $this->abort(404);
+        // Ninguna ruta coincide con ese método. Si la dirección existe con OTRO método y quien
+        // pregunta espera JSON, no es un «no encontrado»: es un 405, y dice cuáles sí acepta.
+        $permitidos = $this->metodosPermitidos($url);
+        if ($permitidos !== [] && ManejadorErrores::esPeticionApi($url)) {
+            if (!headers_sent()) header('Allow: ' . implode(', ', $permitidos));
+            Respuesta::error(Respuesta::codigoPara(405), 'Este recurso solo acepta: ' . implode(', ', $permitidos) . '.', 405);
+        }
+
+        $this->abort(404, '', $url);
     }
 
-    private function abort(int $code, string $msg = ''): void
+    /**
+     * Los métodos con los que existe una dirección (GET, POST…), vacío si no existe con ninguno.
+     *
+     * @return string[]
+     */
+    public function metodosPermitidos(string $url): array
     {
-        http_response_code($code);
-        if ($code === 404) {
-            View::render('shared/404', [], 'public');
-        } else {
-            if (APP_ENV === 'development' && $msg) {
-                echo "<pre>Error {$code}: {$msg}</pre>";
-            } else {
-                View::render('shared/404', [], 'public');
+        $metodos = [];
+        foreach ($this->routes as $route) {
+            if (preg_match($route['pattern'], $url)) {
+                $metodos[$route['method']] = true;
             }
         }
+        return array_keys($metodos);
+    }
+
+    /**
+     * Un 404 es una página (o un JSON, si el pedido es de la API). Cualquier otro caso que
+     * llega acá es un error de programación —una ruta que apunta a un controlador o una
+     * acción que no existe—: se lanza y lo atiende ManejadorErrores. Antes mostraba la
+     * página de «no encontrado» (en producción) o un <pre> suelto (en desarrollo).
+     */
+    private function abort(int $code, string $msg = '', string $url = ''): void
+    {
+        if ($code !== 404) {
+            throw new RuntimeException($msg !== '' ? $msg : "Error {$code} al despachar la ruta.");
+        }
+
+        if (ManejadorErrores::esPeticionApi($url)) {
+            Respuesta::error(Respuesta::codigoPara(404), 'El recurso que buscás no existe.', 404);
+        }
+
+        http_response_code(404);
+        View::render('shared/404', ['pageTitle' => 'Página no encontrada'], 'public');
     }
 }

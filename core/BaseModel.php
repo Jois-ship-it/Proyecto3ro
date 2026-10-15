@@ -70,6 +70,47 @@ abstract class BaseModel
 
     // ─── Helpers internos ─────────────────────────────────────
 
+    /**
+     * «WHERE a AND b» con las condiciones que haya, o '' si no hay ninguna. Las condiciones son
+     * texto de la consulta (nunca datos del pedido: esos viajan en los parámetros enlazados).
+     *
+     * @param string[] $condiciones
+     */
+    protected function dondeDe(array $condiciones): string
+    {
+        return $condiciones === [] ? '' : 'WHERE ' . implode(' AND ', $condiciones);
+    }
+
+    /**
+     * Agrega la condición «columna LIKE :nombre» por cada columna: el texto buscado aparece en
+     * alguna de ellas. Cada columna lleva su propio parámetro (:nombre1, :nombre2…) porque con
+     * consultas preparadas nativas un mismo nombre no puede repetirse. Si no hay texto no hace nada.
+     *
+     * @param string[] $condiciones se le agrega la condición
+     * @param array    $params      se le agregan los parámetros
+     * @param string[] $columnas    columnas donde buscar, con su alias («p.nombre»)
+     */
+    protected function agregarBusqueda(array &$condiciones, array &$params, string $texto, array $columnas, string $nombre = 'q'): void
+    {
+        $patron = Filtros::patronLike($texto);
+        if ($patron === '') {
+            return;
+        }
+        $partes = [];
+        foreach (array_values($columnas) as $i => $columna) {
+            $param = ":{$nombre}" . ($i + 1);
+            $partes[] = "{$columna} LIKE {$param} ESCAPE '" . Filtros::ESCAPE_LIKE . "'";
+            $params[$param] = $patron;
+        }
+        $condiciones[] = '(' . implode(' OR ', $partes) . ')';
+    }
+
+    /** « LIMIT n OFFSET m» (con los números ya como enteros), o '' si no se pidió un tope. */
+    protected function limiteDe(?int $limite, int $desde): string
+    {
+        return $limite === null ? '' : ' LIMIT ' . max(0, $limite) . ' OFFSET ' . max(0, $desde);
+    }
+
     protected function query(string $sql, array $params = []): PDOStatement
     {
         $stmt = $this->db->prepare($sql);

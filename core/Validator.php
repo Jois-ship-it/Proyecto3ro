@@ -35,7 +35,7 @@ class Validator
         return $errores;
     }
 
-    /** Lanza RuntimeException con el primer error si la contraseña no cumple. */
+    /** Lanza ErrorNegocio con el primer error si la contraseña no cumple. */
     public static function assertPassword(string $password, string $confirmacion = null): void
     {
         $errores = self::passwordErrors($password);
@@ -43,7 +43,25 @@ class Validator
             $errores[] = 'Las contraseñas no coinciden.';
         }
         if ($errores) {
-            throw new RuntimeException('Contraseña insegura: ' . $errores[0]);
+            throw new ErrorNegocio('Contraseña insegura: ' . $errores[0]);
+        }
+    }
+
+    /**
+     * Lanza ErrorNegocio si algún texto es más largo que la columna donde se va a guardar.
+     *
+     * Sin esto la base lo rechazaba con un error técnico («Data too long for column 'nick'») y
+     * la persona se quedaba sin saber qué corregir. El largo se cuenta en caracteres, como
+     * VARCHAR(n) en utf8mb4.
+     *
+     * @param array<string, array{0: mixed, 1: int}> $campos etiqueta => [valor, máximo]
+     */
+    public static function assertLargos(array $campos): void
+    {
+        foreach ($campos as $etiqueta => [$valor, $maximo]) {
+            if (mb_strlen(trim((string) $valor)) > $maximo) {
+                throw new ErrorNegocio("{$etiqueta} no puede superar los {$maximo} caracteres.");
+            }
         }
     }
 
