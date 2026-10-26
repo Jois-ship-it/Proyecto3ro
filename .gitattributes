@@ -1,0 +1,2 @@
+# El lanzador del instalador de Windows (scripts/Instalar.bat) necesita saltos de linea CRLF en cualquier clon
+*.bat text eol=crlf

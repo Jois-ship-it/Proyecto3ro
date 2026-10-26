@@ -8,6 +8,16 @@ PHP, Apache ni MySQL en el sistema. Lo único que se instala es Docker.
 
 ---
 
+## A.0 — Windows con un solo archivo (el instalador)
+
+En una PC con Windows 10/11 alcanzan **dos archivos**: `scripts/instalar_windows.ps1` y `scripts/Instalar.bat` (hay que dejarlos en la misma carpeta; no hace falta tener el código). Doble clic en `Instalar.bat`:
+
+1. Un menú pregunta qué instalar: **1 = FlexArena** (rama `flexarena_final`) o **2 = SportTime** (rama `mejoras-letra`), la carpeta y si se cargan los datos de demostración.
+2. Comprueba la PC (Windows, memoria, disco, virtualización, conexión a GitHub y a Docker Hub). Si falta **Git** o **Docker Desktop** los instala (con winget o, si no hay, con el instalador oficial) y vuelve a comprobar. Docker Desktop recién instalado puede pedir **reiniciar**: se reinicia y se vuelve a ejecutar.
+3. Hace `git clone` de la rama del proyecto elegido (con reintentos), crea una entidad certificadora propia y un certificado HTTPS para la IP de la PC, la instala en Windows, genera el `.env` con contraseñas al azar y levanta los contenedores. Al final verifica HTTPS, la API y el inicio de sesión del administrador, y muestra las direcciones y la contraseña del administrador.
+
+Es re-ejecutable: actualiza el código y reutiliza el `.env`, los certificados y los datos. Sin menú: `Instalar.bat -Proyecto SportTime -SinDatosDemo`. Todas las opciones: `Get-Help .\scripts\instalar_windows.ps1 -Full`. Pide permisos de administrador (UAC) para instalar el certificado y las herramientas.
+
 ## A. En tu máquina (desarrollo local)
 
 ### Requisitos
