@@ -93,6 +93,7 @@ class ValidatorTest extends TestCase
         $valido = [
             'nombre' => 'Persona Larga', 'email' => 'larga@test.local', 'nick' => 'larga', 'telefono' => '099123456',
             'documento' => '6123456', 'password' => 'Clave-Segura-123!', 'password_confirm' => 'Clave-Segura-123!',
+            'acepto_politicas' => '1',
         ];
         $svc = new RegistroService();
 

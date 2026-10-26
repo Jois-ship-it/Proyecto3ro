@@ -188,6 +188,7 @@ describe('Administración', () => {
         cy.get('#email').type(correo);
         cy.get('#password').type(CLAVE, { log: false });
         cy.get('#password_confirm').type(CLAVE, { log: false });
+        cy.get('#acepto_politicas').check();
         cy.get('#submitBtn').click();
         cy.iniciarSesion('admin');
         cy.visit(`/admin/registros?q=${encodeURIComponent(correo)}`);

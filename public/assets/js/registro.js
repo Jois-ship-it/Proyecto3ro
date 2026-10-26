@@ -2,7 +2,8 @@
  *
  * Las reglas de la contraseña en el formulario de registro, a medida que se escribe. Cada regla de la lista
  * `#pwHints` (`data-rule`) se marca como cumplida o no (`.cumple`), y el botón de crear la cuenta queda
- * deshabilitado hasta que se cumplan todas. La validación que manda es la del servidor (core/Validator.php):
+ * deshabilitado hasta que se cumplan todas Y esté marcada la casilla de la política de privacidad y los términos
+ * (`#acepto_politicas`). La validación que manda es la del servidor (core/Validator.php y RegistroService):
  * esto solo evita enviar un formulario que se va a rechazar.
  */
 'use strict';
@@ -12,6 +13,7 @@
   const confirmacion = document.getElementById('password_confirm');
   const reglas = document.getElementById('pwHints');
   const boton = document.getElementById('submitBtn');
+  const acepto = document.getElementById('acepto_politicas');
   if (!clave || !confirmacion || !reglas || !boton) return;
 
   function comprobar() {
@@ -31,11 +33,13 @@
       li.dataset.ok = bien ? '1' : '0';
       if (!bien) todas = false;
     });
-    boton.disabled = !todas;
-    boton.classList.toggle('apagado', !todas);
+    const listo = todas && Boolean(acepto && acepto.checked);
+    boton.disabled = !listo;
+    boton.classList.toggle('apagado', !listo);
   }
 
   clave.addEventListener('input', comprobar);
   confirmacion.addEventListener('input', comprobar);
+  if (acepto) acepto.addEventListener('change', comprobar);
   comprobar();
 })();

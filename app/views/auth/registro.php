@@ -59,6 +59,8 @@
         <li data-rule="match">• Las contraseñas coinciden</li>
       </ul>
 
+<?php include APP_PATH . '/views/partials/consentimiento.php'; ?>
+
       <div class="form-actions mt-12">
         <a class="btn ghost" href="/login">Ya tengo cuenta</a>
         <button type="submit" class="btn primary" id="submitBtn">Crear cuenta</button>

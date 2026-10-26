@@ -58,6 +58,18 @@ class PublicoController extends BaseController
         ], 'public');
     }
 
+    /** Política de Privacidad. Pública y sin sesión: se lee ANTES de registrarse. */
+    public function privacidad(): void
+    {
+        $this->render('public/privacidad', ['pageTitle' => 'Política de Privacidad'], 'public');
+    }
+
+    /** Términos y Condiciones. Públicos y sin sesión, igual que la política. */
+    public function terminos(): void
+    {
+        $this->render('public/terminos', ['pageTitle' => 'Términos y Condiciones'], 'public');
+    }
+
     public function home(): void
     {
         // Torneo destacado: el más reciente en curso o, si no hay, el más reciente. Una sola

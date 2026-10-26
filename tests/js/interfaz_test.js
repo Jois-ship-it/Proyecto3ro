@@ -235,7 +235,7 @@ function paginaBracket() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-console.log('registro.js — las reglas de la contraseña');
+console.log('registro.js — las reglas de la contraseña y la casilla de la política de privacidad');
 {
   const doc = crearDocumento();
   const clave = nuevo(doc, 'input', { id: 'password' });
@@ -244,6 +244,8 @@ console.log('registro.js — las reglas de la contraseña');
   const li = {};
   for (const r of ['len', 'upper', 'lower', 'num', 'sym', 'match']) li[r] = nuevo(doc, 'li', { 'data-rule': r }, reglas);
   const boton = nuevo(doc, 'button', { id: 'submitBtn' });
+  const acepto = nuevo(doc, 'input', { id: 'acepto_politicas' });
+  acepto.checked = false;
   const v = crearVentana(doc);
   correr('registro.js', v);
   const estado = () => Object.fromEntries(Object.entries(li).map(([r, e]) => [r, e.clases().includes('cumple')]));
@@ -256,12 +258,20 @@ console.log('registro.js — las reglas de la contraseña');
 
   clave.value = 'Abcdef1!'; conf.value = 'Abcdef1!';
   clave.despachar('input');
-  ok('una clave completa y repetida cumple todo y habilita el botón', Object.values(estado()).every(Boolean) && boton.disabled === false && !boton.clases().includes('apagado'));
+  ok('una clave completa y repetida cumple todas las reglas, pero sin aceptar la política el botón sigue apagado', Object.values(estado()).every(Boolean) && boton.disabled === true && boton.clases().includes('apagado'));
+  acepto.checked = true;
+  acepto.despachar('change');
+  ok('al marcar la casilla de la política, con la clave completa, se habilita el botón', boton.disabled === false && !boton.clases().includes('apagado'));
+  acepto.checked = false;
+  acepto.despachar('change');
+  ok('al desmarcarla, se apaga otra vez aunque la clave esté bien', boton.disabled === true && Object.values(estado()).every(Boolean));
+  acepto.checked = true;
+  acepto.despachar('change');
   ok('cada regla guarda su estado en data-ok', li.len.dataset.ok === '1');
 
   conf.value = 'Abcdef1?';
   conf.despachar('input');
-  ok('si la confirmación no coincide, se apaga otra vez', estado().match === false && boton.disabled === true);
+  ok('si la confirmación no coincide, se apaga otra vez (aunque la casilla esté marcada)', estado().match === false && boton.disabled === true && acepto.checked === true);
 
   clave.value = 'Ñandú2025#'; conf.value = 'Ñandú2025#';
   clave.despachar('input');

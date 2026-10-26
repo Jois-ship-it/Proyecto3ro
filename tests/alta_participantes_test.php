@@ -109,6 +109,7 @@ class AltaParticipantesTest extends TestCase
             'email'    => $email,
             'password' => 'Flex-Test2026!',
             'password_confirm' => 'Flex-Test2026!',
+            'acepto_politicas' => '1',
         ]);
 
         $fila = $this->db->query(

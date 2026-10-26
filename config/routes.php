@@ -9,6 +9,10 @@ $router->get('torneo/{id}',         'PublicoController', 'detalle');
 $router->get('equipo/{id}',         'PublicoController', 'equipo');
 $router->get('jugador/{id}',        'PublicoController', 'jugador');
 
+// ─── POLÍTICAS (se aceptan al registrarse: ver auth/registro y RegistroService) ───────────
+$router->get('privacidad',          'PublicoController', 'privacidad');
+$router->get('terminos',            'PublicoController', 'terminos');
+
 // ─── API JSON (solo lectura, pública) ───────────────────────
 // Sin sesión: muestra lo mismo que las páginas públicas. No hay ninguna ruta de escritura bajo /api.
 $router->get('api/torneos',                     'ApiController', 'torneos');

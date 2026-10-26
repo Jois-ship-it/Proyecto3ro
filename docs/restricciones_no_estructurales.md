@@ -438,10 +438,11 @@ Cubierto por `tests/frontend_estatico_test.php` y `tests/js/interfaz_test.js`. V
 | 210 | El texto blanco del botón primario tiene al menos 4,5:1 de contraste (WCAG AA) sobre todo su degradado: 4,63:1 en el extremo claro (`#1f7ab8`) y 4,89:1 en el oscuro. | `.btn.primary` en `public/assets/css/componentes.css` |
 | 212 | El texto que escribe una persona (el nombre de un torneo) y no tiene espacios —una dirección pegada, una palabra enorme— no ensancha la tarjeta ni la página: donde se muestra en una tarjeta o en un título, se parte donde haga falta (`.rompe-texto`). Sin esto, 80 letras seguidas sacaban todo de pantalla en el celular. La clase va **solo** ahí: puesta en general parte palabras normales de elementos angostos. | `.rompe-texto` en `public/assets/css/componentes.css` |
 | 213 | La lista pública de torneos se actualiza al escribir, sin recargar, pero **es una mejora, no un reemplazo**: el formulario sigue siendo un GET común y sin JavaScript funciona igual. Pide a la API pública (`/api/torneos`, la misma consulta del servidor) tras 300 ms de calma; una respuesta vieja nunca pisa a una nueva; mientras espera la lista se atenúa y queda `aria-busy`; los lectores de pantalla oyen cuántos torneos hay (`role="status"`); la dirección se actualiza para poder copiarla; si el pedido falla, la lista queda como estaba y arriba aparece el motivo. Dibuja el mismo marcado que el servidor y todo dato entra con `textContent`, nunca como HTML. | `PublicoController::torneos()`, `public/assets/js/torneos-en-vivo.js`, `public/assets/js/formato.js` |
+| 214 | Nadie se registra sin aceptar la Política de Privacidad y los Términos y Condiciones: la casilla del formulario es obligatoria y, aunque se envíe el formulario a mano sin ella, el servidor no crea ni la cuenta ni el perfil (es un `ErrorNegocio` con mensaje claro). La aceptación se da de nuevo cada vez (la casilla nunca vuelve marcada) y la auditoría guarda qué versión de los textos se aceptó. Las páginas `/privacidad` y `/terminos` son públicas: se leen antes de tener cuenta. | `RegistroService::registrar()`, `Politicas::aceptada()`, `PublicoController::privacidad()`, `PublicoController::terminos()` |
 
 ---
 
-**Total: 213 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
+**Total: 214 RNE.** Documento derivado del análisis de `app/services` y `app/controllers`.
 
 Todas las restricciones se citan por **nombre de método**, no por número de línea.
 Hasta septiembre de 2026 se citaban por línea y las referencias se habían podrido:

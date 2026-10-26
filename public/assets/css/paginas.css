@@ -190,3 +190,22 @@ calendario del torneo. */
 .cal-titulo     { font-size: .9rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-rango      { font-size: .8rem; color: var(--muted); }
 .cal-agenda     { margin-top: 1rem; }
+
+/* ─── Políticas de privacidad y términos (registro, /privacidad y /terminos) ──────────────────── */
+.consentimiento { margin-top: 1.1rem; padding: .95rem 1rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.consentimiento > h2 { margin: 0 0 .55rem; }
+.consent-lista { margin: 0 0 .9rem; padding-left: 1.1rem; display: grid; gap: .35rem; font-size: .86rem; color: var(--muted); line-height: 1.5; }
+.consent-lista strong { color: var(--text); }
+.check-linea { font-weight: 400; display: flex; gap: .65rem; align-items: flex-start; font-size: .9rem; line-height: 1.5; cursor: pointer; }
+.check-linea input[type="checkbox"] { flex: none; margin-top: .2rem; width: 1.15rem; height: 1.15rem; }
+.check-linea a, .legal a:not(.btn) { color: var(--primary-strong); text-decoration: underline; text-underline-offset: 2px; }
+.legal { max-width: 52rem; margin-inline: auto; }
+.legal h1 { margin: .25rem 0 .35rem; font-size: clamp(1.8rem, 4.2vw, 2.5rem); line-height: 1.1; }
+.legal h2 { margin: 1.9rem 0 .55rem; }
+.legal p, .legal li { line-height: 1.65; }
+.legal ul { margin: .5rem 0 .8rem; padding-left: 1.2rem; display: grid; gap: .4rem; }
+.legal .destacado { margin: .8rem 0 1rem; padding: .85rem 1rem; border-left: 4px solid var(--primary); border-radius: 0 12px 12px 0; background: var(--card); }
+.legal .table-wrap { margin: .9rem 0 1rem; }
+.legal td, .legal th { vertical-align: top; }
+.legal-pie { margin-top: 2.2rem; display: flex; flex-wrap: wrap; gap: .6rem; }
+.footer-legal { display: inline-flex; gap: .35rem; }

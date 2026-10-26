@@ -20,10 +20,50 @@ describe('Registro y acceso', () => {
       cy.get('#submitBtn').should('be.disabled');
       cy.get('#password_confirm').type(CLAVE, { log: false });
       cy.get('#pwHints li.cumple').should('have.length', 6);
+      cy.get('#submitBtn').should('be.disabled');                          // con la clave bien, falta aceptar la política
+      cy.get('#acepto_politicas').check();
       cy.get('#submitBtn').should('not.be.disabled');
+
+      cy.get('#acepto_politicas').uncheck();
+      cy.get('#submitBtn').should('be.disabled');                          // sin la casilla se apaga otra vez, aunque la clave esté bien
+      cy.get('#acepto_politicas').check();
 
       cy.get('#password_confirm').clear().type('otra', { log: false });
       cy.get('#submitBtn').should('be.disabled');
+    });
+
+    it('dice qué se hace con los datos y quién los ve, y enlaza la política y los términos (aceptarlos es obligatorio)', () => {
+      cy.get('.consentimiento').should('contain', 'Privacidad y consentimiento')
+        .and('contain', 'otros participantes, organizadores, administradores y cualquier visitante del sitio');
+      cy.get('#acepto_politicas').should('not.be.checked').and('have.attr', 'required');
+      cy.get('label[for="acepto_politicas"]').should('contain', 'doy mi consentimiento');
+      // Los enlaces se abren en otra pestaña: así no se pierde lo que ya se escribió en el formulario.
+      cy.get('.check-linea a[href="/privacidad"]').should('have.attr', 'target', '_blank');
+      cy.get('.check-linea a[href="/terminos"]').should('have.attr', 'target', '_blank');
+      // Tocar el texto marca la casilla.
+      cy.get('label[for="acepto_politicas"] strong').click();
+      cy.get('#acepto_politicas').should('be.checked');
+    });
+
+    it('el servidor no crea la cuenta si no se aceptó, aunque se fuerce el envío del formulario', () => {
+      cy.unico('Sin Aceptar E2E').then((nombre) => {
+        const correo = `e2e.${nombre.split(' ').pop().toLowerCase()}@example.com`;
+        cy.get('#nombre').type(nombre);
+        cy.get('#email').type(correo);
+        cy.get('#password').type(CLAVE, { log: false });
+        cy.get('#password_confirm').type(CLAVE, { log: false });
+        // Saltea lo que hace el navegador: el botón se habilita a la fuerza y la casilla deja de ser obligatoria.
+        cy.get('#submitBtn').invoke('prop', 'disabled', false);
+        cy.get('#acepto_politicas').invoke('removeAttr', 'required');
+        cy.get('#submitBtn').click();
+        cy.location('pathname').should('eq', '/registro');
+        cy.get('.aviso-auth').should('contain', 'tenés que aceptar la Política de Privacidad y los Términos y Condiciones');
+        cy.get('#nombre').should('have.value', nombre);                      // lo escrito se conserva
+        cy.get('#acepto_politicas').should('not.be.checked');                // pero el consentimiento hay que darlo de nuevo
+        cy.iniciarSesion('admin');
+        cy.visit(`/admin/registros?q=${encodeURIComponent(correo)}`);
+        cy.contains('tr', correo).should('not.exist');                       // y no quedó ninguna solicitud
+      });
     });
 
     it('no deja registrar un correo que ya existe', () => {
@@ -31,11 +71,35 @@ describe('Registro y acceso', () => {
       cy.get('#email').type('matias@example.com');
       cy.get('#password').type(CLAVE, { log: false });
       cy.get('#password_confirm').type(CLAVE, { log: false });
+      cy.get('#acepto_politicas').check();
       cy.get('#submitBtn').click();
       cy.location('pathname').should('eq', '/registro');
       cy.get('.aviso-auth').should('contain', 'Ese email ya está registrado.');
       cy.get('#nombre').should('have.value', 'Alguien Repetido');          // no se pierde lo escrito
       cy.get('#password').should('have.value', '');                         // pero la contraseña no vuelve
+    });
+  });
+
+  describe('política de privacidad y términos y condiciones', () => {
+    it('se leen sin iniciar sesión, con su versión, y dicen quién ve los datos', () => {
+      cy.visit('/privacidad');
+      cy.get('h1').should('contain', 'Política de Privacidad');
+      cy.get('.legal').should('contain', 'Versión 1.0').and('contain', 'das tu consentimiento')
+        .and('contain', 'otros participantes, organizadores, administradores y cualquier persona que visite el sitio');
+      cy.contains('a.btn', 'Ver los Términos y Condiciones').click();
+      cy.location('pathname').should('eq', '/terminos');
+      cy.get('h1').should('contain', 'Términos y Condiciones');
+      cy.contains('a.btn', 'Volver al registro').click();
+      cy.location('pathname').should('eq', '/registro');
+    });
+
+    it('el pie de las páginas públicas enlaza las dos, y el login no pide aceptar nada', () => {
+      cy.visit('/torneos');
+      cy.get('.footer .footer-legal a[href="/privacidad"]').should('be.visible');
+      cy.get('.footer .footer-legal a[href="/terminos"]').should('be.visible');
+      cy.visit('/login');
+      cy.get('#acepto_politicas').should('not.exist');
+      cy.contains('Privacidad y consentimiento').should('not.exist');
     });
   });
 
@@ -50,6 +114,7 @@ describe('Registro y acceso', () => {
       cy.get('#email').type(correo);
       cy.get('#password').type(CLAVE, { log: false });
       cy.get('#password_confirm').type(CLAVE, { log: false });
+      cy.get('#acepto_politicas').check();
       cy.get('#submitBtn').click();
       cy.location('pathname').should('eq', '/login');
       cy.aviso('quedó pendiente de aprobación');
@@ -94,6 +159,7 @@ describe('Registro y acceso', () => {
       cy.get('#email').type(correo);
       cy.get('#password').type(CLAVE, { log: false });
       cy.get('#password_confirm').type(CLAVE, { log: false });
+      cy.get('#acepto_politicas').check();
       cy.get('#submitBtn').click();
       cy.aviso('quedó pendiente');
 
@@ -155,6 +221,7 @@ describe('Registro y acceso', () => {
         cy.get('#email').type(correo);
         cy.get('#password').type(CLAVE, { log: false });
         cy.get('#password_confirm').type(CLAVE, { log: false });
+        cy.get('#acepto_politicas').check();
         cy.get('#submitBtn').click();
         cy.iniciarSesion('admin');
         cy.visit(`/admin/registros?q=${encodeURIComponent(correo)}`);

@@ -42,6 +42,7 @@ class AuthController extends BaseController
             'documento'        => $this->postStr('documento'),
             'password'         => $this->post('password', ''),
             'password_confirm' => $this->post('password_confirm', ''),
+            Politicas::CAMPO_ACEPTACION => $this->post(Politicas::CAMPO_ACEPTACION, ''),
         ];
         try {
             (new RegistroService())->registrar($datos);

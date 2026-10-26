@@ -143,7 +143,7 @@ class EsquemaIntegridadTest extends TestCase
         // un error de SQL que la persona no entiende.
         $registro = new RegistroService();
         $base = ['nombre' => 'Persona', 'password' => 'Clave-Segura1!', 'password_confirm' => 'Clave-Segura1!',
-                 'documento' => '4000333'];
+                 'documento' => '4000333', 'acepto_politicas' => '1'];
 
         $registro->registrar($base + ['email' => 'uno' . Fixtures::DOMINIO_TEST]);
 

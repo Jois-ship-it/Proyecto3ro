@@ -214,6 +214,13 @@ el cambio no pasó por la aplicación (un script, phpMyAdmin). La escriben trigg
 puede leerla. No guarda contraseñas ni datos personales: el historial no se puede modificar y, si los
 guardara, la anonimización por Habeas Data (ley 18331) no serviría. Ver `docs/documentacion_tecnica.md`.
 
+**Consentimiento y política de privacidad.** Quien se registra acepta la Política de Privacidad y los Términos
+y Condiciones (casilla obligatoria, validada en el servidor) y la auditoría guarda qué versión aceptó. La política
+dice, sin eufemismos, que el nombre, el nick, la foto y los resultados son visibles para otros participantes,
+organizadores, administradores y cualquier visitante, y que el email, el teléfono y el documento solo los ven los
+administradores. Está escrita según la ley 18331 (derechos de acceso, rectificación y supresión) y apunta a las
+pantallas que existen en «Mi perfil». Detalle en `docs/documentacion_tecnica.md`.
+
 ## Búsqueda, reportes y exportación
 
 - **Búsqueda sin inyección.** El texto buscado viaja siempre como parámetro enlazado; además se acota

@@ -44,6 +44,12 @@ class RegistroService
         $password = (string)($d['password'] ?? '');
         $confirm  = (string)($d['password_confirm'] ?? '');
 
+        // Sin aceptar la política y los términos no hay cuenta (la casilla del formulario es solo la primera barrera:
+        // esta es la que manda, también para quien envíe el formulario sin pasar por la página).
+        if (!Politicas::aceptada($d[Politicas::CAMPO_ACEPTACION] ?? '')) {
+            throw new ErrorNegocio(Politicas::MENSAJE_FALTA_ACEPTAR);
+        }
+
         // Los largos de las columnas de usuarios y participantes.
         Validator::assertLargos([
             'El nombre'    => [$nombre, 100],
@@ -90,7 +96,8 @@ class RegistroService
         ]);
 
         $this->auditoria->log('registro_participante', 'usuarios', $usuarioId,
-            "Auto-registro de participante: {$email} (pendiente de aprobación)", null, null, $usuarioId);
+            "Auto-registro de participante: {$email} (pendiente de aprobación). Aceptó la Política de Privacidad y los Términos y Condiciones, versión " . Politicas::VERSION . '.',
+            null, null, $usuarioId);
 
         return $usuarioId;
     }

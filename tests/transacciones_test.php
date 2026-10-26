@@ -151,6 +151,7 @@ class TransaccionesTest extends TestCase
             'documento'        => '5123456',
             'password'         => 'Clave-Segura-123!',
             'password_confirm' => 'Clave-Segura-123!',
+            'acepto_politicas' => '1',
         ], $cambios);
     }
 
